@@ -2,8 +2,8 @@
 ## 👥 Thành viên nhóm
 - Lê Phú Thắng (25020399) 
 - Phùng Sơn Vương (25020435)
-- Đặng Minh Tâm ()
-- Nguyễn Thị Hồng Nhung ()
+- Đặng Minh Tâm (25020357)
+- Nguyễn Thị Hồng Nhung (25020305)
 ##  Mục tiêu dự án
 - Mục đích: Phát triển hệ thống đấu giá trực tuyến
 ## Phân chia công việc 
