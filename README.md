@@ -13,3 +13,5 @@
 - ### Phùng Sơn Vương:
   Thiết kế khung MVC, Networking, áp dụng Design Pattern và quản lý việc trộn code (Merge).
 
+- ### Đặng Minh Tâm:
+  Xử lý đặt giá đồng thời (Concurrency) và thuật toán chống bắn tỉa (Anti-sniping).
