@@ -1,3 +1,3 @@
-public class Bidder extends User{
+public class Bidder extends userManager{
 
 }
