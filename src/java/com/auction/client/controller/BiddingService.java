@@ -33,7 +33,10 @@ public synchronized String placeBid(Item item, double amount, String userId) {
         item.setLastBidderId(userId);
         
         // Kiểm tra gia hạn tự động ở giây cuối (Anti-Sniping)
-        handleAntiSniping(item);
+        if (handleAntiSniping(item)) {
+            // Gọi AuctionTimer để hủy lịch cũ, lập lịch mới
+            auctionTimer.cancel();
+            auctionTimer.start();
         
         return "THÀNH CÔNG: Bạn đang là người dẫn đầu với mức giá " + amount + "đ";
     } catch (Exception e) {
