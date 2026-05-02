@@ -1,20 +1,24 @@
-package src.java.com.auction.shared.model.user;
+package com.auction.shared.model.user;
 
-import org.w3c.dom.Entity;
+import com.auction.shared.model.Entity;
+
+import java.io.Serial;
 
 public abstract class User implements Entity {
+    @Serial
     private static final long serialVersionUID = 1L;
+
     protected String name;
     protected String password;
     protected String email;
-    protected long phonenumber;
+    protected long phoneNumber;
     protected String status;
     protected String id;
-    public User(String id, String name,String password,String email,long phonenumber,String status) {
+    public User(String id, String name,String password,String email,long phoneNumber,String status) {
         this.name=name;
         this.password=password;
         this.email=email;
-        this.phonenumber=phonenumber;
+        this.phoneNumber=phoneNumber;
         this.status=status;
         this.id=id;
     }
@@ -49,7 +53,7 @@ public abstract class User implements Entity {
     }
 
     public void setPhonenumber(long phonenumber) {
-        this.phonenumber = phonenumber;
+        this.phoneNumber = phonenumber;
     }
 
     public void setStatus(String status) {
@@ -57,10 +61,16 @@ public abstract class User implements Entity {
     }
 
     public long getPhonenumber() {
-        return phonenumber;
+        return phoneNumber;
     }
 
     public String getStatus() {
         return status;
     }
+
+    @Override
+    public void setId(String ID){ this.id=ID; }
+
+    @Override
+    public void printInfo(){ System.out.println(name+" | "+ id); }
 }

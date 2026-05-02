@@ -1,13 +1,13 @@
 package com.auction.client.controller;
 
-import com.auction.shared.model.Item;
+import com.auction.shared.model.Electronic;
 import java.util.Date;
 
 public class TestAuction {
     public static void main(String[] args) {
         try {
             // 1. Tạo món hàng giả: Laptop, giá 1000, bước giá 100
-            Item item = new Item("Laptop Gaming", 1000, 100);
+            Electronic item = new Electronic("Laptop Gaming", "DELL",10,1000, 100);
             
             // 2. Cho phiên đấu giá còn đúng 10 giây (để kích hoạt Anti-Sniping < 30s)
             long endTime = System.currentTimeMillis() + 10000;
