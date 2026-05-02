@@ -1,4 +1,4 @@
-package src.java.com.auction.shared.model.user;
+package com.auction.shared.model.user;
 public class Bidder extends User {
     String name;
 
@@ -7,7 +7,7 @@ public class Bidder extends User {
     }
 
     @Override
-    public String toString() {
-        return name;
+    public void printInfo() {
+        System.out.println(name);
     }
 }

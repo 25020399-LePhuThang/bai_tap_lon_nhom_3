@@ -1,4 +1,6 @@
-class Auction {
+package com.auction.shared.model;
+
+public class Auction {
 
     // Đăng ký auto-bid
     public void registerAutoBid() {
