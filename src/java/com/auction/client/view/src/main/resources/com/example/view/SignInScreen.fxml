@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.PasswordField?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.ColumnConstraints?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.RowConstraints?>
+<?import javafx.scene.text.Font?>
+
+<GridPane hgap="20.0" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="332.0" prefWidth="779.0" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1">
+  <columnConstraints>
+    <ColumnConstraints fillWidth="false" hgrow="SOMETIMES" maxWidth="365.39996337890625" minWidth="10.0" prefWidth="204.79998474121095" />
+    <ColumnConstraints hgrow="SOMETIMES" maxWidth="319.1999908447265" minWidth="10.0" prefWidth="265.0000366210937" />
+      <ColumnConstraints hgrow="SOMETIMES" maxWidth="322.4000366210938" minWidth="10.0" prefWidth="216.1999633789062" />
+  </columnConstraints>
+  <rowConstraints>
+    <RowConstraints maxHeight="126.19998779296876" minHeight="0.0" prefHeight="25.199987792968756" vgrow="SOMETIMES" />
+    <RowConstraints maxHeight="318.2" minHeight="5.799994611740111" prefHeight="31.800006103515607" vgrow="SOMETIMES" />
+    <RowConstraints maxHeight="342.99997863769534" minHeight="0.0" prefHeight="72.39998779296874" vgrow="SOMETIMES" />
+      <RowConstraints maxHeight="338.1999877929687" minHeight="0.0" prefHeight="59.59998779296876" vgrow="SOMETIMES" />
+      <RowConstraints maxHeight="338.1999877929687" minHeight="0.0" prefHeight="57.60002441406249" vgrow="SOMETIMES" />
+      <RowConstraints maxHeight="338.1999877929687" minHeight="10.0" prefHeight="27.000015258789062" vgrow="SOMETIMES" />
+      <RowConstraints maxHeight="338.1999877929687" minHeight="10.0" prefHeight="30.999984741210938" vgrow="SOMETIMES" />
+      <RowConstraints maxHeight="338.1999877929687" minHeight="10.0" prefHeight="57.19996337890626" vgrow="SOMETIMES" />
+  </rowConstraints>
+   <children>
+      <Label prefHeight="18.0" prefWidth="102.0" text="  SĐT: 0834539363" textFill="#3775b4" />
+      <Label text="              Email: 25020399@vnu.edu.vn" textFill="#246994" GridPane.columnIndex="2">
+         <font>
+            <Font size="13.0" />
+         </font>
+      </Label>
+      <Label text="  Địa chỉ: 144 Xuân Thủy, Dịch Vọng Hậu, Cầu Giấy, Hà Nội" textFill="#285f96" GridPane.columnSpan="2" GridPane.rowIndex="1" />
+      <Label text="                                           ĐĂNG NHẬP" GridPane.columnSpan="3" GridPane.rowIndex="2">
+         <font>
+            <Font size="24.0" />
+         </font>
+      </Label>
+      <Label text="                         Tên đăng nhập:" GridPane.rowIndex="3">
+         <font>
+            <Font size="14.0" />
+         </font>
+      </Label>
+      <TextField maxWidth="-Infinity" prefWidth="200.0" GridPane.columnIndex="1" GridPane.rowIndex="3" />
+      <Label text="                         Mật khẩu:" GridPane.rowIndex="4">
+         <font>
+            <Font size="14.0" />
+         </font>
+      </Label>
+      <PasswordField maxWidth="-Infinity" prefWidth="200.0" GridPane.columnIndex="1" GridPane.rowIndex="4" />
+      <Label prefHeight="18.0" prefWidth="310.0" text="                            Chưa có tài khoản? Đăng nhập tại đây!" textFill="#21d115" GridPane.columnSpan="3" GridPane.rowIndex="5" />
+      <Label text="                                                                      Lỗi sẽ được thông báo tại đây!" textFill="#cf1212" GridPane.columnSpan="2" GridPane.rowIndex="6">
+         <font>
+            <Font size="13.0" />
+         </font>
+      </Label>
+      <ImageView fitHeight="45.0" fitWidth="99.0" pickOnBounds="true" preserveRatio="true" GridPane.rowIndex="7">
+         <image>
+            <Image url="@Image/Gemini_Generated_Image_iza1keiza1keiza1.png" />
+         </image>
+      </ImageView>
+      <ImageView fitHeight="255.0" fitWidth="239.0" pickOnBounds="true" preserveRatio="true" GridPane.columnIndex="2" GridPane.rowIndex="4">
+         <image>
+            <Image url="@Image/Screenshot%202026-05-02%20150847.png" />
+         </image>
+      </ImageView>
+   </children>
+</GridPane>
