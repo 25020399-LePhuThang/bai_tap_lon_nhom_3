@@ -37,6 +37,7 @@
       <RowConstraints maxHeight="48.799999999999955" minHeight="8.799963378906227" prefHeight="14.399999999999977" vgrow="SOMETIMES" />
       <RowConstraints maxHeight="300.0" minHeight="10.0" prefHeight="244.79999999999995" vgrow="ALWAYS" />
       <RowConstraints maxHeight="300.0" minHeight="10.0" prefHeight="30.399999999999977" vgrow="ALWAYS" />
+      <RowConstraints maxHeight="300.0" minHeight="10.0" prefHeight="30.399999999999977" vgrow="ALWAYS" />
   </rowConstraints>
    <children>
       <Label text="  SĐT: 0834539363" textFill="#2da2cc">
@@ -117,17 +118,17 @@
             <Font size="27.0" />
          </font>
       </Label>
-      <Label text="     Giá hiện tại:" GridPane.columnIndex="1" GridPane.rowIndex="5" GridPane.rowSpan="2">
+      <Label text="              Giá hiện tại:" GridPane.columnIndex="1" GridPane.rowIndex="5" GridPane.rowSpan="2">
          <font>
             <Font size="18.0" />
          </font>
       </Label>
-      <Label text="     Giá khởi điểm:" GridPane.columnIndex="1" GridPane.rowIndex="7">
+      <Label text="              Giá khởi điểm:" GridPane.columnIndex="1" GridPane.rowIndex="7">
          <font>
             <Font size="18.0" />
          </font>
       </Label>
-      <Label text="     Bước giá:" GridPane.columnIndex="1" GridPane.rowIndex="8" GridPane.rowSpan="2">
+      <Label text="              Bước giá:" GridPane.columnIndex="1" GridPane.rowIndex="8" GridPane.rowSpan="2">
          <font>
             <Font size="18.0" />
          </font>
@@ -169,12 +170,15 @@
           <TableColumn fx:id="tbvHistory" prefWidth="292.0" text="Số tiền" />
         </columns>
       </TableView>
-      <ImageView fitHeight="34.0" fitWidth="58.0" pickOnBounds="true" preserveRatio="true" GridPane.rowIndex="17">
+      <ImageView fitHeight="34.0" fitWidth="58.0" pickOnBounds="true" preserveRatio="true" GridPane.rowIndex="18">
          <image>
             <Image url="@Image/Gemini_Generated_Image_iza1keiza1keiza1.png" />
          </image>
+         <GridPane.margin>
+            <Insets bottom="19.0" />
+         </GridPane.margin>
       </ImageView>
-      <Label fx:id="lblTime4" text="                              Thời gian hiển thị tại đây" textFill="#dc2525" GridPane.columnIndex="1" GridPane.rowIndex="17">
+      <Label fx:id="lblTime4" text="                              Thời gian hiển thị tại đây" textFill="#dc2525" GridPane.columnIndex="1" GridPane.rowIndex="18">
          <font>
             <Font size="14.0" />
          </font>
@@ -219,7 +223,7 @@
             <Insets left="90.0" />
          </padding>
       </Label>
-      <Label fx:id="lblRecentPrice" text="Label" textFill="#ec1e1e" GridPane.columnIndex="1" GridPane.rowIndex="5" GridPane.rowSpan="2">
+      <Label fx:id="lblRecentPrice" text="        Label" textFill="#ec1e1e" GridPane.columnIndex="1" GridPane.rowIndex="5" GridPane.rowSpan="2">
          <GridPane.margin>
             <Insets left="130.0" />
          </GridPane.margin>
@@ -227,7 +231,7 @@
             <Font size="18.0" />
          </font>
       </Label>
-      <Label fx:id="lblStartPrice" layoutX="448.0" layoutY="348.0" text="Label" textFill="#ec1e1e" GridPane.columnIndex="1" GridPane.rowIndex="7">
+      <Label fx:id="lblStartPrice" layoutX="448.0" layoutY="348.0" text="         Label" textFill="#ec1e1e" GridPane.columnIndex="1" GridPane.rowIndex="7">
          <font>
             <Font size="18.0" />
          </font>
@@ -235,7 +239,7 @@
             <Insets left="145.0" />
          </GridPane.margin>
       </Label>
-      <Label fx:id="lblStepPrice" layoutX="463.0" layoutY="393.0" text="Label" textFill="#ec1e1e" GridPane.columnIndex="1" GridPane.rowIndex="8" GridPane.rowSpan="2">
+      <Label fx:id="lblStepPrice" layoutX="463.0" layoutY="393.0" text="        Label" textFill="#ec1e1e" GridPane.columnIndex="1" GridPane.rowIndex="8" GridPane.rowSpan="2">
          <font>
             <Font size="18.0" />
          </font>
@@ -243,5 +247,10 @@
             <Insets left="110.0" />
          </GridPane.margin>
       </Label>
+      <Button fx:id="btnBack" mnemonicParsing="false" text="Quay lại" GridPane.columnIndex="1" GridPane.rowIndex="17">
+         <GridPane.margin>
+            <Insets left="220.0" />
+         </GridPane.margin>
+      </Button>
    </children>
 </GridPane>

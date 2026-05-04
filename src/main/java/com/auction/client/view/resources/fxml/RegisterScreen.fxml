@@ -77,12 +77,12 @@
             <Font size="14.0" />
          </font>
       </Label>
-      <PasswordField maxWidth="-Infinity" prefWidth="200.0" promptText="Mật khẩu chứa tối thiểu 8 kí tự" GridPane.columnIndex="1" GridPane.rowIndex="4" />
-      <PasswordField maxWidth="-Infinity" prefWidth="200.0" GridPane.columnIndex="1" GridPane.rowIndex="5" />
-      <TextField maxHeight="-Infinity" maxWidth="-Infinity" prefWidth="200.0" promptText="Tên chứa chữ, số, kí tự VD: abc12@" GridPane.columnIndex="1" GridPane.rowIndex="3" />
-      <TextField maxWidth="-Infinity" prefWidth="200.0" promptText="abc@gmail.com" GridPane.columnIndex="1" GridPane.rowIndex="6" />
-      <TextField maxWidth="-Infinity" prefWidth="200.0" GridPane.columnIndex="1" GridPane.rowIndex="7" />
-      <Label text="                                      Lỗi sẽ được thông báo tại đây!" textFill="#b12424" GridPane.columnSpan="2" GridPane.rowIndex="9">
+      <PasswordField fx:id="txtPass" maxWidth="-Infinity" prefWidth="200.0" promptText="Mật khẩu chứa tối thiểu 8 kí tự" GridPane.columnIndex="1" GridPane.rowIndex="4" />
+      <PasswordField fx:id="txtPass2" maxWidth="-Infinity" prefWidth="200.0" GridPane.columnIndex="1" GridPane.rowIndex="5" />
+      <TextField fx:id="txtUsername" maxHeight="-Infinity" maxWidth="-Infinity" prefWidth="200.0" promptText="Tên chứa chữ, số, kí tự VD: abc12@" GridPane.columnIndex="1" GridPane.rowIndex="3" />
+      <TextField fx:id="txtEmail" maxWidth="-Infinity" prefWidth="200.0" promptText="abc@gmail.com" GridPane.columnIndex="1" GridPane.rowIndex="6" />
+      <TextField fx:id="txtPhone" maxWidth="-Infinity" prefWidth="200.0" GridPane.columnIndex="1" GridPane.rowIndex="7" />
+      <Label fx:id="lblError" text="                                      Lỗi sẽ được thông báo tại đây!" textFill="#b12424" GridPane.columnSpan="2" GridPane.rowIndex="9">
          <font>
             <Font size="14.0" />
          </font>
@@ -97,12 +97,12 @@
       </ImageView>
       <HBox prefHeight="59.0" prefWidth="501.0" spacing="100.0" GridPane.columnSpan="2" GridPane.rowIndex="8">
          <children>
-            <Button mnemonicParsing="false" prefHeight="19.0" prefWidth="74.0" text="Đăng ký">
+            <Button fx:id="btnRegister1" mnemonicParsing="false" prefHeight="19.0" prefWidth="74.0" text="Đăng ký">
                <font>
                   <Font size="14.0" />
                </font>
             </Button>
-            <Button mnemonicParsing="false" text="Thoát">
+            <Button fx:id="btnOut" mnemonicParsing="false" text="Thoát">
                <font>
                   <Font size="14.0" />
                </font>
@@ -117,8 +117,16 @@
             <Image url="@Image/pngtree-auction-icon-png-image_8470662.png" />
          </image>
          <GridPane.margin>
-            <Insets right="30.0" />
+            <Insets bottom="40.0" right="30.0" />
          </GridPane.margin>
       </ImageView>
+      <Label fx:id="lblTime4" text="Thời gian hiển thị tại đây" textFill="#c42e2e" GridPane.columnIndex="1" GridPane.rowIndex="10">
+         <font>
+            <Font size="14.0" />
+         </font>
+         <GridPane.margin>
+            <Insets left="110.0" top="160.0" />
+         </GridPane.margin>
+      </Label>
    </children>
 </GridPane>

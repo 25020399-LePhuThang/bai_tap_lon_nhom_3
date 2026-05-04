@@ -25,9 +25,10 @@
     <RowConstraints maxHeight="368.7999900817871" minHeight="10.0" prefHeight="33.2" vgrow="SOMETIMES" />
       <RowConstraints maxHeight="450.0000045776368" minHeight="10.0" prefHeight="40.400000000000006" vgrow="SOMETIMES" />
       <RowConstraints maxHeight="518.7999938964842" minHeight="10.0" prefHeight="74.20001831054687" vgrow="SOMETIMES" />
-      <RowConstraints maxHeight="536.6" minHeight="10.0" prefHeight="214.9999816894531" vgrow="SOMETIMES" />
-      <RowConstraints maxHeight="536.6" minHeight="10.0" prefHeight="91.19998779296873" vgrow="SOMETIMES" />
-      <RowConstraints maxHeight="536.6" minHeight="10.0" prefHeight="344.5999633789063" vgrow="SOMETIMES" />
+      <RowConstraints maxHeight="536.6" minHeight="10.0" prefHeight="260.99998779296874" vgrow="SOMETIMES" />
+      <RowConstraints maxHeight="536.6" minHeight="10.0" prefHeight="69.40000610351564" vgrow="SOMETIMES" />
+      <RowConstraints maxHeight="536.6" minHeight="10.0" prefHeight="298.1999938964844" vgrow="SOMETIMES" />
+      <RowConstraints maxHeight="518.7999938964842" minHeight="10.0" prefHeight="47.80003662109368" vgrow="SOMETIMES" />
       <RowConstraints maxHeight="518.7999938964842" minHeight="0.0" prefHeight="47.80003662109368" vgrow="SOMETIMES" />
   </rowConstraints>
    <children>
@@ -69,20 +70,21 @@
             <Font size="18.0" />
          </font>
       </Label>
-      <TableView prefHeight="542.0" prefWidth="600.0" GridPane.columnSpan="3" GridPane.rowIndex="5" GridPane.vgrow="ALWAYS">
+      <TableView fx:id="tbvIsPresenting" prefHeight="279.0" prefWidth="600.0" GridPane.columnSpan="3" GridPane.rowIndex="5" GridPane.vgrow="ALWAYS">
         <columns>
-          <TableColumn prefWidth="204.00006103515625" text="                  Tên sản phẩm" />
-          <TableColumn prefWidth="120.7999267578125" text="               Loại" />
-            <TableColumn prefWidth="150.4000244140625" text="         Giá bán hiện tại" />
-            <TableColumn prefWidth="124.79998779296875" text="     Thời gian còn lại" />
+            <TableColumn prefWidth="153.5999755859375" text="          Tên sản phẩm" />
+          <TableColumn prefWidth="78.39996337890625" text="          ID" />
+          <TableColumn text="         Loại" />
+            <TableColumn prefWidth="140.0" text="         Giá bán hiện tại" />
+            <TableColumn prefWidth="147.20001220703125" text="     Thời gian còn lại" />
         </columns>
       </TableView>
-      <ImageView fitHeight="36.0" fitWidth="87.0" pickOnBounds="true" preserveRatio="true" GridPane.rowIndex="8">
+      <ImageView fitHeight="36.0" fitWidth="87.0" pickOnBounds="true" preserveRatio="true" GridPane.rowIndex="9">
          <image>
             <Image url="@Image/Gemini_Generated_Image_iza1keiza1keiza1.png" />
          </image>
       </ImageView>
-      <Label text="                                                                                                         Thời gian hiển thị ở đây" textFill="#c12c2c" GridPane.columnIndex="1" GridPane.rowIndex="8" />
+      <Label text="                                                                                                         Thời gian hiển thị ở đây" textFill="#c12c2c" GridPane.columnIndex="1" GridPane.rowIndex="9" />
       <Label text="                                CÁC PHIÊN ĐẤU GIÁ SẮP DIỄN RA" GridPane.columnSpan="2" GridPane.rowIndex="6">
          <font>
             <Font size="18.0" />
@@ -91,13 +93,14 @@
             <Insets top="30.0" />
          </padding>
       </Label>
-      <TableView prefHeight="200.0" prefWidth="200.0" GridPane.columnSpan="2" GridPane.rowIndex="7" GridPane.vgrow="ALWAYS">
+      <TableView fx:id="tbvWillPresent" prefHeight="200.0" prefWidth="200.0" GridPane.columnSpan="2" GridPane.rowIndex="7" GridPane.vgrow="ALWAYS">
         <columns>
-          <TableColumn prefWidth="156.0" text="Tên sản phẩm" />
-          <TableColumn prefWidth="63.20001220703125" text="      Loại" />
-            <TableColumn prefWidth="118.39996337890625" text="     Giá bán hiện tại" />
-            <TableColumn prefWidth="150.39996337890625" text="       Thời gian bắt đầu" />
-            <TableColumn prefWidth="116.00006103515625" text="Thời gian còn lại" />
+          <TableColumn prefWidth="119.20001220703125" text="     Tên sản phẩm" />
+            <TableColumn prefWidth="66.39996337890625" text="         ID" />
+          <TableColumn prefWidth="69.5999755859375" text="      Loại" />
+            <TableColumn prefWidth="93.5999755859375" text=" Giá bán hiện tại" />
+            <TableColumn prefWidth="129.60003662109375" text="   Thời gian bắt đầu" />
+            <TableColumn prefWidth="285.59991455078125" text="Thời gian kết thúc" />
         </columns>
       </TableView>
       <ImageView fitHeight="30.0" fitWidth="34.0" pickOnBounds="true" preserveRatio="true" GridPane.rowIndex="2">
@@ -108,5 +111,15 @@
             <Insets />
          </GridPane.margin>
       </ImageView>
+      <Label layoutX="10.0" layoutY="10.0" text="                                                                                 Email: 25020399@vnu.edu.vn" textFill="#2b91b7" GridPane.columnIndex="1">
+         <font>
+            <Font size="14.0" />
+         </font>
+      </Label>
+      <Button fx:id="btnQuaylai2" mnemonicParsing="false" text="Quay lại" textFill="#cc2c2c" GridPane.columnIndex="1" GridPane.rowIndex="8">
+         <GridPane.margin>
+            <Insets left="420.0" />
+         </GridPane.margin>
+      </Button>
    </children>
 </GridPane>
