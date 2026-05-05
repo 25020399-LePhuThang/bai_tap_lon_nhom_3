@@ -16,6 +16,8 @@ public class Electronic extends Item{
         this.warrantyPeriod=warrantyPeriod;
     }
 
+    public  Electronic(){}
+
     public int getWarrantyPeriod(){ return warrantyPeriod;}
     public void setWarrantyPeriod(int newWarrantyPeriod){ warrantyPeriod=newWarrantyPeriod; }
 
