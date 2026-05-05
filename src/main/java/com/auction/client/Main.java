@@ -2,6 +2,7 @@
 package com.auction.client;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
+import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
 import java.io.IOException;
@@ -11,7 +12,7 @@ public class Main extends Application {
     @Override
     public void start(Stage stage) throws IOException {
         // Gọi file giao diện Welcome của bạn (lưu ý đường dẫn phải chính xác)
-        FXMLLoader fxmlLoader = new FXMLLoader(Main.class.getResource("/com/auction/client/view/hello-view.fxml"));
+        FXMLLoader fxmlLoader = new FXMLLoader(Main.class.getResource("/hello-view.fxml"));
 
         // Tạo cảnh kịch và đặt kích thước ban đầu (ví dụ: rộng 800, cao 600)
         Scene scene = new Scene(fxmlLoader.load(), 800, 600);

@@ -10,21 +10,13 @@ public class Bidder extends User {
     protected float balance=0;
     protected float maxAutoBidLimit;
 
-    public Bidder(String id, String name,String password,String email,long phoneNumber,String status) {
-        super(id,name,password,email,phoneNumber, status);
+    public Bidder(String name) {
+        this.name = name;
         this.maxAutoBidLimit = 0;
-    }
-
-    // Constructor rỗng (Cần thiết cho Database/JSON)
-    public Bidder() {
-        super();
     }
 
     public float  getBalance(){ return balance; }
     public void setBalance(float balance){ this.balance=balance; }
-
-    public float getMaxAutoBidLimit() { return maxAutoBidLimit; }
-    public void setMaxAutoBidLimit(float maxAutoBidLimit) { this.maxAutoBidLimit = maxAutoBidLimit; }
 
     @Override
     public String getRole(){ return "bidder"; }

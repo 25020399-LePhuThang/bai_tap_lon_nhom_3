@@ -11,11 +11,12 @@ public class Admin extends User{
     private String adminLevel;
     private String employeeId;
 
-    public Admin(String id, String name,String password,String email,long phoneNumber,String status){
-        super(id,name,password,email,phoneNumber,status);
+    public Admin(String id, String name,String password,String email,String phoneNumber,String status){
+        super(id, name, password, email, phoneNumber, status, "ADMIN");
         adminLevel="MODERATOR";
         employeeId=String.valueOf(counter.getAndIncrement());
     }
+    public Admin(){}
 
     public Admin() { super(); }
 

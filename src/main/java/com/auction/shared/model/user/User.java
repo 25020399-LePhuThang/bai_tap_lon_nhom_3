@@ -11,12 +11,12 @@ public abstract class User implements Entity {
     protected String name;
     protected String password;
     protected String email;
-    protected long phoneNumber;
+    protected String phoneNumber;
     protected String status;
     protected String role;
 
 
-    public User(String id, String name, String password, String email, long phoneNumber, String status, String role) {
+    public User(String id, String name, String password, String email, String phoneNumber, String status, String role) {
         this.id = id;
         this.name = name;
         this.password = password;
@@ -42,8 +42,8 @@ public abstract class User implements Entity {
     public void setEmail(String email) { this.email = email; }
 
 
-    public long getPhoneNumber() { return phoneNumber; }
-    public void setPhoneNumber(long phoneNumber) { this.phoneNumber = phoneNumber; }
+    public String getPhoneNumber() { return phoneNumber; }
+    public void setPhoneNumber(String phoneNumber) { this.phoneNumber = phoneNumber; }
 
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
