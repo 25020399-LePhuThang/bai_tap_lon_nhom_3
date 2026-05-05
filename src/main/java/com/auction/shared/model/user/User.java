@@ -14,6 +14,7 @@ public abstract class User implements Entity {
     protected long phoneNumber;
     protected String status;
     protected String id;
+
     public User(String id, String name,String password,String email,long phoneNumber,String status) {
         this.name=name;
         this.password=password;
@@ -22,7 +23,7 @@ public abstract class User implements Entity {
         this.status=status;
         this.id=id;
     }
-    public User(){};
+    public User(){}
 
     public String getId() {
         return id;

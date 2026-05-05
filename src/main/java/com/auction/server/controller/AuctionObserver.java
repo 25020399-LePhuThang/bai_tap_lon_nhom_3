@@ -4,14 +4,14 @@ import com.auction.shared.model.Observer;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-public class AuctionObservable {
+public class AuctionObserver {
 
     private final List<Observer> observers = new CopyOnWriteArrayList<>();
 
     private String auctionId;
     private double currentPrice = 0;
 
-    public AuctionObservable(String auctionId) {
+    public AuctionObserver(String auctionId) {
         this.auctionId = auctionId;
     }
 

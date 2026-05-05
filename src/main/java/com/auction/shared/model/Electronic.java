@@ -3,8 +3,9 @@ public class Electronic extends Item{
     private int warrantyPeriod;
     private String brand;
 
-    public Electronic(String name, String brand, int warrantyPeriod,double currentPrice, double minIncrement){
-        super(name,currentPrice,minIncrement);
+    public Electronic(String name, String brand, int warrantyPeriod, double startingPrice, double minIncrement){
+        super(name,startingPrice,minIncrement);
+        currentPrice=startingPrice;
         this.brand=brand;
         this.warrantyPeriod=warrantyPeriod;
     }
