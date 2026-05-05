@@ -17,6 +17,8 @@ public class Admin extends User{
         employeeId=String.valueOf(counter.getAndIncrement());
     }
 
+    public Admin() { super(); }
+
     public String getAdminLevel() { return adminLevel; }
     public void setAdminLevel(String adminLevel) { this.adminLevel = adminLevel; }
 
