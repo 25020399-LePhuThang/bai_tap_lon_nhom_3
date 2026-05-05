@@ -1,90 +1,59 @@
 package com.auction.shared.model.user;
 
 import com.auction.shared.model.Entity;
-
 import java.io.Serial;
 
 public abstract class User implements Entity {
     @Serial
     private static final long serialVersionUID = 1L;
 
+    protected String id;
     protected String name;
     protected String password;
     protected String email;
     protected long phoneNumber;
     protected String status;
-    protected String id;
-    protected String avatarURL;
+    protected String role;
 
-    public User(String id, String name,String password,String email,long phoneNumber,String status) {
-        this.name=name;
-        this.password=password;
-        this.email=email;
-        this.phoneNumber=phoneNumber;
-        this.status=status;
-        this.id=id;
-    }
-    public User(){}
 
-    public String getId() {
-        return id;
-    }
-
-    public void setName(String name) {
+    public User(String id, String name, String password, String email, long phoneNumber, String status, String role) {
+        this.id = id;
         this.name = name;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setPassword(String password) {
         this.password = password;
-    }
-
-    public String getPassword() {
-        return password;
-    }
-
-    public void setEmail(String email) {
         this.email = email;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public void setPhonenumber(long phonenumber) {
-        this.phoneNumber = phonenumber;
-    }
-
-    public void setStatus(String status) {
+        this.phoneNumber = phoneNumber;
         this.status = status;
+        this.role = role; // Gán giá trị role
     }
 
-    public long getPhonenumber() {
-        return phoneNumber;
-    }
+    public User() {}
 
-    public String getStatus() {
-        return status;
-    }
+    public String getId() { return id; }
+    @Override
+    public void setId(String id) { this.id = id; }
 
-    public String getAvatarURL(){ return avatarURL;}
-    public void setAvatarURL(String avatarURL){ this.avatarURL=avatarURL; }
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
 
-    abstract String getRole();
+    public String getPassword() { return password; }
+    public void setPassword(String password) { this.password = password; }
+
+    public String getEmail() { return email; }
+    public void setEmail(String email) { this.email = email; }
+
+
+    public long getPhoneNumber() { return phoneNumber; }
+    public void setPhoneNumber(long phoneNumber) { this.phoneNumber = phoneNumber; }
+
+    public String getStatus() { return status; }
+    public void setStatus(String status) { this.status = status; }
+
+
+    public String getRole() { return role; }
+    public void setRole(String role) { this.role = role; }
 
     @Override
-    public void setId(String ID){ this.id=ID; }
-
-    @Override
-    public void printInfo(){ System.out.println(name+" | "+ id); }
-
-    @Override
-    public String toString(){
-        return "Admin{" +
-            "id='" + getId() + '\'' +
-                    '}';
+    public void printInfo() {
+        System.out.println(name + " | " + id + " | Role: " + role);
     }
 }
