@@ -1,18 +1,22 @@
 package com.auction.shared.model;
+
+import java.io.Serial;
+
 public class Vehicle extends Item{
+    @Serial
+    private static final long serialVersionUID = 1L;
+
     private int warrantyPeriod;
     private String brand;
-    private int numberOfSeats;
     private String fuelType;
     private String engineCapacity;
 
-    public Vehicle(String name, String brand,int numberOfSeats,String fuelType,String engineCapacity, int warrantyPeriod,double currentPrice, double minIncrement){
-        super(name,currentPrice,minIncrement);
+    public Vehicle(String name, String brand,String fuelType,String engineCapacity, int warrantyPeriod,double startingPrice, double minIncrement){
+        super(name,startingPrice,minIncrement);
         this.brand=brand;
         this.warrantyPeriod=warrantyPeriod;
         this.engineCapacity=engineCapacity;
         this.fuelType=fuelType;
-        this.numberOfSeats=numberOfSeats;
     }
 
     public int getWarrantyPeriod(){ return warrantyPeriod;}
@@ -27,10 +31,7 @@ public class Vehicle extends Item{
     public String getEngineCapacity(){ return engineCapacity;}
     public void setEngineCapacity(String newEngineCapacity){ engineCapacity=newEngineCapacity; }
 
-    public int getNumberOfSeats(){ return numberOfSeats;}
-    public void setNumberOfSeats(int newNumberOfSeats){ numberOfSeats=newNumberOfSeats; }
-
     public void printInfo(){
-        System.out.println("Tên phương tiện:\n"+getName()+getNumberOfSeats()+" chỗ\n"+"Hãng:\n"+getBrand()+"Loại nhiên liệu:\n"+getFuelType()+"Dung tích động cơ/Công suất:\n"+getEngineCapacity()+"Thời hạn bảo hành còn: "+getWarrantyPeriod()+" tháng");
+        System.out.println("Tên phương tiện:\n"+getName()+" chỗ\n"+"Hãng:\n"+getBrand()+"Loại nhiên liệu:\n"+getFuelType()+"Dung tích động cơ/Công suất:\n"+getEngineCapacity()+"Thời hạn bảo hành còn: "+getWarrantyPeriod()+" tháng");
     }
 }

@@ -1,4 +1,4 @@
-package com.auction.client.controller;
+package com.auction.server.controller;
 
 import java.util.Date;
 import com.auction.shared.model.Item;

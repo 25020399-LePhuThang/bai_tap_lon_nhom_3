@@ -1,6 +1,11 @@
 package com.auction.shared.model;
 
+import java.io.Serial;
+
 public class Auction {
+
+    @Serial
+    private static final long serialVersionUID = 1L;
 
     // Đăng ký auto-bid
     public void registerAutoBid() {

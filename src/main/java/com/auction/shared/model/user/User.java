@@ -14,6 +14,8 @@ public abstract class User implements Entity {
     protected long phoneNumber;
     protected String status;
     protected String id;
+    protected String avatarURL;
+
     public User(String id, String name,String password,String email,long phoneNumber,String status) {
         this.name=name;
         this.password=password;
@@ -22,7 +24,7 @@ public abstract class User implements Entity {
         this.status=status;
         this.id=id;
     }
-    public User(){};
+    public User(){}
 
     public String getId() {
         return id;
@@ -68,9 +70,21 @@ public abstract class User implements Entity {
         return status;
     }
 
+    public String getAvatarURL(){ return avatarURL;}
+    public void setAvatarURL(String avatarURL){ this.avatarURL=avatarURL; }
+
+    abstract String getRole();
+
     @Override
     public void setId(String ID){ this.id=ID; }
 
     @Override
     public void printInfo(){ System.out.println(name+" | "+ id); }
+
+    @Override
+    public String toString(){
+        return "Admin{" +
+            "id='" + getId() + '\'' +
+                    '}';
+    }
 }

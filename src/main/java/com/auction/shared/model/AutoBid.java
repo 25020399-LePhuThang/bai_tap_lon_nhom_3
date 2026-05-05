@@ -1,6 +1,11 @@
 package com.auction.shared.model;
 
+import java.io.Serial;
+
 public class AutoBid {
+    @Serial
+    private static final long serialVersionUID = 1L;
+
     private String bidderId;
     private double maxBid;
     private double increment;
