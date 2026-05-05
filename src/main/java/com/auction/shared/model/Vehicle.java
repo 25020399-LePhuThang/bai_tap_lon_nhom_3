@@ -19,6 +19,8 @@ public class Vehicle extends Item{
         this.fuelType=fuelType;
     }
 
+    public Vehicle(){}
+
     public int getWarrantyPeriod(){ return warrantyPeriod;}
     public void setWarrantyPeriod(int newWarrantyPeriod){ warrantyPeriod=newWarrantyPeriod; }
 

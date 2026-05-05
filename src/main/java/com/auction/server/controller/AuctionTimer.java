@@ -41,6 +41,11 @@ public class AuctionTimer {
             timer = new Timer(); 
         }
     }
+ 
+    public void reschedule() {
+        cancel();    // Hủy lịch cũ, tạo Timer mới 
+        start();     // Lên lịch lại với endTime đã được cập nhập
+    }
 
     private void processEndAuction() {
         System.out.println(">>> THÔNG BÁO: Phiên đấu giá [" + item.getName() + "] đã kết thúc!");

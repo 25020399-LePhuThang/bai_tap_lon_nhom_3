@@ -15,6 +15,8 @@ public class Art extends Item{
         this.creationYear=creationYear;
     }
 
+    public Art(){}
+
     public String getAuthor(){ return author;}
     public void setAuthor(String newAuthor){ author=newAuthor; }
 

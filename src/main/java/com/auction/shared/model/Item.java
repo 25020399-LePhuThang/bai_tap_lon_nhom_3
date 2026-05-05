@@ -15,6 +15,15 @@ public abstract class Item implements Entity {
     protected String sellerId;
     protected String lastBidderId;
     protected String name;
+    /**
+     * Trạng thái hiện tại của sản phẩm.
+     * Các giá trị hợp lệ bao gồm:
+     * <ul>
+     * <li>{@code "ACTIVE"}    : Đang có thể đấu giá.</li>
+     * <li>{@code "SOLD"} : Đã bán.</li>
+     * <li>{@code "DELETED"}  : Sản phẩm bị hủy do vi phạm.</li>
+     * </ul>
+     */
     protected String status;
     protected String itemID;
     protected Date startTime;
