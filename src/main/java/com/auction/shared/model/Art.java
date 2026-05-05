@@ -1,11 +1,16 @@
 package com.auction.shared.model;
 
+import java.io.Serial;
+
 public class Art extends Item{
+    @Serial
+    private static final long serialVersionUID = 1L;
+
     protected String author;
     protected int creationYear;
 
-    public Art(String name, String author,int creationYear,double currentPrice, double minIncrement){
-        super(name,currentPrice,minIncrement);
+    public Art(String name, String author,int creationYear,double startingPrice, double minIncrement){
+        super(name,startingPrice,minIncrement);
         this.author=author;
         this.creationYear=creationYear;
     }
