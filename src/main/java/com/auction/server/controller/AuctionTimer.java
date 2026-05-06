@@ -13,6 +13,7 @@ public class AuctionTimer {
         this.item = item;
         this.timer = new Timer();
     }
+    public AuctionTimer(){this.timer = new Timer();}
 
     
     public void start() {
@@ -49,6 +50,10 @@ public class AuctionTimer {
 
     private void processEndAuction() {
         System.out.println(">>> THÔNG BÁO: Phiên đấu giá [" + item.getName() + "] đã kết thúc!");
-        
+
+    }
+
+    public void setItem(Item item) {
+        this.item = item;
     }
 }

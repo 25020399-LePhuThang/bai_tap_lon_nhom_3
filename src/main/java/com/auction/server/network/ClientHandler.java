@@ -58,17 +58,15 @@ public class ClientHandler implements Runnable {
                         String username = parts[1];
                         String password = parts[2];
 
-                        // Gọi hàm tĩnh Login của ông Thắng
+
                         User loggedInUser = com.auction.server.DAO.UserDAO.Login(username, password);
 
                         if (loggedInUser != null) {
-                            // Đăng nhập thành công, gửi kèm cái Role (vai trò) về cho Client luôn
                             out.println("LOGIN_SUCCESS|" + loggedInUser.getRole());
                         } else {
                             out.println("LOGIN_FAIL|Sai tài khoản hoặc mật khẩu");
                         }
                     }
-                    // 3. NẾU KHÁCH MUỐN ĐẶT GIÁ
                     case "BID" -> {
                         String user = parts[1];
                         // Đổi sang parseDouble để khớp với kiểu double của Tâmi

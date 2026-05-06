@@ -83,6 +83,11 @@
       <TextField fx:id="txtUsername" maxHeight="-Infinity" maxWidth="-Infinity" prefWidth="200.0" promptText="Từ 4-20 kí tự" styleClass="text-field" stylesheets="@style.css" GridPane.columnIndex="1" GridPane.rowIndex="3" />
       <TextField fx:id="txtEmail" maxWidth="-Infinity" prefWidth="200.0" promptText="abc@gmail.com" styleClass="text-field" GridPane.columnIndex="1" GridPane.rowIndex="6" />
       <TextField fx:id="txtPhone" maxWidth="-Infinity" prefWidth="200.0" styleClass="text-field" GridPane.columnIndex="1" GridPane.rowIndex="7" />
+      <Label fx:id="lblError1" styleClass="error-label" stylesheets="@style.css" textFill="#b12424" GridPane.columnIndex="1" GridPane.columnSpan="2" GridPane.rowIndex="3">
+         <font>
+            <Font size="14.0" />
+         </font>
+      </Label>
       <ImageView fitHeight="72.0" fitWidth="95.0" pickOnBounds="true" preserveRatio="true" GridPane.rowIndex="11">
          <image>
             <Image url="@Image/Gemini_Generated_Image_iza1keiza1keiza1.png" />
