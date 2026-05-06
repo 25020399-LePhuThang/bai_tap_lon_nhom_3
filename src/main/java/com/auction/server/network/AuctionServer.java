@@ -18,7 +18,7 @@ public class AuctionServer {
             ServerSocket serverSocket = new ServerSocket(5000);
 
             AuctionTimer timer = new AuctionTimer(); // (Nhớ kêu Tâmi đưa class này cho cưng)
-            BiddingService sharedBiddingService = new BiddingService(timer);
+            BiddingService sharedBiddingService = new BiddingService();
 
             // 3. Vòng lặp chờ khách
             while (true) {

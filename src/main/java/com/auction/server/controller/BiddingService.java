@@ -4,11 +4,12 @@ import java.util.Date;
 import com.auction.shared.model.Item;
 
 public class BiddingService {
-    private AuctionTimer auctionTimer;
-    
-    public BiddingService(AuctionTimer timer) {
-        this.auctionTimer = timer;
-    }
+    //   private AuctionTimer auctionTimer;
+//
+//    public BiddingService(AuctionTimer timer) {
+//    this.auctionTimer = timer;
+//
+    //}
     public String placeBid(Item item, double amount, String userId) {
         //Lock trên item được share giữa các thread
         synchronized (item) {
@@ -39,32 +40,32 @@ public class BiddingService {
             try {
                 item.setCurrentPrice(amount);
                 item.setLastBidderId(userId);
-        
+
                 // Kiểm tra gia hạn tự động ở giây cuối (Anti-Sniping)
                 if (handleAntiSniping(item)) {
                     // Gọi AuctionTimer để hủy lịch cũ, lập lịch mới
-                    auctionTimer.reschedule();
+//                    auctionTimer.reschedule();
                 }
-                
+
                 return "THÀNH CÔNG: Bạn đang là người dẫn đầu với mức giá " + amount + "đ";
-            }
-            catch (Exception e) {
+            } catch (Exception e) {
                 return "LỖI HỆ THỐNG: Không thể cập nhật giá lúc này. Vui lòng thử lại.";
             }
         }
     }
+
     //Anti-Sniping
     private boolean handleAntiSniping(Item item) {
         // Tính thời gian còn lại (ms)
         long timeLeft = item.getEndTime().getTime() - System.currentTimeMillis();
-    
+
         // Nếu còn dưới 30 giây thì gia hạn
-        if (timeLeft > 0 && timeLeft < 30000) { 
+        if (timeLeft > 0 && timeLeft < 30000) {
             long newEndTime = item.getEndTime().getTime() + 60000; // Cộng thêm 60s
             item.setEndTime(new java.util.Date(newEndTime));
             System.out.println(">>> He thong: Phat hien Sniping! Gia han them 60s.");
             return true; // Trả về true để báo là có gia hạn
         }
         return false; // Không cần gia hạn
-    }  
+    }
 }

@@ -1,6 +1,6 @@
 package com.auction.server.DAO;
 
-import com.auction.client.database.DatabaseManager;
+import com.auction.server.database.DatabaseManager;
 import com.auction.shared.model.user.Admin;
 import com.auction.shared.model.user.Bidder;
 import com.auction.shared.model.user.Seller;

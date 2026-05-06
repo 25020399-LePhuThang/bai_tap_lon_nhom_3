@@ -1,6 +1,8 @@
 package com.auction.client.controller;
 
 import com.auction.client.Network.NetworkClient;
+import com.auction.shared.model.user.Bidder;
+import com.auction.shared.model.user.User;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
@@ -24,7 +26,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ResourceBundle;
 
-public class RegisterController implements Initializable{
+public class RegisterController implements Initializable {
 
     @FXML
     private Button btnRegister1;
@@ -41,11 +43,11 @@ public class RegisterController implements Initializable{
     @FXML
     private Button btnOut;
     @FXML
-    private Label lblError;
-    @FXML
     private Label lblTime4;
     @FXML
     private Button SignIN;
+    @FXML
+    private Label lblERROR;
 
     public void initialize(URL url, ResourceBundle resourceBundle) {
         clockInit();
@@ -73,46 +75,63 @@ public class RegisterController implements Initializable{
         switchScence(event, "/hello-view.fxml");
     }
 
-    public void RegisterLogic(ActionEvent event){
-        String username=txtUsername.getText();
-        String password1=txtPass.getText();
-        String password2=txtPass2.getText();
-        String email=txtEmail.getText();
-        String phone=txtPhone.getText();
-
-        if(username.isEmpty()||phone.isEmpty()||email.isEmpty()||password1.isEmpty()){
-            lblError.setText("        Quý khách vui lòng nhập đủ thông tin để tiếp tục!");
-        }
-
-        if(!username.matches("^[a-zA-Z0-9_]{4,20}$")){
-            lblError.setText("       Tên đăng nhập chỉ từ 4-20 ký tự, không chứa kí tự đặc biệt");
-            return;
-        }
-
-        if(password1.length()<8 ){
-            lblError.setText("                Mật khẩu quá ngắn");
-            return;
-        }
-        if(password1.length()>30){
-            lblError.setText("                Mật khẩu quá dài");
-            return;
-        }
-        if(password1!=password2){
-            lblError.setText("     Nhập lại mật khẩu không khớp");
-        }
-        if(!email.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$")){
-            lblError.setText("       Email không hợp lệ");
-        }
-        if(!phone.matches("^0[0-9]{9}$")){
-            lblError.setText("       Số điện thoại không hợp lệ");
-        }
+    public void RegisterLogic(ActionEvent event) {
+        lblERROR.setText("");
+        lblERROR.setStyle("-fx-text-fill: #FF0000;");
 
 
+        String username = txtUsername.getText().trim();
+        String password1 = txtPass.getText();
+        String password2 = txtPass2.getText();
+        String email = txtEmail.getText().trim();
+        String phone = txtPhone.getText().trim();
 
+        if (username.isEmpty() || phone.isEmpty() || email.isEmpty() || password1.isEmpty()) {
+            lblERROR.setText("Nhập đủ thông tin để tiếp tục!");
+        } else if (!username.matches("^[a-zA-Z0-9_]{4,20}$")) {
+            lblERROR.setText("Tên đăng nhập từ 4-20 ký tự, không chứa kí tự đặc biệt");
+            txtUsername.requestFocus();
+        } else if (password1.length() < 8) {
+            lblERROR.setText("Mật khẩu quá ngắn");
+            txtPass.requestFocus();
+        } else if (password1.length() > 30) {
+            lblERROR.setText("Mật khẩu quá dài");
+            txtPass.requestFocus();
+        } else if (!password1.equals(password2)) {
+            lblERROR.setText("Nhập lại mật khẩu không khớp");
+            txtPass2.requestFocus();
+        } else if (!email.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$")) {
+            lblERROR.setText("Email không hợp lệ");
+            txtEmail.requestFocus();
+        } else if (!phone.matches("^0[0-9]{9}$")) {
+            lblERROR.setText("Số điện thoại không hợp lệ");
+            txtPhone.requestFocus();
+        } else {
+            lblERROR.setStyle("-fx-text-fill: #2E7D32;");
+            lblERROR.setText("Dữ liệu hợp lệ. Đang xử lý đăng ký...");
 
+            Bidder newBidder = new Bidder();
+            newBidder.setName(username);
+            newBidder.setPassword(password1);
+            newBidder.setEmail(email);
+            newBidder.setPhoneNumber(phone);
 
+            // đợi liên kết với server
+           // boolean isSuccess = NetworkClient.sendRegisterRequest(username, password1, email, phone);
+           // if (isSuccess) {
+            //    try {
+            //        switchScence(event, "/SignInScreen.fxml");
+            //    } catch (IOException e) {
+            //        e.printStackTrace();
+                }
+           // } else {
+            //    lblERROR.setText("         Tên đăng nhập hoặc Email đã tồn tại! Vui lòng thử lại.");
+          //  }
+      //  }
     }
+
     public void toSignInScreen(ActionEvent event) throws IOException {
         switchScence(event, "/SignInScreen.fxml");
     }
 }
+
