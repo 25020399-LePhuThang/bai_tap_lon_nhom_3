@@ -1,4 +1,4 @@
-package com.auction.server.network;
+package com.auction.client.Network;
 
 import java.io.*;
 import java.net.*;
@@ -8,8 +8,8 @@ public class NetworkClient {
     private static NetworkClient instance;
 
     private Socket socket;
-    private BufferedReader in;
-    private PrintWriter out;
+    private static BufferedReader in;
+    private static PrintWriter out;
 
     // Constructor để private -> Không cho bên ngoài dùng từ khóa 'new' tạo lung tung
     private NetworkClient() {
@@ -34,7 +34,7 @@ public class NetworkClient {
     }
 
     // Hàm "Gửi và Chờ Nhận" thiết kế riêng cho ông Thắng xài lúc Đăng nhập
-    public String sendAndReceive(String message) {
+    public static String sendAndReceive(String message) {
         try {
             out.println(message); // Quăng tin nhắn qua Server
             return in.readLine(); // Đứng chờ Server trả lời rồi quăng ngược lại cho Thắng

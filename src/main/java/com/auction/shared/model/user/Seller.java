@@ -14,11 +14,11 @@ public class Seller extends User{
     private List<Item> addedItems;
     protected float balance=0;
 
-    public Seller(String id, String name,String password,String email,long phoneNumber,String status){
-        super(id,name,password,email,phoneNumber,status);
+    public Seller(String id, String name,String password,String email,String phoneNumber,String status,String role){
+        super(id,name,password,email,phoneNumber,status,"SELLER");
         addedItems = new ArrayList<>();
     }
-
+public Seller(){super();}
     public double  getRating() {
         return rating;
     }

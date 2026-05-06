@@ -45,11 +45,11 @@ public class WelcomeController implements Initializable {
     }
 
     public void toSignInScreen(ActionEvent event) throws IOException {
-        switchScence(event, "SignInScreen.fxml");
+        switchScence(event, "/SignInScreen.fxml");
     }
 
     public void toRegisterScreen(ActionEvent event) throws IOException {
-        switchScence(event, "RegisterScreen.fxml");
+        switchScence(event, "/RegisterScreen.fxml");
     }
 
     private void switchScence(ActionEvent event, String fxmlFile) throws IOException {

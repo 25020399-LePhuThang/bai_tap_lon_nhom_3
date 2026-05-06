@@ -1,8 +1,6 @@
 package com.auction.client.controller;
 
-import com.auction.client.DAO.UserDAO;
-import com.auction.client.database.DatabaseManager;
-import com.auction.shared.model.user.User;
+import com.auction.client.Network.NetworkClient;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
@@ -29,19 +27,20 @@ import java.util.ResourceBundle;
 
 public class LoginController implements Initializable {
     @FXML
-    Label lbltime1;
+   private Label lbltime1;
     @FXML
-    TextField txtLogin1;
+    private TextField txtLogin1;
     @FXML
-    PasswordField txtPass1;
+   private PasswordField txtPass1;
     @FXML
-    Button btnRegister2;
+    private Button btnRegister2;
     @FXML
-    Label lblError1;
+    private Label lblError1;
     @FXML
-    Button btnLogin2;
+   private Button btnLogin2;
+    @FXML
+    private Button btnBack3;
 
-    private UserDAO userDAO = new UserDAO();
 
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
@@ -71,7 +70,7 @@ public class LoginController implements Initializable {
         String pass = txtPass1.getText();
 
         if (user.isEmpty() || pass.isEmpty()) {
-            lblError1.setText("Vui lòng nhập tài khoản và mật khẩu");
+            lblError1.setText("                    Vui lòng nhập tài khoản và mật khẩu");
             return;
         }
 
@@ -83,17 +82,20 @@ public class LoginController implements Initializable {
 
         if (serverResponse.equals("LOGIN_SUCCESS")) {
             try {
-                switchScence(event, "MainScreen.fxml");
+                switchScence(event, "/MainScreen.fxml");
             } catch (IOException e) {
                 e.printStackTrace();
             }
         } else {
-            lblError1.setText("Sai tài khoản hoặc mật khẩu! Server từ chối.");
+            lblError1.setText("         Sai tài khoản hoặc mật khẩu! Server từ chối.");
         }
     }
-    public String toRegisterScreen(ActionEvent event) throws IOException {
-        switchScence(event, "RegisterScreen.fxml");
-        return "chuyển đến phần đăng kí";
+    public void toRegisterScreen(ActionEvent event) throws IOException {
+        switchScence(event, "/RegisterScreen.fxml");
+    }
+
+    public void toWelcome(ActionEvent event) throws IOException {
+        switchScence(event, "/hello-view.fxml");
     }
 }
 

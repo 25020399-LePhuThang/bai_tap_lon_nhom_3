@@ -16,7 +16,6 @@ public class Admin extends User{
         adminLevel="MODERATOR";
         employeeId=String.valueOf(counter.getAndIncrement());
     }
-    public Admin(){}
 
     public Admin() { super(); }
 
