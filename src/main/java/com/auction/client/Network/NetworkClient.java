@@ -36,10 +36,21 @@ public class NetworkClient {
     // Hàm "Gửi và Chờ Nhận" thiết kế riêng cho ông Thắng xài lúc Đăng nhập
     public static String sendAndReceive(String message) {
         try {
+            getInstance();
             out.println(message); // Quăng tin nhắn qua Server
             return in.readLine(); // Đứng chờ Server trả lời rồi quăng ngược lại cho Thắng
         } catch (IOException e) {
             return "ERROR|Mất mạng rồi má ơi";
+        }
+    }
+    public static boolean sendRegisterRequest(String username, String password, String email, String phone) {
+        try {
+            String message = "REGISTER|" + username + "|" + password + "|" + email + "|" + phone;
+            String response = sendAndReceive(message);
+            return response != null && response.startsWith("REGISTER_SUCCESS");
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
         }
     }
 }

@@ -2,6 +2,7 @@ package com.auction.server.network;
 
 import com.auction.server.controller.AuctionTimer;
 import com.auction.server.controller.BiddingService;
+import com.auction.server.database.DatabaseManager;
 
 import java.io.IOException;
 import java.net.ServerSocket;
@@ -13,6 +14,7 @@ public class AuctionServer {
     public static ArrayList<ClientHandler> clients = new ArrayList<>();
 
     public static void main(String[] args) {
+        DatabaseManager.initDB();
         try {
             // 2. Mở cổng
             ServerSocket serverSocket = new ServerSocket(5000);

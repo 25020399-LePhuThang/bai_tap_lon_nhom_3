@@ -117,17 +117,17 @@ public class RegisterController implements Initializable {
             newBidder.setPhoneNumber(phone);
 
             // đợi liên kết với server
-           // boolean isSuccess = NetworkClient.sendRegisterRequest(username, password1, email, phone);
-           // if (isSuccess) {
-            //    try {
-            //        switchScence(event, "/SignInScreen.fxml");
-            //    } catch (IOException e) {
-            //        e.printStackTrace();
+            boolean isSuccess = NetworkClient.sendRegisterRequest(username, password1, email, phone);
+            if (isSuccess) {
+                try {
+                    switchScence(event, "/SignInScreen.fxml");
+                } catch (IOException e) {
+                    e.printStackTrace();
                 }
-           // } else {
-            //    lblERROR.setText("         Tên đăng nhập hoặc Email đã tồn tại! Vui lòng thử lại.");
-          //  }
-      //  }
+            } else {
+                lblERROR.setText("         Tên đăng nhập hoặc Email đã tồn tại! Vui lòng thử lại.");
+            }
+        }
     }
 
     public void toSignInScreen(ActionEvent event) throws IOException {

@@ -15,4 +15,21 @@ public class DatabaseManager {
         }
         return conn;
  }
+ public static void initDB() {
+     String sql = "CREATE TABLE IF NOT EXISTS Users (" +
+             "userId INTEGER PRIMARY KEY AUTOINCREMENT," +
+             "username TEXT UNIQUE NOT NULL," +
+             "password TEXT NOT NULL," +
+             "email TEXT UNIQUE NOT NULL," +
+             "phone TEXT," +
+             "role TEXT DEFAULT 'BIDDER'" +
+             ");";
+     try (Connection conn = getConnection();
+          var stmt = conn.createStatement()) {
+         stmt.execute(sql);
+         System.out.println("DB init OK!");
+     } catch (Exception e) {
+         e.printStackTrace();
+     }
+ }
 }
