@@ -88,6 +88,25 @@ public class ClientHandler implements Runnable {
                             out.println("BID_FAIL|Sản phẩm không tồn tại!");
                         }
                     }
+
+                    // 3b. AUTO-BID: AUTO_BID|bidderId|maxBid|increment|itemId
+                    case "AUTO_BID" -> {
+                        String bidderId  = parts[1];
+                        double maxBid    = Double.parseDouble(parts[2]);
+                        double increment = Double.parseDouble(parts[3]);
+                        String itemId    = parts[4];
+
+                        Item targetItem = ProductManager.getItemById(itemId);
+
+                        if (targetItem != null) {
+                            String result = biddingService.registerAutoBid(
+                                    targetItem, bidderId, maxBid, increment);
+                            out.println(result);
+                        } else {
+                            out.println("AUTO_BID_FAIL|Sản phẩm không tồn tại!");
+                        }
+                    }
+
                     // 4. NẾU KHÁCH MUỐN XEM DANH SÁCH SẢN PHẨM
                     case "GET_PRODUCTS" -> {
                         // 👉 GỌI THẲNG VÀO ProductManager CỦA TÂMI
