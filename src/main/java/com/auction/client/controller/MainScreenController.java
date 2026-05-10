@@ -1,9 +1,9 @@
 package com.auction.client.controller;
 
-import com.auction.client.Network.NetworkClient;
+import com.auction.client.network.NetworkClient;
 import com.auction.server.dao.ItemDAO;
 import com.auction.shared.model.Auction;
-import com.auction.shared.model.Item;
+import com.auction.shared.model.item.Item;
 import com.auction.shared.model.user.Bidder;
 import com.auction.shared.model.user.User;
 import javafx.collections.FXCollections;

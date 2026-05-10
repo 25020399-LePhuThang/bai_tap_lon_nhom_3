@@ -1,6 +1,7 @@
-package com.auction.shared.model;
+package com.auction.shared.model.item;
 
 import com.auction.server.database.DatabaseManager;
+import com.auction.shared.model.Entity;
 
 import java.io.Serializable;
 import java.sql.Connection;

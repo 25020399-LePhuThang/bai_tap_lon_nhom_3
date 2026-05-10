@@ -1,6 +1,6 @@
 package com.auction.server.controller;
 
-import com.auction.shared.model.Item;
+import com.auction.shared.model.item.Item;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.Date;

@@ -1,10 +1,10 @@
 package com.auction.server.dao;
 
 import com.auction.server.database.DatabaseManager;
-import com.auction.shared.model.Art;
-import com.auction.shared.model.Electronic;
-import com.auction.shared.model.Item; // Đảm bảo bạn đã có class Item trong thư mục shared/model
-import com.auction.shared.model.Vehicle;
+import com.auction.shared.model.item.Art;
+import com.auction.shared.model.item.Electronic;
+import com.auction.shared.model.item.Item; // Đảm bảo bạn đã có class Item trong thư mục shared/model
+import com.auction.shared.model.item.Vehicle;
 import com.auction.shared.model.user.Admin;
 import com.auction.shared.model.user.Bidder;
 import com.auction.shared.model.user.Seller;
