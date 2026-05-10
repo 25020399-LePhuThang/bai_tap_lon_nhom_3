@@ -1,10 +1,20 @@
-package com.auction.shared.model;
+package com.auction.shared.model.item;
 
+import com.auction.server.database.DatabaseManager;
+import com.auction.shared.model.Entity;
+
+import java.io.Serializable;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.io.Serial;
 
-public abstract class Item implements Entity {
+public abstract class Item implements Entity, Serializable {
     @Serial
     private static final  long  serialVersionUID = 1L;
 
@@ -12,7 +22,6 @@ public abstract class Item implements Entity {
     protected double startingPrice;
     protected double currentPrice;
     protected double minIncrement;
-    protected String sellerId;
     protected String lastBidderId;
     protected String name;
     /**
@@ -29,6 +38,7 @@ public abstract class Item implements Entity {
     protected Date startTime;
     protected Date endTime;
     protected String productImageURL;
+    protected String type;
 
     public Item() {
     }
@@ -75,6 +85,14 @@ public abstract class Item implements Entity {
     public String  getProductImageURL() { return productImageURL; }
     public void setProductImageURL(String productImageURL) { this.productImageURL = productImageURL; }
 
+    public String getType() {
+        return type;
+    }
+
+    public void setType(String type) {
+        this.type = type;
+    }
+
     /** Kiểm tra xem phiên đấu giá còn hoạt động không?
      *
      * @return true / false
@@ -83,6 +101,4 @@ public abstract class Item implements Entity {
         long currentTime = System.currentTimeMillis();
         return status.equals("ACTIVE") && currentTime >= startTime.getTime() && currentTime <= endTime.getTime();
     }
-
-    
-}
+            }

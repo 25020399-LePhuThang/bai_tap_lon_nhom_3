@@ -1,10 +1,10 @@
 package com.auction.server.dao;
 
 import com.auction.server.database.DatabaseManager;
-import com.auction.shared.model.Art;
-import com.auction.shared.model.Electronic;
-import com.auction.shared.model.Item;
-import com.auction.shared.model.Vehicle;
+import com.auction.shared.model.item.Art;
+import com.auction.shared.model.item.Electronic;
+import com.auction.shared.model.item.Item; // Đảm bảo bạn đã có class Item trong thư mục shared/model
+import com.auction.shared.model.item.Vehicle;
 import com.auction.shared.model.user.Admin;
 import com.auction.shared.model.user.Bidder;
 import com.auction.shared.model.user.Seller;
@@ -16,24 +16,20 @@ import java.util.List;
 
 public class ItemDAO {
 
-    // 1. THÊM TÀI SẢN MỚI
     public boolean insertItem(Item item) {
-        // Đã canh chỉnh lại cho đủ 9 cột và 9 dấu ?
-        String sql = "INSERT INTO items (item_id, item_name, start_price, current_price, step_price, lastbidder_id, status, type, productImageURL) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO items (item_name, start_price,currentprice, step_price, lastbidder_id, status,type,productImageURL) VALUES ( ?, ?, ?, ?, ?,?,?,?)";
 
-        try (Connection conn = DatabaseManager.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+        try (Connection conn1 = DatabaseManager.getConnection();
+             PreparedStatement pstmt = conn1.prepareStatement(sql)) {
 
             pstmt.setString(1, item.getId());
             pstmt.setString(2, item.getName());
             pstmt.setDouble(3, item.getStartingPrice());
-            pstmt.setDouble(4, item.getCurrentPrice());
+            pstmt.setDouble(4, item.getCurrentPrice()); // Vừa đăng lên thì giá hiện tại = giá khởi điểm
             pstmt.setDouble(5, item.getMinIncrement());
             pstmt.setString(6, item.getLastBidderId());
             pstmt.setString(7, item.getStatus());
-
-            // Chú ý: Nếu class Item chưa có hàm getType(), cưng có thể truyền thẳng chuỗi "ELECTRONIC" / "VEHICLE" tạm vào đây
-            pstmt.setString(8, item.getClass().getSimpleName().toUpperCase()); // Lấy luôn tên class làm Type (ART/VEHICLE/ELECTRONIC)
+            pstmt.setString(8, item.getType());
             pstmt.setString(9, item.getProductImageURL());
 
             int rowsAffected = pstmt.executeUpdate();
@@ -48,36 +44,66 @@ public class ItemDAO {
     // 2. LẤY DANH SÁCH TÀI SẢN ĐANG ĐẤU GIÁ
     public List<Item> getActiveItems() {
         List<Item> itemList = new ArrayList<>();
-        String sql = "SELECT * FROM items WHERE status = 'ACTIVE'";
+        String sql2 = "SELECT * FROM items WHERE status = 'ACTIVE'";
 
-        try (Connection conn = DatabaseManager.getConnection();
-             PreparedStatement preparedStatement = conn.prepareStatement(sql);
+        try (Connection conn2 = DatabaseManager.getConnection();
+             PreparedStatement preparedStatement = conn2.prepareStatement(sql2);
              ResultSet rs = preparedStatement.executeQuery()) {
+            {
+                try (ResultSet result = preparedStatement.executeQuery()) {
+                    while (rs.next()) {
+                        Item foundItem = null;
+                        String type = result.getString("type");
 
-            while (rs.next()) {
-                Item foundItem = createItemByType(rs.getString("type"));
+                        if (type != null) {
+                            switch (type.toUpperCase()) {
+                                case "ELECTRONIC":
+                                    foundItem = new Electronic();
+                                    break;
+                                case "VEHICLE":
+                                    foundItem = new Vehicle();
+                                    break;
+                                case "ART":
+                                default:
+                                    foundItem = new Art();
+                                    break;
+                            }
+                        }
+                        if (foundItem != null) {
+                            foundItem.setId(rs.getString("item_id"));
+                            foundItem.setName(rs.getString("item_name"));
+                            foundItem.setStartingPrice(rs.getDouble("starting_price"));
+                            foundItem.setCurrentPrice(rs.getDouble("current_price"));
+                            foundItem.setMinIncrement(rs.getDouble("step_price"));
+                            foundItem.setLastBidderId(rs.getString("lastbidder_id"));
+                            foundItem.setEndTime(rs.getDate("EndTime"));
+                            foundItem.setStatus(rs.getString("status"));
+                            foundItem.setStartTime(rs.getDate("StartTime"));
+                            foundItem.setProductImageURL(rs.getString("productImageURL"));
 
-                if (foundItem != null) {
-                    mapResultSetToItem(rs, foundItem);
-                    itemList.add(foundItem);
+                            itemList.add(foundItem);
+                        }
+                    }
+                } catch (SQLException e) {
+                    System.err.println("Lỗi khi lấy danh sách tài sản: " + e.getMessage());
                 }
             }
         } catch (SQLException e) {
-            System.err.println("Lỗi khi lấy danh sách ACTIVE: " + e.getMessage());
+            throw new RuntimeException(e);
         }
         return itemList;
     }
 
+
     // 3. CẬP NHẬT GIÁ TÀI SẢN
-    // Tui đổi int itemId thành String itemId vì trong Item.java id đang là kiểu String nha
-    public boolean updateCurrentPrice(String itemId, double newPrice) {
+    public boolean updateCurrentPrice(int itemId, double newPrice) {
         String sql = "UPDATE items SET current_price = ? WHERE item_id = ?";
 
         try (Connection conn = DatabaseManager.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
             pstmt.setDouble(1, newPrice);
-            pstmt.setString(2, itemId);
+            pstmt.setInt(2, itemId);
 
             int rowsAffected = pstmt.executeUpdate();
             return rowsAffected > 0;
@@ -86,114 +112,137 @@ public class ItemDAO {
             System.err.println("Lỗi khi cập nhật giá: " + e.getMessage());
             return false;
         }
+
     }
 
-    // 4. LẤY DANH SÁCH TÀI SẢN CHUẨN BỊ ĐẤU GIÁ
+    //Lấy danh sách tài sản đang được đấu giá
     public List<Item> getPreparedItems() {
         List<Item> itemList = new ArrayList<>();
-        String sql = "SELECT * FROM items WHERE status = 'PREPARED'";
+        String sql3 = "SELECT * FROM items WHERE status = 'PREPARED'";
 
-        try (Connection conn = DatabaseManager.getConnection();
-             PreparedStatement preparedStatement = conn.prepareStatement(sql);
+        try (Connection conn2 = DatabaseManager.getConnection();
+             PreparedStatement preparedStatement = conn2.prepareStatement(sql3);
              ResultSet rs = preparedStatement.executeQuery()) {
+            {
+                try (ResultSet result = preparedStatement.executeQuery()) {
+                    while (rs.next()) {
+                        Item foundItem = null;
+                        String type = result.getString("type");
 
-            while (rs.next()) {
-                Item foundItem = createItemByType(rs.getString("type"));
-                if (foundItem != null) {
-                    mapResultSetToItem(rs, foundItem);
-                    itemList.add(foundItem);
+                        if (type != null) {
+                            switch (type.toUpperCase()) {
+                                case "ELECTRONIC":
+                                    foundItem = new Electronic();
+                                    break;
+                                case "VEHICLE":
+                                    foundItem = new Vehicle();
+                                    break;
+                                case "ART":
+                                default:
+                                    foundItem = new Art();
+                                    break;
+                            }
+                        }
+                        if (foundItem != null) {
+                            foundItem.setId(rs.getString("item_id"));
+                            foundItem.setName(rs.getString("item_name"));
+                            foundItem.setStartingPrice(rs.getDouble("starting_price"));
+                            foundItem.setCurrentPrice(rs.getDouble("current_price"));
+                            foundItem.setMinIncrement(rs.getDouble("step_price"));
+                            foundItem.setLastBidderId(rs.getString("lastbidder_id"));
+                            foundItem.setEndTime(rs.getDate("EndTime"));
+                            foundItem.setStatus(rs.getString("status"));
+                            foundItem.setStartTime(rs.getDate("StartTime"));
+                            foundItem.setProductImageURL(rs.getString("productImageURL"));
+
+                            itemList.add(foundItem);
+                        }
+                    }
+                } catch (SQLException e) {
+                    System.err.println("Lỗi khi lấy danh sách tài sản: " + e.getMessage());
                 }
             }
         } catch (SQLException e) {
-            System.err.println("Lỗi khi lấy danh sách PREPARED: " + e.getMessage());
+            throw new RuntimeException(e);
         }
         return itemList;
     }
 
-    // 5. LẤY DANH SÁCH TÀI SẢN ĐÃ ĐẤU GIÁ XONG
+    //Lấy danh sách tài sản đã được đấu giá
     public List<Item> getSoldItems() {
         List<Item> itemList = new ArrayList<>();
-        String sql = "SELECT * FROM items WHERE status = 'SOLD'";
+        String sql4 = "SELECT * FROM items WHERE status = 'SOLD'";
 
-        try (Connection conn = DatabaseManager.getConnection();
-             PreparedStatement preparedStatement = conn.prepareStatement(sql);
+        try (Connection conn2 = DatabaseManager.getConnection();
+             PreparedStatement preparedStatement = conn2.prepareStatement(sql4);
              ResultSet rs = preparedStatement.executeQuery()) {
+            {
+                try (ResultSet result = preparedStatement.executeQuery()) {
+                    while (rs.next()) {
+                        Item foundItem = null;
+                        String type = result.getString("type");
 
-            while (rs.next()) {
-                Item foundItem = createItemByType(rs.getString("type"));
-                if (foundItem != null) {
-                    mapResultSetToItem(rs, foundItem);
-                    itemList.add(foundItem);
+                        if (type != null) {
+                            switch (type.toUpperCase()) {
+                                case "ELECTRONIC":
+                                    foundItem = new Electronic();
+                                    break;
+                                case "VEHICLE":
+                                    foundItem = new Vehicle();
+                                    break;
+                                case "ART":
+                                default:
+                                    foundItem = new Art();
+                                    break;
+                            }
+                        }
+                        if (foundItem != null) {
+                            foundItem.setId(rs.getString("item_id"));
+                            foundItem.setName(rs.getString("item_name"));
+                            foundItem.setStartingPrice(rs.getDouble("starting_price"));
+                            foundItem.setCurrentPrice(rs.getDouble("current_price"));
+                            foundItem.setMinIncrement(rs.getDouble("step_price"));
+                            foundItem.setLastBidderId(rs.getString("lastbidder_id"));
+                            foundItem.setEndTime(rs.getDate("EndTime"));
+                            foundItem.setStatus(rs.getString("status"));
+                            foundItem.setStartTime(rs.getDate("StartTime"));
+                            foundItem.setProductImageURL(rs.getString("productImageURL"));
+
+                            itemList.add(foundItem);
+                        }
+                    }
+                } catch (SQLException e) {
+                    System.err.println("Lỗi khi lấy danh sách tài sản: " + e.getMessage());
                 }
             }
         } catch (SQLException e) {
-            System.err.println("Lỗi khi lấy danh sách SOLD: " + e.getMessage());
+            throw new RuntimeException(e);
         }
         return itemList;
     }
 
-    // 6. CẬP NHẬT TRẠNG THÁI TỪ PREPARED SANG ACTIVE KHI ĐẾN GIỜ
-    public void updateToActive() {
-        String sql = "UPDATE items SET status = 'ACTIVE' WHERE status='PREPARED' AND startTime<=? AND ?<=endTime";
-        Timestamp now = new Timestamp(System.currentTimeMillis());
+    //Cập nhật status
+    public void updateToActive() throws SQLException {
+        String sql5 = "UPDATE items SET status = 'ACTIVE' WHERE status='PREPARED' AND startTime<=? AND ?<=endTime";
+        long TimeNow = System.currentTimeMillis();
+        Timestamp now = new Timestamp(TimeNow);
 
-        try (Connection conn = DatabaseManager.getConnection();
-             PreparedStatement preparedStatement = conn.prepareStatement(sql)) {
+        Connection conn2 = DatabaseManager.getConnection();
+        PreparedStatement preparedStatement = conn2.prepareStatement(sql5);
 
-            preparedStatement.setTimestamp(1, now);
-            preparedStatement.setTimestamp(2, now);
-            preparedStatement.executeUpdate(); // Đã thêm lệnh execute để chạy SQL
-
-        } catch (SQLException e) {
-            System.err.println("Lỗi khi cập nhật status thành ACTIVE: " + e.getMessage());
-        }
+        preparedStatement.setTimestamp(1, now);
+        preparedStatement.setTimestamp(2, now);
     }
 
-    // 7. CẬP NHẬT TRẠNG THÁI THÀNH SOLD KHI HẾT GIỜ
-    public void updateToSold() {
-        String sql = "UPDATE items SET status = 'SOLD' WHERE status='ACTIVE' AND ?>=endTime";
-        Timestamp now = new Timestamp(System.currentTimeMillis());
+    public void updateToSold() throws SQLException {
+        String sql5 = "UPDATE items SET status = 'SOLD' WHERE status='ACTIVE' AND ?>=endTime";
+        long TimeNow = System.currentTimeMillis();
+        Timestamp now = new Timestamp(TimeNow);
 
-        try (Connection conn = DatabaseManager.getConnection();
-             PreparedStatement preparedStatement = conn.prepareStatement(sql)) {
+        Connection conn2 = DatabaseManager.getConnection();
+        PreparedStatement preparedStatement = conn2.prepareStatement(sql5);
 
-            preparedStatement.setTimestamp(1, now);
-            preparedStatement.executeUpdate(); // Đã thêm lệnh execute để chạy SQL
-
-        } catch (SQLException e) {
-            System.err.println("Lỗi khi cập nhật status thành SOLD: " + e.getMessage());
-        }
-    }
-
-    // =========================================================================
-    // CÁC HÀM TIỆN ÍCH (HELPER METHODS) ĐỂ TRÁNH LẶP CODE
-    // =========================================================================
-
-    // Hàm sinh Object theo Type
-    private Item createItemByType(String type) {
-        if (type == null) return new Art(); // Default
-        switch (type.toUpperCase()) {
-            case "ELECTRONIC":
-                return new Electronic();
-            case "VEHICLE":
-                return new Vehicle();
-            case "ART":
-            default:
-                return new Art();
-        }
-    }
-
-    // Hàm gắn dữ liệu từ ResultSet vào Object Item
-    private void mapResultSetToItem(ResultSet rs, Item item) throws SQLException {
-        item.setId(rs.getString("item_id"));
-        item.setName(rs.getString("item_name"));
-        item.setStartingPrice(rs.getDouble("starting_price"));
-        item.setCurrentPrice(rs.getDouble("current_price"));
-        item.setMinIncrement(rs.getDouble("step_price"));
-        item.setLastBidderId(rs.getString("lastbidder_id"));
-        item.setEndTime(rs.getDate("EndTime"));
-        item.setStatus(rs.getString("status"));
-        item.setStartTime(rs.getDate("StartTime"));
-        item.setProductImageURL(rs.getString("productImageURL"));
+        preparedStatement.setTimestamp(1, now);
     }
 }
+

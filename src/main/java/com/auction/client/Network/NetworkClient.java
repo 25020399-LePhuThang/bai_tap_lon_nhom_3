@@ -1,6 +1,6 @@
 package com.auction.client.network;
 
-import com.auction.shared.model.Item;
+import com.auction.shared.model.item.Item;
 
 import java.io.*;
 import java.net.*;
@@ -126,14 +126,16 @@ public class NetworkClient {
         if (jsonResponse == null || jsonResponse.isEmpty()) return new ArrayList<>();
 
         Gson gson = new Gson();
-        // Ép nó đọc hết đống JSON đó thành một List các đồ Electronic
-        Type listType = new TypeToken<ArrayList<com.auction.shared.model.Electronic>>(){}.getType();
 
-        // BÙM! 1 dòng duy nhất, Gson tự động mapping cả đống field cho cưng!
+        // Sửa chỗ này nè: Thay Electronic bằng Item
+        Type listType = new TypeToken<ArrayList<Item>>(){}.getType();
+
+        // BÙM! Bây giờ nó sẽ map đúng vào list Item, có đầy đủ getter/setter cưng mới thêm
         List<Item> items = gson.fromJson(jsonResponse, listType);
 
         return items;
     }
+
 
     // 1. Lấy đồ đang đấu giá (đổi getActiveItems thành takeActiveItem)
     public static List<Item> takeActiveItems() {

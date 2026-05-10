@@ -2,8 +2,8 @@
 package com.auction.server.controller;
 
 import com.auction.client.network.NetworkClient;
-import com.auction.shared.model.Item;
-import com.auction.shared.model.Electronic;
+import com.auction.shared.model.item.Item;
+import com.auction.shared.model.item.Electronic;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;

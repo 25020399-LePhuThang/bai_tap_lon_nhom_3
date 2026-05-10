@@ -3,7 +3,7 @@ package com.auction.client.controller;
 import com.auction.client.network.NetworkClient;
 import com.auction.server.dao.ItemDAO;
 import com.auction.shared.model.Auction;
-import com.auction.shared.model.Item;
+import com.auction.shared.model.item.Item;
 import com.auction.shared.model.user.Bidder;
 import com.auction.shared.model.user.User;
 import javafx.collections.FXCollections;
@@ -174,5 +174,17 @@ public class MainScreenController implements Initializable {
         List<Item> activeItems = NetworkClient.takePreparedItems();
         ObservableList<Item> activeList = FXCollections.observableArrayList(activeItems);
         tbvWillPresent.setItems(activeList);
+    }
+
+    public void setDisplayName(String currentUser){
+        lblName.setText(currentUser);
+    }
+
+    public void toSellerLoginScreen(ActionEvent event) throws IOException{
+        switchScence(event,"/SellerLoginScreen.fxml"); //(Yêu cầu nhập lại họ tên, sdt,.. và lần sau đăng nhập nick này sẽ mở ra giao diện nguời bán luôn)
+    }
+
+    public void Search(){
+        String search=txtSearch1.getText();
     }
 }

@@ -1,8 +1,9 @@
-package com.auction.shared.model;
+package com.auction.shared.model.item;
 
 import java.io.Serial;
+import java.io.Serializable;
 
-public class Art extends Item{
+public class Art extends Item {
     @Serial
     private static final long serialVersionUID = 1L;
 

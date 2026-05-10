@@ -5,7 +5,7 @@ import com.auction.server.controller.ProductManager;
 import com.auction.server.controller.RegisterHandler;
 import com.auction.server.dao.ItemDAO;
 import com.auction.server.dao.UserDAO;
-import com.auction.shared.model.Item;
+import com.auction.shared.model.item.Item;
 import com.auction.shared.model.user.User;
 import com.google.gson.Gson;
 
