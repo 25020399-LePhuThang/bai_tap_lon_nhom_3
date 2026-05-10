@@ -245,4 +245,4 @@ public class ItemDAO {
         preparedStatement.setTimestamp(1, now);
     }
 }
-}
+

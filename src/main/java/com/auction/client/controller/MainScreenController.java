@@ -175,4 +175,16 @@ public class MainScreenController implements Initializable {
         ObservableList<Item> activeList = FXCollections.observableArrayList(activeItems);
         tbvWillPresent.setItems(activeList);
     }
+
+    public void setDisplayName(String currentUser){
+        lblName.setText(currentUser);
+    }
+
+    public void toSellerLoginScreen(ActionEvent event) throws IOException{
+        switchScence(event,"/SellerLoginScreen.fxml"); //(Yêu cầu nhập lại họ tên, sdt,.. và lần sau đăng nhập nick này sẽ mở ra giao diện nguời bán luôn)
+    }
+
+    public void Search(){
+        String search=txtSearch1.getText();
+    }
 }

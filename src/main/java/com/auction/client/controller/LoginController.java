@@ -1,6 +1,7 @@
 package com.auction.client.controller;
 
 import com.auction.client.Network.NetworkClient;
+import com.auction.shared.model.user.User;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
@@ -81,11 +82,7 @@ public class LoginController implements Initializable {
 
 
         if (serverResponse.equals("LOGIN_SUCCESS")) {
-            try {
-                switchScence(event, "/MainScreen.fxml");
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+                UsernamePass(user);
         } else {
             lblError1.setText("         Sai tài khoản hoặc mật khẩu! Server từ chối.");
         }
@@ -96,6 +93,25 @@ public class LoginController implements Initializable {
 
     public void toWelcome(ActionEvent event) throws IOException {
         switchScence(event, "/hello-view.fxml");
+    }
+
+    public void UsernamePass(String currentUser) {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/MainScreen.fxml"));
+            Parent root = loader.load();
+
+            MainScreenController mainController = loader.getController();
+
+
+            mainController.setDisplayName(currentUser);
+
+            Stage stage = (Stage) btnLogin2.getScene().getWindow();
+            stage.setScene(new Scene(root));
+            stage.show();
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 }
 
