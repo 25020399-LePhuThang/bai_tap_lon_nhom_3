@@ -1,6 +1,6 @@
 package com.auction.client.controller;
 
-import com.auction.client.Network.NetworkClient;
+import com.auction.client.network.NetworkClient;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;

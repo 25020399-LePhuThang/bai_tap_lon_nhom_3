@@ -1,6 +1,7 @@
 //thuật toán quản lí sản phẩm đấu giá
 package com.auction.server.controller;
 
+import com.auction.client.network.NetworkClient;
 import com.auction.shared.model.Item;
 import com.auction.shared.model.Electronic;
 import java.util.ArrayList;
@@ -60,4 +61,9 @@ public class ProductManager {
         }
         return null; // Không tìm thấy
     }
+
+    public List<Item> getActiveItems() {
+        return NetworkClient.getActiveItems(); // gọi qua client
+    }
+
 }
