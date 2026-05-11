@@ -1,4 +1,4 @@
-package com.auction.shared.model;
+package com.auction.shared.model.item;
 
 import java.io.Serial;
 import java.io.Serializable;
