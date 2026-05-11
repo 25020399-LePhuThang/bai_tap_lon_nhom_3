@@ -1,8 +1,8 @@
 //thuật toán quản lí sản phẩm đấu giá
 package com.auction.server.controller;
 
-import com.auction.shared.model.Item;
-import com.auction.shared.model.Electronic;
+import com.auction.shared.model.item.Item;
+import com.auction.shared.model.item.Electronic;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;

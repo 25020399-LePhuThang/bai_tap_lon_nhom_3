@@ -3,7 +3,7 @@ package com.auction.client.controller;
 import com.auction.client.Network.NetworkClient;
 import com.auction.server.dao.ItemDAO;
 import com.auction.shared.model.Auction;
-import com.auction.shared.model.Item;
+import com.auction.shared.model.item.Item;
 import com.auction.shared.model.user.Bidder;
 import com.auction.shared.model.user.User;
 import javafx.collections.FXCollections;
@@ -76,6 +76,46 @@ public class MainScreenController implements Initializable {
 
     public void initialize(URL url, ResourceBundle resourceBundle) {
         clockInit();
+        NameColumn1.setCellValueFactory(new PropertyValueFactory<>("name"));
+        IDcolumn1.setCellValueFactory(new PropertyValueFactory<>("itemID"));
+        typeColumn1.setCellValueFactory(new PropertyValueFactory<>("type"));
+        RecentPriceColumn.setCellValueFactory(new PropertyValueFactory<>("currentPrice"));
+        EndTimeColumn1.setCellValueFactory(new PropertyValueFactory<>("endTime"));
+
+        loadtoTable1();
+
+        tbvIsPresenting.setOnMouseClicked(event -> {
+
+            if (event.getClickCount() == 2) {
+                Item selectedItem = tbvIsPresenting.getSelectionModel().getSelectedItem();
+
+                if (selectedItem != null) {
+                    System.out.println("Bạn muốn đấu giá vật phẩm: " + selectedItem.getName());
+                    openAuctionScreen(selectedItem);
+                }
+            }
+        });
+
+        NameColumn2.setCellValueFactory(new PropertyValueFactory<>("name"));
+        IDcolumn2.setCellValueFactory(new PropertyValueFactory<>("itemID"));
+        typeColumn2.setCellValueFactory(new PropertyValueFactory<>("type"));
+        StartPriceColumn.setCellValueFactory(new PropertyValueFactory<>("startingPrice"));
+        StartTimeColumn.setCellValueFactory(new PropertyValueFactory<>("startTime"));
+        EndTimeColumn2.setCellValueFactory(new PropertyValueFactory<>("endTime"));
+
+        loadtoTable2();
+
+        tbvWillPresent.setOnMouseClicked(event -> {
+
+            if (event.getClickCount() == 2) {
+                Item selectedItem = tbvWillPresent.getSelectionModel().getSelectedItem();
+
+                if (selectedItem != null) {
+                    System.out.println("Bạn muốn đấu giá vật phẩm: " + selectedItem.getName());
+                    openAuctionScreen(selectedItem);
+                }
+            }
+        });
     }
 
     public void clockInit() {
@@ -98,28 +138,6 @@ public class MainScreenController implements Initializable {
 
     public void toLoginScreen(ActionEvent event) throws IOException {
         switchScence(event, "/SignInScreen.fxml");
-    }
-
-    public void Table1Presenting(URL url, ResourceBundle resourceBundle) {
-        NameColumn1.setCellValueFactory(new PropertyValueFactory<>("name"));
-        IDcolumn1.setCellValueFactory(new PropertyValueFactory<>("itemID"));
-        typeColumn1.setCellValueFactory(new PropertyValueFactory<>("type"));
-        RecentPriceColumn.setCellValueFactory(new PropertyValueFactory<>("currentPrice"));
-        EndTimeColumn1.setCellValueFactory(new PropertyValueFactory<>("endTime"));
-
-        loadtoTable1();
-
-        tbvIsPresenting.setOnMouseClicked(event -> {
-
-            if (event.getClickCount() == 2) {
-                Item selectedItem = tbvIsPresenting.getSelectionModel().getSelectedItem();
-
-                if (selectedItem != null) {
-                    System.out.println("Bạn muốn đấu giá vật phẩm: " + selectedItem.getName());
-                    openAuctionScreen(selectedItem);
-                }
-            }
-        });
     }
 
     //Kết nối với Server
@@ -145,30 +163,6 @@ public class MainScreenController implements Initializable {
             throw new RuntimeException(e);
         }
     }
-
-    public void Table2Presenting(URL url, ResourceBundle resourceBundle) {
-        NameColumn2.setCellValueFactory(new PropertyValueFactory<>("name"));
-        IDcolumn2.setCellValueFactory(new PropertyValueFactory<>("itemID"));
-        typeColumn2.setCellValueFactory(new PropertyValueFactory<>("type"));
-        StartPriceColumn.setCellValueFactory(new PropertyValueFactory<>("startingPrice"));
-        StartTimeColumn.setCellValueFactory(new PropertyValueFactory<>("startTime"));
-        EndTimeColumn2.setCellValueFactory(new PropertyValueFactory<>("endTime"));
-
-        loadtoTable2();
-
-        tbvWillPresent.setOnMouseClicked(event -> {
-
-            if (event.getClickCount() == 2) {
-                Item selectedItem = tbvWillPresent.getSelectionModel().getSelectedItem();
-
-                if (selectedItem != null) {
-                    System.out.println("Bạn muốn đấu giá vật phẩm: " + selectedItem.getName());
-                    openAuctionScreen(selectedItem);
-                }
-            }
-        });
-    }
-
 
     public void loadtoTable2() {
         List<Item> activeItems = NetworkClient.takePreparedItems();

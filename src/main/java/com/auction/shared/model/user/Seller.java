@@ -1,6 +1,6 @@
 package com.auction.shared.model.user;
 
-import com.auction.shared.model.Item;
+import com.auction.shared.model.item.Item;
 
 import java.util.ArrayList;
 import java.util.List;

@@ -81,7 +81,7 @@ public class LoginController implements Initializable {
         String serverResponse = NetworkClient.sendAndReceive(requestMessage);
 
 
-        if (serverResponse.equals("LOGIN_SUCCESS")) {
+        if (serverResponse != null && serverResponse.startsWith("LOGIN_SUCCESS")) {
                 UsernamePass(user);
         } else {
             lblError1.setText("         Sai tài khoản hoặc mật khẩu! Server từ chối.");

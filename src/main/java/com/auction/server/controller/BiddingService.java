@@ -4,7 +4,7 @@ import java.util.Date;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import com.auction.shared.model.AutoBid;
-import com.auction.shared.model.Item;
+import com.auction.shared.model.item.Item;
 
 public class BiddingService {
 

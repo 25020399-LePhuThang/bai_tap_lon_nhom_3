@@ -1,8 +1,7 @@
-package com.auction.shared.model;
-
+package com.auction.shared.model.item;
 import java.io.Serial;
 
-public class Electronic extends Item{
+public class Electronic extends Item {
     @Serial
     private static final long serialVersionUID = 1L;
 

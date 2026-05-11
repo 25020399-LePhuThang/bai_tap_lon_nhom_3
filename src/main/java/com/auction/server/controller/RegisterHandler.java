@@ -1,6 +1,6 @@
 package com.auction.server.controller;
 
-import com.auction.server.DAO.UserDAO;
+import com.auction.server.dao.UserDAO;
 import com.auction.shared.model.user.User;
 import com.auction.shared.model.user.Bidder; // Mặc định người mới đăng ký là Bidder
 

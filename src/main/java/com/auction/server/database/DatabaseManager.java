@@ -5,7 +5,7 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 
 public class DatabaseManager {
-    private static final String URL="jdbc:sqlite:auction_data.db";
+    private static final String URL="jdbc:sqlite:auction_system.db";
  public static Connection getConnection() {
         Connection conn=null;
         try{

@@ -1,4 +1,4 @@
-package com.auction.client;
+package com.auction.client.view;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
@@ -14,7 +14,7 @@ public class Main extends Application {
         FXMLLoader fxmlLoader = new FXMLLoader(Main.class.getResource("/hello-view.fxml"));
 
         // Tạo cảnh kịch và đặt kích thước ban đầu (ví dụ: rộng 800, cao 600)
-        Scene scene = new Scene(fxmlLoader.load(), 800, 600);
+        Scene scene = new Scene(fxmlLoader.load(), 570, 540);
 
         // Đặt tiêu đề cho cửa sổ phần mềm
         stage.setTitle("Hệ thống Đấu giá TTVN");

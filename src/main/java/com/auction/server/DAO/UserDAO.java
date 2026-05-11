@@ -1,4 +1,4 @@
-package com.auction.server.DAO;
+package com.auction.server.dao;
 
 import com.auction.server.database.DatabaseManager;
 import com.auction.shared.model.user.Admin;
@@ -27,6 +27,14 @@ public class UserDAO {
 
     //Hàm đăng nhập
     public static User Login(String name, String pass) {
+
+        name = name.trim();
+        pass = pass.trim();
+
+        // 2. MÁY QUÉT: In ra Console để làm bằng chứng trước tòa
+        System.out.println("SERVER ĐANG XỬ LÝ ĐĂNG NHẬP -> Tên: [" + name + "] | Mật khẩu: [" + pass + "]");
+
+        // ... Từ dòng String sql = ... trở xuống bạn giữ nguyên ...
         String sql = "SELECT * FROM Users WHERE username=? AND password=?";
         try (Connection connection = DatabaseManager.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
@@ -38,7 +46,9 @@ public class UserDAO {
                     User foundUser = null;
                     String role = result.getString("role");
 
-                    if (role != null) {
+                    if (role == null || role.trim().isEmpty()) {
+                        role = "BIDDER"; // Cứu nguy, mặc định cho làm người đấu giá
+                    }
                         switch (role.toUpperCase()) {
                             case "ADMIN":
                                 foundUser = new Admin();
@@ -50,7 +60,6 @@ public class UserDAO {
                             default:
                                 foundUser = new Bidder();
                                 break;
-                        }
                     }
                     if (foundUser != null) {
                         foundUser.setId(result.getString("user_id"));
