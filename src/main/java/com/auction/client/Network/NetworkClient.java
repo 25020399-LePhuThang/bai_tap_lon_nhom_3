@@ -1,4 +1,6 @@
-package com.auction.client.Network;
+package com.auction.client.network;
+
+import com.auction.shared.model.item.Item;
 
 import com.auction.shared.model.item.Item;
 

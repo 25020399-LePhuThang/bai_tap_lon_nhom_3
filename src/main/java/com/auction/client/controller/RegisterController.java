@@ -1,6 +1,6 @@
 package com.auction.client.controller;
 
-import com.auction.client.Network.NetworkClient;
+import com.auction.client.network.NetworkClient;
 import com.auction.shared.model.user.Bidder;
 import com.auction.shared.model.user.User;
 import javafx.fxml.FXML;

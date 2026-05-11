@@ -1,6 +1,6 @@
 package com.auction.client.controller;
 
-import com.auction.client.Network.NetworkClient;
+import com.auction.client.network.NetworkClient;
 import com.auction.server.dao.ItemDAO;
 import com.auction.shared.model.Auction;
 import com.auction.shared.model.item.Item;
