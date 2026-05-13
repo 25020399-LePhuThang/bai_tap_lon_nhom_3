@@ -39,6 +39,16 @@ public class ClientHandler implements Runnable {
     }
 
 
+    /**
+     * Gửi một tin nhắn xuống client này.
+     * Được AuctionServer.broadcast() gọi để push realtime cho tất cả client.
+     */
+    public void sendMessage(String message) {
+        if (out != null) {
+            out.println(message);
+        }
+    }
+
     @Override
     public void run() {
         try {
@@ -77,21 +87,26 @@ public class ClientHandler implements Runnable {
                     //3a. BID:
                     case "BID" -> {
                         String user = parts[1];
-                        // Đổi sang parseDouble để khớp với kiểu double của Tâmi
                         double price = Double.parseDouble(parts[2]);
                         String itemId = parts[3];
 
-                        // Tìm món đồ trong kho giả
                         Item targetItem = ProductManager.getItemById(itemId);
 
                         if (targetItem != null) {
-                            // 👉 TRUYỀN ĐÚNG THỨ TỰ: Món đồ -> Tiền -> User
                             String result = biddingService.placeBid(targetItem, price, user);
 
+                            // Trả kết quả về đúng người vừa đặt giá
                             out.println(result);
 
-                            // (Nếu placeBid trả về chữ THÀNH CÔNG, cưng nhớ gọi AuctionServer.broadcast(giá mới)
-                            // để loa phát thanh cho cả làng biết nha)
+                            // Nếu bid thành công → broadcast giá mới cho TẤT CẢ client đang xem
+                            // Format: BID_UPDATE|itemId|giáMới|ngườiDẫnĐầu
+                            if (result.startsWith("THÀNH CÔNG")) {
+                                double finalPrice = targetItem.getCurrentPrice();
+                                String finalWinner = targetItem.getLastBidderId();
+                                AuctionServer.broadcast(
+                                        "BID_UPDATE|" + itemId + "|" + finalPrice + "|" + finalWinner
+                                );
+                            }
                         } else {
                             out.println("BID_FAIL|Sản phẩm không tồn tại!");
                         }
@@ -110,6 +125,12 @@ public class ClientHandler implements Runnable {
                             String result = biddingService.registerAutoBid(
                                     targetItem, bidderId, maxBid, increment);
                             out.println(result);
+
+                            // Nếu auto-bid đã cập nhật giá → broadcast cho tất cả client
+                            AuctionServer.broadcast(
+                                    "BID_UPDATE|" + itemId + "|" + targetItem.getCurrentPrice()
+                                            + "|" + targetItem.getLastBidderId()
+                            );
                         } else {
                             out.println("AUTO_BID_FAIL|Sản phẩm không tồn tại!");
                         }

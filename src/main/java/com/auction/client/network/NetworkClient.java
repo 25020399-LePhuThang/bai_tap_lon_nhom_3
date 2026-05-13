@@ -8,7 +8,7 @@ import java.io.*;
 import java.net.*;
 import java.util.List;
 import java.util.ArrayList;
-
+import java.util.function.Consumer;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
@@ -19,6 +19,14 @@ public class NetworkClient {
     private static Socket socket;
     private static BufferedReader in;
     private static PrintWriter out;
+
+
+    // Callback được gọi mỗi khi nhận được BID_UPDATE từ server
+    private Consumer<String> bidUpdateListener;
+
+    // Thread lắng nghe server push tin về
+    private Thread listenerThread;
+
 
     private NetworkClient() {
         try {
@@ -37,6 +45,50 @@ public class NetworkClient {
             instance = new NetworkClient();
         }
         return instance;
+    }
+
+
+    /**
+     * Đăng ký một callback để nhận cập nhật giá realtime từ server.
+     * Server sẽ push "BID_UPDATE|itemId|giáMới|ngườiDẫnĐầu" mỗi khi có bid mới.
+     *
+     * Lưu ý: Callback này chạy trên background thread — nếu cập nhật UI (JavaFX),
+     * phải bọc trong Platform.runLater(() -> { ... }).
+     *
+     * @param listener hàm xử lý nhận vào chuỗi tin nhắn từ server
+     */
+    public void startListening(Consumer<String> listener) {
+        this.bidUpdateListener = listener;
+
+        // Tránh tạo nhiều thread lắng nghe trùng nhau
+        if (listenerThread != null && listenerThread.isAlive()) {
+            return;
+        }
+
+        listenerThread = new Thread(() -> {
+            try {
+                String line;
+                while ((line = in.readLine()) != null) {
+                    // Chỉ xử lý các tin nhắn server chủ động push về
+                    if (line.startsWith("BID_UPDATE|") && bidUpdateListener != null) {
+                        bidUpdateListener.accept(line);
+                    }
+                    // Các loại tin nhắn khác (AUCTION_ENDED, v.v.) có thể thêm ở đây
+                }
+            } catch (IOException e) {
+                System.err.println("Client: Listener bị đứt kết nối: " + e.getMessage());
+            }
+        }, "bid-listener-thread");
+
+        listenerThread.setDaemon(true); // Tắt app thì thread này tự tắt theo
+        listenerThread.start();
+    }
+
+    /**
+     * Dừng listener thread (dùng khi đóng màn hình AuctionDetail).
+     */
+    public void stopListening() {
+        bidUpdateListener = null;
     }
 
     public static String sendAndReceive(String message) {

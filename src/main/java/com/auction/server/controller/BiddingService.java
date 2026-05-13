@@ -14,6 +14,16 @@ public class BiddingService {
     //   private AuctionTimer auctionTimer;
     //   public BiddingService(AuctionTimer timer) { this.auctionTimer = timer; }
 
+    // Mỗi phiên (itemId) có một AuctionObserver riêng để notify realtime
+    private final Map<String, AuctionObserver> observerMap = new ConcurrentHashMap<>();
+
+    /**
+     * Lấy hoặc tạo AuctionObserver cho một phiên. Dùng để màn hình chi tiết đăng ký theo dõi.
+     */
+    public AuctionObserver getOrCreateObserver(String itemId) {
+        return observerMap.computeIfAbsent(itemId, AuctionObserver::new);
+    }
+
     /**
      * Đặt giá thủ công. Sau khi bid thành công, kích hoạt auto-bid
      * để những người đã đăng ký auto-bid có thể phản ứng lại.
