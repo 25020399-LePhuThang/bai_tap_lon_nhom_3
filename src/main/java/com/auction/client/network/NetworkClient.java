@@ -1,5 +1,6 @@
 package com.auction.client.network;
 
+import com.auction.shared.model.BidTransaction;
 import com.auction.shared.model.item.Item;
 
 import com.auction.shared.model.item.Item;
@@ -215,5 +216,18 @@ public class NetworkClient {
     public static List<Item> takePreparedItems() {
         String response = sendAndReceive("GET_PREPARED_ITEMS");
         return parseItems(response);
+    }
+
+
+    /**
+     * Lấy lịch sử bid của một sản phẩm (sắp xếp tăng dần) để vẽ LineChart.
+     * Gửi GET_BID_HISTORY|itemId → server trả về JSON array.
+     */
+    public static List<BidTransaction> getBidHistory(String itemId) {
+        String response = sendAndReceive("GET_BID_HISTORY|" + itemId);
+        if (response == null || response.isEmpty()) return new ArrayList<>();
+        Gson gson = new Gson();
+        Type listType = new TypeToken<ArrayList<BidTransaction>>(){}.getType();
+        return gson.fromJson(response, listType);
     }
 }

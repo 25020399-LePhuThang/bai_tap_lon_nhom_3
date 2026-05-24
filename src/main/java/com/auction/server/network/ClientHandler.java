@@ -5,6 +5,8 @@ import com.auction.server.controller.ProductManager;
 import com.auction.server.controller.RegisterHandler;
 import com.auction.server.dao.ItemDAO;
 import com.auction.server.dao.UserDAO;
+import com.auction.server.dao.BidDAO;
+import com.auction.shared.model.BidTransaction;
 import com.auction.shared.model.item.Item;
 import com.auction.shared.model.user.User;
 import com.google.gson.Gson;
@@ -24,6 +26,7 @@ public class ClientHandler implements Runnable {
 
     private UserDAO userDAO = new UserDAO();
     private ItemDAO itemDAO = new ItemDAO(); // <--- Thêm dòng này vào đầu class
+    private BidDAO bidDAO = new BidDAO();
 
     public ClientHandler(Socket socket, BiddingService  biddingService) {
         this.socket = socket;
@@ -103,6 +106,12 @@ public class ClientHandler implements Runnable {
                             if (result.startsWith("THÀNH CÔNG")) {
                                 double finalPrice = targetItem.getCurrentPrice();
                                 String finalWinner = targetItem.getLastBidderId();
+
+                                // Lưu vào DB để Bid History Visualization có dữ liệu
+                                BidTransaction tx = new BidTransaction(user, itemId, finalPrice);
+                                bidDAO.save(tx);
+
+                                // Broadcast realtime cho tất cả client
                                 AuctionServer.broadcast(
                                         "BID_UPDATE|" + itemId + "|" + finalPrice + "|" + finalWinner
                                 );
@@ -127,10 +136,15 @@ public class ClientHandler implements Runnable {
                             out.println(result);
 
                             // Nếu auto-bid đã cập nhật giá → broadcast cho tất cả client
-                            AuctionServer.broadcast(
-                                    "BID_UPDATE|" + itemId + "|" + targetItem.getCurrentPrice()
-                                            + "|" + targetItem.getLastBidderId()
-                            );
+                            if (result.startsWith("AutoBid")) {
+                                double finalPrice = targetItem.getCurrentPrice();
+                                String finalWinner = targetItem.getLastBidderId();
+                                BidTransaction tx = new BidTransaction(finalWinner, itemId, finalPrice);
+                                bidDAO.save(tx);
+                                AuctionServer.broadcast(
+                                        "BID_UPDATE|" + itemId + "|" + finalPrice + "|" + finalWinner
+                                );
+                            }
                         } else {
                             out.println("AUTO_BID_FAIL|Sản phẩm không tồn tại!");
                         }
