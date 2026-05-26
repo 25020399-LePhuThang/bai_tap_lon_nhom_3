@@ -1,29 +1,37 @@
 package com.auction.shared.model.user;
 
 import com.auction.shared.model.Entity;
+import com.google.gson.annotations.SerializedName;
+
 import java.io.Serial;
 
 public abstract class User implements Entity {
     @Serial
     private static final long serialVersionUID = 1L;
-
+    @SerializedName("user_id")
     protected String id;
-    protected String name;
+    @SerializedName("username")
+    protected String username;
+    @SerializedName("password")
     protected String password;
+    @SerializedName("email")
     protected String email;
+    @SerializedName("phone")
     protected String phoneNumber;
+    @SerializedName("status")
     protected String status;
+    @SerializedName("role")
     protected String role;
 
 
     public User(String id, String name, String password, String email, String phoneNumber, String status, String role) {
         this.id = id;
-        this.name = name;
+        this.username = username;
         this.password = password;
         this.email = email;
         this.phoneNumber = phoneNumber;
         this.status = status;
-        this.role = role; // Gán giá trị role
+        this.role = role;
     }
 
     public User() {}
@@ -32,8 +40,8 @@ public abstract class User implements Entity {
     @Override
     public void setId(String id) { this.id = id; }
 
-    public String getName() { return name; }
-    public void setName(String name) { this.name = name; }
+    public String getName() { return username; }
+    public void setName(String name) { this.username = name; }
 
     public String getPassword() { return password; }
     public void setPassword(String password) { this.password = password; }
@@ -54,6 +62,6 @@ public abstract class User implements Entity {
 
     @Override
     public void printInfo() {
-        System.out.println(name + " | " + id + " | Role: " + role);
+        System.out.println(username + " | " + id + " | Role: " + role);
     }
 }

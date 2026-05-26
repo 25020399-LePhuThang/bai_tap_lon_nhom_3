@@ -1,14 +1,20 @@
 package com.auction.shared.model.user;
 
+import com.google.gson.annotations.SerializedName;
+
 import java.io.Serial;
 
 public class Bidder extends User {
     @Serial
     private static final long serialVersionUID = 1L;
-
+    @SerializedName("name")
     String name;
+    @SerializedName("balance")
     protected float balance=0;
+    @SerializedName("max_autobid_limit")
     protected float maxAutoBidLimit;
+    @SerializedName("shipping_address")
+    private String ShippingAddress;
 
     public Bidder(String id, String name,String password,String email,String phoneNumber,String status,String role) {
         super(id,name,password,email,phoneNumber, status,"Bidder");
@@ -27,7 +33,7 @@ public class Bidder extends User {
     public void setMaxAutoBidLimit(float maxAutoBidLimit) { this.maxAutoBidLimit = maxAutoBidLimit; }
 
     @Override
-    public String getRole(){ return "bidder"; }
+    public String getRole(){ return "BIDDER"; }
 
     @Override
     public void printInfo() {
@@ -42,4 +48,7 @@ public class Bidder extends User {
                 ", balance=" + balance + '\'' +
                 '}';
     }
+
+    public String getShippingAddress(){return ShippingAddress;}
+    public void setShippingAddress(String ShippingAddress){this.ShippingAddress=ShippingAddress;}
 }

@@ -3,12 +3,11 @@ package com.auction.server.dao;
 import com.auction.server.database.DatabaseManager;
 import com.auction.shared.model.item.Art;
 import com.auction.shared.model.item.Electronic;
-import com.auction.shared.model.item.Item; // Đảm bảo bạn đã có class Item trong thư mục shared/model
+import com.auction.shared.model.item.Item;
 import com.auction.shared.model.item.Vehicle;
-import com.auction.shared.model.user.Admin;
-import com.auction.shared.model.user.Bidder;
-import com.auction.shared.model.user.Seller;
-import com.auction.shared.model.user.User;
+
+import javafx.collections.transformation.FilteredList;
+import javafx.collections.transformation.SortedList;
 
 import java.sql.*;
 import java.util.ArrayList;
@@ -16,21 +15,21 @@ import java.util.List;
 
 public class ItemDAO {
 
+    // 1. THÊM TÀI SẢN MỚI
     public boolean insertItem(Item item) {
-        String sql = "INSERT INTO items (item_name, start_price,currentprice, step_price, lastbidder_id, status,type,productImageURL) VALUES ( ?, ?, ?, ?, ?,?,?,?)";
+        String sql = "INSERT INTO items (item_name, start_price, current_price, step_price, lastbidder_id, status, type, productImageURL) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
 
-        try (Connection conn1 = DatabaseManager.getConnection();
-             PreparedStatement pstmt = conn1.prepareStatement(sql)) {
+        try (Connection conn = DatabaseManager.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
-            pstmt.setString(1, item.getId());
-            pstmt.setString(2, item.getName());
-            pstmt.setDouble(3, item.getStartingPrice());
-            pstmt.setDouble(4, item.getCurrentPrice()); // Vừa đăng lên thì giá hiện tại = giá khởi điểm
-            pstmt.setDouble(5, item.getMinIncrement());
-            pstmt.setString(6, item.getLastBidderId());
-            pstmt.setString(7, item.getStatus());
-            pstmt.setString(8, item.getType());
-            pstmt.setString(9, item.getProductImageURL());
+            pstmt.setString(1, item.getName());
+            pstmt.setDouble(2, item.getStartingPrice());
+            pstmt.setDouble(3, item.getCurrentPrice());
+            pstmt.setDouble(4, item.getMinIncrement());
+            pstmt.setString(5, item.getLastBidderId());
+            pstmt.setString(6, item.getStatus());
+            pstmt.setString(7, item.getType());
+            pstmt.setString(8, item.getProductImageURL());
 
             int rowsAffected = pstmt.executeUpdate();
             return rowsAffected > 0;
@@ -43,206 +42,404 @@ public class ItemDAO {
 
     // 2. LẤY DANH SÁCH TÀI SẢN ĐANG ĐẤU GIÁ
     public List<Item> getActiveItems() {
+        return getItemsByStatus("ACTIVE");
+    }
+
+    // 3. LẤY DANH SÁCH TÀI SẢN CHUẨN BỊ ĐẤU GIÁ
+    public List<Item> getPreparedItems() {
+        return getItemsByStatus("PREPARED");
+    }
+
+    // 4. LẤY DANH SÁCH TÀI SẢN ĐÃ BÁN
+    public List<Item> getSoldItems() {
+        return getItemsByStatus("SOLD");
+    }
+
+    // HÀM DÙNG CHUNG ĐỂ LẤY DỮ LIỆU (Tối ưu code, tránh lặp lại)
+    private List<Item> getItemsByStatus(String status) {
         List<Item> itemList = new ArrayList<>();
-        String sql2 = "SELECT * FROM items WHERE status = 'ACTIVE'";
+        String sql = "SELECT * FROM items WHERE status = ?";
 
-        try (Connection conn2 = DatabaseManager.getConnection();
-             PreparedStatement preparedStatement = conn2.prepareStatement(sql2);
-             ResultSet rs = preparedStatement.executeQuery()) {
-            {
-                try (ResultSet result = preparedStatement.executeQuery()) {
-                    while (rs.next()) {
-                        Item foundItem = null;
-                        String type = result.getString("type");
+        try (Connection conn = DatabaseManager.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
-                        if (type != null) {
-                            switch (type.toUpperCase()) {
-                                case "ELECTRONIC":
-                                    foundItem = new Electronic();
-                                    break;
-                                case "VEHICLE":
-                                    foundItem = new Vehicle();
-                                    break;
-                                case "ART":
-                                default:
-                                    foundItem = new Art();
-                                    break;
-                            }
-                        }
-                        if (foundItem != null) {
-                            foundItem.setId(rs.getString("item_id"));
-                            foundItem.setName(rs.getString("item_name"));
-                            foundItem.setStartingPrice(rs.getDouble("starting_price"));
-                            foundItem.setCurrentPrice(rs.getDouble("current_price"));
-                            foundItem.setMinIncrement(rs.getDouble("step_price"));
-                            foundItem.setLastBidderId(rs.getString("lastbidder_id"));
-                            foundItem.setEndTime(rs.getDate("EndTime"));
-                            foundItem.setStatus(rs.getString("status"));
-                            foundItem.setStartTime(rs.getDate("StartTime"));
-                            foundItem.setProductImageURL(rs.getString("productImageURL"));
+            pstmt.setString(1, status);
 
-                            itemList.add(foundItem);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    String type = rs.getString("type");
+                    Item foundItem = null;
+
+                    if (type != null) {
+                        switch (type.toUpperCase()) {
+                            case "ELECTRONIC":
+                                Electronic el = new Electronic();
+                                // Đọc thêm thuộc tính riêng của đồ điện tử từ DB
+                                el.setWarrantyPeriod(rs.getInt("warranty_period"));
+                                el.setBrand(rs.getString("brand"));
+                                foundItem = el;
+                                break;
+
+                            case "VEHICLE":
+                                Vehicle v = new Vehicle();
+                                v.setWarrantyPeriod(rs.getInt("warranty_period"));
+                                v.setBrand(rs.getString("brand"));
+                                v.setEngineCapacity(rs.getString("engine_capacity"));
+                                v.setFuelType(rs.getString("fuel_type"));
+                                foundItem = v;
+                                break;
+
+                            case "ART":
+                                Art a = new Art();
+                                a.setAuthor(rs.getString("author"));
+                                a.setCreationYear(rs.getInt("creation_year"));
+                                foundItem = a;
+                                break;
                         }
                     }
-                } catch (SQLException e) {
-                    System.err.println("Lỗi khi lấy danh sách tài sản: " + e.getMessage());
+
+                    if (foundItem != null) {
+                        foundItem.setId(rs.getString("item_id"));
+                        foundItem.setName(rs.getString("item_name"));
+                        foundItem.setStartingPrice(rs.getDouble("start_price"));
+                        foundItem.setCurrentPrice(rs.getDouble("current_price"));
+                        foundItem.setMinIncrement(rs.getDouble("step_price"));
+                        foundItem.setLastBidderId(rs.getString("last_bidder_id"));
+
+                        foundItem.setType(type);
+
+                        foundItem.setStatus(rs.getString("status"));
+                        foundItem.setProductImageURL(rs.getString("productImageURL"));
+
+                        foundItem.setStartTime(rs.getTimestamp("StartTime"));
+                        foundItem.setEndTime(rs.getTimestamp("EndTime"));
+                        foundItem.setSeller_ID(rs.getString("seller_id"));
+
+                        itemList.add(foundItem);
+                    }
                 }
             }
         } catch (SQLException e) {
-            throw new RuntimeException(e);
+            System.err.println("Lỗi khi lấy danh sách tài sản (" + status + "): " + e.getMessage());
         }
         return itemList;
     }
 
-
-    // 3. CẬP NHẬT GIÁ TÀI SẢN
+    // 5. CẬP NHẬT GIÁ TÀI SẢN
     public boolean updateCurrentPrice(int itemId, double newPrice) {
         String sql = "UPDATE items SET current_price = ? WHERE item_id = ?";
-
         try (Connection conn = DatabaseManager.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
             pstmt.setDouble(1, newPrice);
             pstmt.setInt(2, itemId);
 
-            int rowsAffected = pstmt.executeUpdate();
-            return rowsAffected > 0;
-
+            return pstmt.executeUpdate() > 0;
         } catch (SQLException e) {
             System.err.println("Lỗi khi cập nhật giá: " + e.getMessage());
             return false;
         }
-
     }
 
-    //Lấy danh sách tài sản đang được đấu giá
-    public List<Item> getPreparedItems() {
+    // 6. CẬP NHẬT TRẠNG THÁI SANG ACTIVE
+    public void updateToActive() {
+        String sql = "UPDATE items SET status = 'ACTIVE' WHERE status = 'PREPARED' AND StartTime <= ? AND ? <= EndTime";
+        Timestamp now = new Timestamp(System.currentTimeMillis());
+
+        try (Connection conn = DatabaseManager.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setTimestamp(1, now);
+            pstmt.setTimestamp(2, now);
+
+            pstmt.executeUpdate();
+
+        } catch (SQLException e) {
+            System.err.println("Lỗi khi updateToActive: " + e.getMessage());
+        }
+    }
+
+    // 7. CẬP NHẬT TRẠNG THÁI SANG SOLD
+    public void updateToSold() {
+        String sql = "UPDATE items SET status = 'SOLD' WHERE status = 'ACTIVE' AND ? >= EndTime";
+        Timestamp now = new Timestamp(System.currentTimeMillis());
+
+        try (Connection conn = DatabaseManager.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setTimestamp(1, now);
+            pstmt.executeUpdate();
+
+        } catch (SQLException e) {
+            System.err.println("Lỗi khi updateToSold: " + e.getMessage());
+        }
+    }
+
+    public List<Item> getItemsBySellerID(Integer sellerId) {
         List<Item> itemList = new ArrayList<>();
-        String sql3 = "SELECT * FROM items WHERE status = 'PREPARED'";
 
-        try (Connection conn2 = DatabaseManager.getConnection();
-             PreparedStatement preparedStatement = conn2.prepareStatement(sql3);
-             ResultSet rs = preparedStatement.executeQuery()) {
-            {
-                try (ResultSet result = preparedStatement.executeQuery()) {
-                    while (rs.next()) {
-                        Item foundItem = null;
-                        String type = result.getString("type");
+        String sql = "SELECT * FROM items WHERE seller_id = ?";
 
-                        if (type != null) {
-                            switch (type.toUpperCase()) {
-                                case "ELECTRONIC":
-                                    foundItem = new Electronic();
-                                    break;
-                                case "VEHICLE":
-                                    foundItem = new Vehicle();
-                                    break;
-                                case "ART":
-                                default:
-                                    foundItem = new Art();
-                                    break;
-                            }
-                        }
-                        if (foundItem != null) {
-                            foundItem.setId(rs.getString("item_id"));
-                            foundItem.setName(rs.getString("item_name"));
-                            foundItem.setStartingPrice(rs.getDouble("starting_price"));
-                            foundItem.setCurrentPrice(rs.getDouble("current_price"));
-                            foundItem.setMinIncrement(rs.getDouble("step_price"));
-                            foundItem.setLastBidderId(rs.getString("lastbidder_id"));
-                            foundItem.setEndTime(rs.getDate("EndTime"));
-                            foundItem.setStatus(rs.getString("status"));
-                            foundItem.setStartTime(rs.getDate("StartTime"));
-                            foundItem.setProductImageURL(rs.getString("productImageURL"));
+        try (Connection conn = DatabaseManager.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
-                            itemList.add(foundItem);
+            // 2. TRUYỀN BIẾN: Nhét sellerId vào dấu ?
+            pstmt.setInt(1, sellerId);
+
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    String type = rs.getString("type");
+                    Item foundItem = null;
+
+                    if (type != null) {
+                        switch (type.toUpperCase()) {
+                            case "ELECTRONIC":
+                                Electronic el = new Electronic();
+                                el.setWarrantyPeriod(rs.getInt("warranty_period"));
+                                el.setBrand(rs.getString("brand"));
+                                foundItem = el;
+                                break;
+
+                            case "VEHICLE":
+                                Vehicle v = new Vehicle();
+                                v.setWarrantyPeriod(rs.getInt("warranty_period"));
+                                v.setBrand(rs.getString("brand"));
+                                v.setEngineCapacity(rs.getString("engine_capacity"));
+                                v.setFuelType(rs.getString("fuel_type"));
+                                foundItem = v;
+                                break;
+
+                            case "ART":
+                                Art a = new Art();
+                                a.setAuthor(rs.getString("author"));
+                                a.setCreationYear(rs.getInt("creation_year"));
+                                foundItem = a;
+                                break;
                         }
                     }
-                } catch (SQLException e) {
-                    System.err.println("Lỗi khi lấy danh sách tài sản: " + e.getMessage());
+
+                    if (foundItem != null) {
+                        foundItem.setId(rs.getString("item_id"));
+                        foundItem.setName(rs.getString("item_name"));
+                        foundItem.setStartingPrice(rs.getDouble("start_price"));
+                        foundItem.setCurrentPrice(rs.getDouble("current_price"));
+                        foundItem.setMinIncrement(rs.getDouble("step_price"));
+                        foundItem.setLastBidderId(rs.getString("last_bidder_id"));
+
+                        foundItem.setType(type);
+
+                        foundItem.setStatus(rs.getString("status"));
+                        foundItem.setProductImageURL(rs.getString("productImageURL"));
+
+                        foundItem.setStartTime(rs.getTimestamp("StartTime"));
+                        foundItem.setEndTime(rs.getTimestamp("EndTime"));
+                        foundItem.setSeller_ID(rs.getString("seller_id"));
+
+                        itemList.add(foundItem);
+                    }
                 }
             }
         } catch (SQLException e) {
-            throw new RuntimeException(e);
+            // 3. ĐỔI LỜI BÁO LỖI cho dễ debug
+            System.err.println("Lỗi khi lấy danh sách tài sản của Seller (" + sellerId + "): " + e.getMessage());
         }
         return itemList;
     }
 
-    //Lấy danh sách tài sản đã được đấu giá
-    public List<Item> getSoldItems() {
-        List<Item> itemList = new ArrayList<>();
-        String sql4 = "SELECT * FROM items WHERE status = 'SOLD'";
+    public boolean createItem(Item item) {
+        // 🔴 ĐÃ THÊM MA THUẬT SUBQUERY Ở VỊ TRÍ SỐ 9
+        String sql = "INSERT INTO Items (item_name, type, start_price, current_price, step_price, " +
+                "StartTime, EndTime, status, seller_id, productImageURL, " +
+                "warranty_period, brand, engine_capacity, fuel_type, author, creation_year) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, (SELECT user_id FROM Users WHERE username = ?), ?, ?, ?, ?, ?, ?, ?)";
 
-        try (Connection conn2 = DatabaseManager.getConnection();
-             PreparedStatement preparedStatement = conn2.prepareStatement(sql4);
-             ResultSet rs = preparedStatement.executeQuery()) {
-            {
-                try (ResultSet result = preparedStatement.executeQuery()) {
-                    while (rs.next()) {
-                        Item foundItem = null;
-                        String type = result.getString("type");
+        try (Connection conn = DatabaseManager.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
-                        if (type != null) {
-                            switch (type.toUpperCase()) {
-                                case "ELECTRONIC":
-                                    foundItem = new Electronic();
-                                    break;
-                                case "VEHICLE":
-                                    foundItem = new Vehicle();
-                                    break;
-                                case "ART":
-                                default:
-                                    foundItem = new Art();
-                                    break;
-                            }
-                        }
-                        if (foundItem != null) {
-                            foundItem.setId(rs.getString("item_id"));
-                            foundItem.setName(rs.getString("item_name"));
-                            foundItem.setStartingPrice(rs.getDouble("starting_price"));
-                            foundItem.setCurrentPrice(rs.getDouble("current_price"));
-                            foundItem.setMinIncrement(rs.getDouble("step_price"));
-                            foundItem.setLastBidderId(rs.getString("lastbidder_id"));
-                            foundItem.setEndTime(rs.getDate("EndTime"));
-                            foundItem.setStatus(rs.getString("status"));
-                            foundItem.setStartTime(rs.getDate("StartTime"));
-                            foundItem.setProductImageURL(rs.getString("productImageURL"));
+            pstmt.setString(1, item.getName());
+            pstmt.setString(2, item.getType());
+            pstmt.setDouble(3, item.getStartingPrice());
+            pstmt.setDouble(4, item.getCurrentPrice());
+            pstmt.setDouble(5, item.getMinIncrement());
 
-                            itemList.add(foundItem);
-                        }
-                    }
-                } catch (SQLException e) {
-                    System.err.println("Lỗi khi lấy danh sách tài sản: " + e.getMessage());
-                }
+            // 🔴 ĐÃ CHUẨN HÓA NGÀY THÁNG ĐỂ KHÔNG BỊ BIẾN THÀNH SỐ LỚN
+            java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+            pstmt.setString(6, item.getStartTime() != null ? sdf.format(item.getStartTime()) : null);
+            pstmt.setString(7, item.getEndTime() != null ? sdf.format(item.getEndTime()) : null);
+
+            pstmt.setString(8, item.getStatus());
+
+            // Nhét "TesterLan2" vào đây, Database sẽ tự động tìm và đổi ra số 8!
+            pstmt.setString(9, item.getSeller_ID());
+            pstmt.setString(10, item.getProductImageURL());
+
+            // Phân loại để nạp thông số riêng
+            if (item instanceof Electronic) {
+                Electronic el = (Electronic) item;
+                pstmt.setInt(11, el.getWarrantyPeriod());
+                pstmt.setString(12, el.getBrand());
+                pstmt.setNull(13, java.sql.Types.VARCHAR);
+                pstmt.setNull(14, java.sql.Types.VARCHAR);
+                pstmt.setNull(15, java.sql.Types.VARCHAR);
+                pstmt.setNull(16, java.sql.Types.INTEGER);
+
+            } else if (item instanceof Vehicle) {
+                Vehicle v = (Vehicle) item;
+                pstmt.setInt(11, v.getWarrantyPeriod());
+                pstmt.setString(12, v.getBrand());
+                pstmt.setString(13, v.getEngineCapacity());
+                pstmt.setString(14, v.getFuelType());
+                pstmt.setNull(15, java.sql.Types.VARCHAR);
+                pstmt.setNull(16, java.sql.Types.INTEGER);
+
+            } else if (item instanceof Art) {
+                Art a = (Art) item;
+                pstmt.setNull(11, java.sql.Types.INTEGER);
+                pstmt.setNull(12, java.sql.Types.VARCHAR);
+                pstmt.setNull(13, java.sql.Types.VARCHAR);
+                pstmt.setNull(14, java.sql.Types.VARCHAR);
+                pstmt.setString(15, a.getAuthor());
+                pstmt.setInt(16, a.getCreationYear());
             }
+
+            return pstmt.executeUpdate() > 0;
+
         } catch (SQLException e) {
-            throw new RuntimeException(e);
+            System.err.println("Lỗi Insert DB: " + e.getMessage());
+            return false;
         }
-        return itemList;
     }
 
-    //Cập nhật status
-    public void updateToActive() throws SQLException {
-        String sql5 = "UPDATE items SET status = 'ACTIVE' WHERE status='PREPARED' AND startTime<=? AND ?<=endTime";
-        long TimeNow = System.currentTimeMillis();
-        Timestamp now = new Timestamp(TimeNow);
+    public List<Item> takeWaitingItems() {
+        List<Item> waitingItems = new ArrayList<>();
 
-        Connection conn2 = DatabaseManager.getConnection();
-        PreparedStatement preparedStatement = conn2.prepareStatement(sql5);
+        String sql = "SELECT * FROM Items WHERE status = 'WAITING'";
 
-        preparedStatement.setTimestamp(1, now);
-        preparedStatement.setTimestamp(2, now);
+        try (Connection conn = DatabaseManager.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql);
+             ResultSet rs = pstmt.executeQuery()) {
+
+            while (rs.next()) {
+                String type = rs.getString("type");
+                Item item = null;
+
+                // 1. Khởi tạo Object bằng các lớp con (Concrete Classes)
+                if (type != null) {
+                    if (type.equalsIgnoreCase("Electronic")) {
+                        item = new Electronic();
+                    } else if (type.equalsIgnoreCase("Art")) {
+                        item = new Art();
+                    } else if (type.equalsIgnoreCase("Vehicle")) {
+                        item = new Vehicle();
+                    } else {
+                        // Nếu gặp loại lạ (do rác trong DB), in ra log và bỏ qua dòng này
+                        System.err.println("Bỏ qua sản phẩm không rõ loại: " + type);
+                        continue;
+                    }
+                } else {
+                    continue; // Bỏ qua nếu type bị null
+                }
+
+                // 2. Nạp các thông số chung của lớp cha (Abstract Item)
+                // LƯU Ý: Đổi rs.getString / rs.getInt cho khớp với kiểu dữ liệu trong DB nhé
+                item.setId(rs.getString("item_id"));
+                item.setName(rs.getString("item_name"));
+                item.setType(type);
+                item.setStartingPrice(rs.getDouble("start_price"));
+                item.setCurrentPrice(rs.getDouble("current_price"));
+                item.setSeller_ID(rs.getString("seller_id"));
+                item.setStatus(rs.getString("status"));
+
+                String imageUrl = rs.getString("productImageURL");
+                if (imageUrl != null) item.setProductImageURL(imageUrl);
+
+                // Nạp thêm các thuộc tính riêng (Đa hình) nếu DB cậu có lưu:
+                if (item instanceof Electronic) {
+                    // ((Electronic) item).setBrand(rs.getString("brand"));
+                } else if (item instanceof Art) {
+                    // ((Art) item).setAuthor(rs.getString("author"));
+                } else if (item instanceof Vehicle) {
+                    // ((Vehicle) item).setEngineCapacity(rs.getString("engine_capacity"));
+                }
+
+                // 3. Thêm vào danh sách
+                waitingItems.add(item);
+            }
+
+        } catch (Exception e) {
+            System.err.println("Lỗi khi lấy danh sách sản phẩm chờ duyệt: " + e.getMessage());
+            e.printStackTrace();
+        }
+
+        return waitingItems;
     }
 
-    public void updateToSold() throws SQLException {
-        String sql5 = "UPDATE items SET status = 'SOLD' WHERE status='ACTIVE' AND ?>=endTime";
-        long TimeNow = System.currentTimeMillis();
-        Timestamp now = new Timestamp(TimeNow);
 
-        Connection conn2 = DatabaseManager.getConnection();
-        PreparedStatement preparedStatement = conn2.prepareStatement(sql5);
 
-        preparedStatement.setTimestamp(1, now);
+    // ==========================================
+    // CÁC HÀM CHO ADMIN: QUẢN LÝ SẢN PHẨM
+    // ==========================================
+
+    // Cập nhật trạng thái sản phẩm (Dùng để duyệt WAITING -> ACTIVE)
+    // ==========================================
+    // DUYỆT SẢN PHẨM THÔNG MINH TỰ ĐỘNG CHỌN TRẠNG THÁI
+    // ==========================================
+    public static boolean approveItemWithTimeCheck(String itemId) {
+        // LƯU Ý 1: Sửa "start_time" thành tên cột lưu thời gian bắt đầu trong bảng SQLite của cậu
+        String queryTime = "SELECT StartTime FROM Items WHERE item_id = ?";
+        String updateStatus = "UPDATE Items SET status = ? WHERE item_id = ?";
+
+        try (Connection conn = DatabaseManager.getConnection();
+             PreparedStatement pstmtQuery = conn.prepareStatement(queryTime);
+             PreparedStatement pstmtUpdate = conn.prepareStatement(updateStatus)) {
+
+            // 1. Quét tìm thời gian bắt đầu của sản phẩm này
+            // LƯU Ý 2: Nếu id của cậu là int thì nhớ đổi thành pstmtQuery.setInt(1, Integer.parseInt(itemId));
+            pstmtQuery.setString(1, itemId);
+            ResultSet rs = pstmtQuery.executeQuery();
+
+            if (rs.next()) {
+                // Mặc định cho nó lên sàn luôn (ACTIVE)
+                String newStatus = "ACTIVE";
+
+                // Lấy ra thời gian từ DB để so sánh
+                java.sql.Timestamp startTime = rs.getTimestamp("StartTime");
+
+                // Nếu có cài đặt thời gian bắt đầu, VÀ thời gian đó nằm ở TƯƠNG LAI -> Cất vào kho (PREPARED)
+                if (startTime != null && startTime.after(new java.sql.Timestamp(System.currentTimeMillis()))) {
+                    newStatus = "PREPARED";
+                }
+
+                // 2. Chốt hạ trạng thái mới vào Database
+                pstmtUpdate.setString(1, newStatus);
+                pstmtUpdate.setString(2, itemId); // Tương tự, nếu id là int thì parse ra
+
+                return pstmtUpdate.executeUpdate() > 0;
+            }
+            return false;
+        } catch (Exception e) {
+            System.err.println("Lỗi khi duyệt có điều kiện thời gian: " + e.getMessage());
+            e.printStackTrace();
+            return false;
+        }
     }
-}
 
+    // Xóa thẳng tay sản phẩm (Dùng để từ chối)
+    public static boolean deleteItem(String itemId) {
+        String sql = "DELETE FROM Items WHERE id = ?";
+
+        try (Connection conn = DatabaseManager.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setString(1, itemId); // Tương tự, nếu id là Int thì parse sang Int
+
+            int rowsAffected = pstmt.executeUpdate();
+            return rowsAffected > 0;
+
+        } catch (Exception e) {
+            System.err.println("Lỗi khi xóa Item: " + e.getMessage());
+            e.printStackTrace();
+            return false;
+        }
+    }
+    }

@@ -5,11 +5,20 @@ import com.auction.server.controller.ProductManager;
 import com.auction.server.controller.RegisterHandler;
 import com.auction.server.dao.ItemDAO;
 import com.auction.server.dao.UserDAO;
-import com.auction.server.dao.BidDAO;
-import com.auction.shared.model.BidTransaction;
+import com.auction.server.database.DatabaseManager;
+import com.auction.shared.model.item.Art;
+import com.auction.shared.model.item.Electronic;
 import com.auction.shared.model.item.Item;
+import com.auction.shared.model.item.Vehicle;
 import com.auction.shared.model.user.User;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+
+import com.google.gson.*;
+import java.lang.reflect.Type;
+import com.auction.shared.model.item.*;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -25,30 +34,16 @@ public class ClientHandler implements Runnable {
     private BiddingService biddingService;
 
     private UserDAO userDAO = new UserDAO();
-    private ItemDAO itemDAO = new ItemDAO(); // <--- Thêm dòng này vào đầu class
-    private BidDAO bidDAO = new BidDAO();
+    private ItemDAO itemDAO = new ItemDAO();
 
-    public ClientHandler(Socket socket, BiddingService  biddingService) {
+    public ClientHandler(Socket socket, BiddingService biddingService) {
         this.socket = socket;
-        this.biddingService=biddingService;
+        this.biddingService = biddingService;
         try {
-            // 1. Gắn ống dịch chữ
             this.in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-            // 2. Gắn ống đẩy chữ
             this.out = new PrintWriter(socket.getOutputStream(), true);
         } catch (IOException e) {
             e.printStackTrace();
-        }
-    }
-
-
-    /**
-     * Gửi một tin nhắn xuống client này.
-     * Được AuctionServer.broadcast() gọi để push realtime cho tất cả client.
-     */
-    public void sendMessage(String message) {
-        if (out != null) {
-            out.println(message);
         }
     }
 
@@ -57,37 +52,53 @@ public class ClientHandler implements Runnable {
         try {
             String message;
             while ((message = in.readLine()) != null) {
-                String[] parts = message.split("\\|");
+                String[] parts = message.split("\\|", -1);
                 String action = parts[0];
 
                 switch (action) {
-                    //1. ĐĂNG KÍ
-                    case "REGISTER"-> {
+                    // 1. ĐĂNG KÍ
+                    case "REGISTER" -> {
                         String username = parts[1];
                         String password = parts[2];
                         String email = parts[3];
                         String phone = parts[4];
+                        String role = parts[5];
 
-                        // Giao hết cho cái cục Thắng vừa tạo xử lý, xong hét vô ống nước trả về Client
-                        out.println(RegisterHandler.processRegister(username, password, email, phone));
+                        out.println(RegisterHandler.processRegister(username, password, email, phone, role));
                     }
 
-
-                    //2.ĐĂNG NHẬP
+                    // ==============================================================
+                    // XỬ LÝ YÊU CẦU ĐĂNG NHẬP (Nhận 3 tham số: user, pass, role)
+                    // ==============================================================
                     case "LOGIN" -> {
-                        String username = parts[1];
-                        String password = parts[2];
+                        try {
+                            // Tách dữ liệu từ chuỗi "LOGIN|username|password|role"
+                            String username = parts[1];
+                            String password = parts[2];
+                            String role = parts[3];
 
+                            // Gọi hàm Login trong UserDAO mà Vương vừa sửa lúc nãy
+                            User loggedInUser = UserDAO.Login(username, password, role);
 
-                        User loggedInUser = UserDAO.Login(username, password);
-
-                        if (loggedInUser != null) {
-                            out.println("LOGIN_SUCCESS|" + loggedInUser.getRole());
-                        } else {
-                            out.println("LOGIN_FAIL|Sai tài khoản hoặc mật khẩu");
+                            if (loggedInUser != null) {
+                                // Kiểm tra xem tài khoản có bị Admin khóa không
+                                if ("BANNED".equalsIgnoreCase(loggedInUser.getStatus())) {
+                                    out.println("LOGIN_BANNED");
+                                } else {
+                                    // Đăng nhập thành công, trả về kèm theo Role để Client xác nhận lại
+                                    out.println("LOGIN_SUCCESS|" + loggedInUser.getRole());
+                                }
+                            } else {
+                                // Trả về null tức là sai tài khoản hoặc mật khẩu
+                                out.println("LOGIN_FAIL");
+                            }
+                        } catch (Exception e) {
+                            System.err.println("Lỗi xử lý LOGIN trên Server: " + e.getMessage());
+                            out.println("ERROR|Lỗi hệ thống khi đăng nhập");
                         }
                     }
-                    //3a. BID:
+
+                    // 3a. BID
                     case "BID" -> {
                         String user = parts[1];
                         double price = Double.parseDouble(parts[2]);
@@ -97,36 +108,18 @@ public class ClientHandler implements Runnable {
 
                         if (targetItem != null) {
                             String result = biddingService.placeBid(targetItem, price, user);
-
-                            // Trả kết quả về đúng người vừa đặt giá
                             out.println(result);
-
-                            // Nếu bid thành công → broadcast giá mới cho TẤT CẢ client đang xem
-                            // Format: BID_UPDATE|itemId|giáMới|ngườiDẫnĐầu
-                            if (result.startsWith("THÀNH CÔNG")) {
-                                double finalPrice = targetItem.getCurrentPrice();
-                                String finalWinner = targetItem.getLastBidderId();
-
-                                // Lưu vào DB để Bid History Visualization có dữ liệu
-                                BidTransaction tx = new BidTransaction(user, itemId, finalPrice);
-                                bidDAO.save(tx);
-
-                                // Broadcast realtime cho tất cả client
-                                AuctionServer.broadcast(
-                                        "BID_UPDATE|" + itemId + "|" + finalPrice + "|" + finalWinner
-                                );
-                            }
                         } else {
                             out.println("BID_FAIL|Sản phẩm không tồn tại!");
                         }
                     }
 
-                    // 3b. AUTO-BID: AUTO_BID|bidderId|maxBid|increment|itemId
+                    // 3b. AUTO-BID
                     case "AUTO_BID" -> {
-                        String bidderId  = parts[1];
-                        double maxBid    = Double.parseDouble(parts[2]);
+                        String bidderId = parts[1];
+                        double maxBid = Double.parseDouble(parts[2]);
                         double increment = Double.parseDouble(parts[3]);
-                        String itemId    = parts[4];
+                        String itemId = parts[4];
 
                         Item targetItem = ProductManager.getItemById(itemId);
 
@@ -134,50 +127,304 @@ public class ClientHandler implements Runnable {
                             String result = biddingService.registerAutoBid(
                                     targetItem, bidderId, maxBid, increment);
                             out.println(result);
-
-                            // Nếu auto-bid đã cập nhật giá → broadcast cho tất cả client
-                            if (result.startsWith("AutoBid")) {
-                                double finalPrice = targetItem.getCurrentPrice();
-                                String finalWinner = targetItem.getLastBidderId();
-                                BidTransaction tx = new BidTransaction(finalWinner, itemId, finalPrice);
-                                bidDAO.save(tx);
-                                AuctionServer.broadcast(
-                                        "BID_UPDATE|" + itemId + "|" + finalPrice + "|" + finalWinner
-                                );
-                            }
                         } else {
                             out.println("AUTO_BID_FAIL|Sản phẩm không tồn tại!");
                         }
                     }
 
-                    // 4. NẾU KHÁCH MUỐN XEM DANH SÁCH SẢN PHẨM
+                    // 4. GET PREPARED ITEMS
                     case "GET_PREPARED_ITEMS" -> {
-                        // 1. Gọi ItemDAO móc danh sách Prepared ra
                         List<Item> preparedList = itemDAO.getPreparedItems();
-
-                        // 2. Ép danh sách đó thành JSON bằng Gson
                         String json = new Gson().toJson(preparedList);
-
-                        // 3. Quăng cái chuỗi JSON đó trả lại cho Client
                         out.println(json);
                     }
-                    // 5. NẾU KHÁCH MUỐN XEM DANH SÁCH SẢN PHẨM ĐANG ĐẤU GIÁ (ACTIVE)
+
+                    // 5. GET ACTIVE ITEMS
                     case "GET_ACTIVE_ITEMS" -> {
-                        // 1. Gọi ItemDAO móc danh sách Active ra (Nhớ đảm bảo trong ItemDAO có hàm này nhé)
                         List<Item> activeList = itemDAO.getActiveItems();
-
-                        // 2. Ép danh sách đó thành JSON bằng Gson
                         String json = new Gson().toJson(activeList);
-
-                        // 3. Quăng cái chuỗi JSON đó trả lại cho Client (BẮT BUỘC PHẢI DÙNG println CÓ CHỮ "ln" Ở CUỐI)
                         out.println(json);
                     }
 
+                    // 6. XỬ LÝ CẬP NHẬT THÔNG TIN
+                    case "UPDATE_INFO" -> {
+                        String currentUsername = parts[1];
+                        String newUsername = parts[2];
+                        String newEmail = parts[3];
+                        String newPhone = parts[4];
+                        String newAddress = parts[5];
+
+                        String result = userDAO.updateUserInfo(currentUsername, newUsername, newEmail, newPhone, newAddress);
+
+                        switch (result) {
+                            case "SUCCESS":
+                                out.println("UPDATE_SUCCESS|Cập nhật thông tin thành công rồi cưng!");
+                                break;
+                            case "ERR_USERNAME":
+                                out.println("UPDATE_FAIL|Tên đăng nhập mới này đã có người sử dụng!");
+                                break;
+                            case "ERR_EMAIL":
+                                out.println("UPDATE_FAIL|Email mới này đã có người sử dụng!");
+                                break;
+                            case "ERR_PHONE":
+                                out.println("UPDATE_FAIL|Số điện thoại mới này đã có người sử dụng!");
+                                break;
+                            default:
+                                out.println("UPDATE_FAIL|Lỗi hệ thống Database, không thể cập nhật thông tin.");
+                                break;
+                        }
+                    }
+
+                    // 7. XỬ LÝ ĐỔI MẬT KHẨU
+                    case "CHANGE_PASS" -> {
+                        String username = parts[1];
+                        String oldPassword = parts[2];
+                        String newPassword = parts[3];
+
+                        String result = userDAO.changePassword(username, oldPassword, newPassword);
+                        out.println(result);
+                    }
+
+                    // 8. XỬ LÝ NẠP TIỀN
+                    case "DEPOSIT" -> {
+                        String username = parts[1];
+                        double amount = Double.parseDouble(parts[2]);
+
+                        boolean isSuccess = userDAO.deposit(username, amount);
+
+                        if (isSuccess) {
+                            double newBalance = userDAO.getBalance(username);
+                            out.println("DEPOSIT_SUCCESS|" + newBalance);
+                        } else {
+                            out.println("DEPOSIT_FAIL|Lỗi hệ thống khi nạp tiền");
+                        }
+                    }
+
+                    // 9. XỬ LÝ RÚT TIỀN
+                    case "WITHDRAW" -> {
+                        String username = parts[1];
+                        double amount = Double.parseDouble(parts[2]);
+
+                        String result = userDAO.withdraw(username, amount);
+
+                        if (result.equals("SUCCESS")) {
+                            double newBalance = userDAO.getBalance(username);
+                            out.println("WITHDRAW_SUCCESS|" + newBalance);
+                        } else {
+                            out.println("WITHDRAW_FAIL|Số dư không đủ hoặc lỗi Database!");
+                        }
+                    }
+
+                    // 10. XỬ LÝ LẤY SỐ DƯ TÀI KHOẢN
+                    case "GET_BALANCE" -> {
+                        String username = parts[1];
+                        double currentBalance = userDAO.getBalance(username);
+                        out.println("BALANCE_SUCCESS|" + currentBalance);
+                    }
+
+                    // 11. LẤY DANH SÁCH SẢN PHẨM CỦA NGƯỜI BÁN
+                    case "GET_ITEMS_BY_SELLER" -> {
+                        String username = parts[1];
+                        System.out.println("[DEBUG] Đã nhận yêu cầu lấy danh sách của: " + username);
+
+                        try {
+                            int sellerId = userDAO.getIdByUsername(username);
+                            System.out.println("[DEBUG] Tìm thấy SellerID: " + sellerId);
+
+                            if (sellerId != -1) {
+                                List<Item> sellerItems = itemDAO.getItemsBySellerID(sellerId);
+                                System.out.println("[DEBUG] Số lượng sản phẩm tìm thấy: " + (sellerItems != null ? sellerItems.size() : 0));
+
+                                if (sellerItems != null && !sellerItems.isEmpty()) {
+                                    String json = new Gson().toJson(sellerItems);
+                                    out.println("GET_SELLER_ITEMS_SUCCESS|" + json);
+                                } else {
+                                    out.println("GET_SELLER_ITEMS_SUCCESS|[]");
+                                }
+                            } else {
+                                out.println("GET_SELLER_ITEMS_SUCCESS|[]");
+                            }
+
+                        } catch (Exception e) {
+                            System.out.println("[SEVERE] Lỗi khi xử lý GET_ITEMS_BY_SELLER: " + e.getMessage());
+                            e.printStackTrace();
+                            out.println("GET_SELLER_ITEMS_FAIL|Lỗi server!");
+                        }
+                    }
+
+                    case "CREATE_ITEM" -> {
+                        try {
+                            String[] dataParts = message.split("\\|", 2);
+                            if (dataParts.length < 2) {
+                                out.println("ERROR|Thiếu dữ liệu JSON");
+                            } else {
+                                String jsonString = dataParts[1];
+
+                                // 1. Dạy Gson cách phân biệt các lớp con
+                                Gson gson = new GsonBuilder()
+                                        .setDateFormat("yyyy-MM-dd HH:mm:ss")
+                                        .registerTypeAdapter(Item.class, new JsonDeserializer<Item>() {
+                                            @Override
+                                            public Item deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
+                                                JsonObject jsonObject = json.getAsJsonObject();
+                                                String itemType = jsonObject.has("type") ? jsonObject.get("type").getAsString() : "";
+
+                                                if (itemType.equalsIgnoreCase("Art")) {
+                                                    return context.deserialize(json, Art.class);
+                                                } else if (itemType.equalsIgnoreCase("Vehicle")) {
+                                                    return context.deserialize(json, Vehicle.class);
+                                                } else if (itemType.equalsIgnoreCase("Electronic")) {
+                                                    return context.deserialize(json, Electronic.class);
+                                                }
+                                                throw new JsonParseException("Không nhận diện được: " + itemType);
+                                            }
+                                        })
+                                        .create();
+
+                                // 2. Dịch JSON thành Object
+                                Item newItem = gson.fromJson(jsonString, Item.class);
+
+                                // 3. Gọi DAO lưu Database
+                                ItemDAO itemDAO = new ItemDAO();
+                                boolean isInserted = itemDAO.createItem(newItem);
+
+                                // 4. Trả kết quả
+                                if (isInserted) {
+                                    out.println("CREATE_ITEM_SUCCESS");
+                                } else {
+                                    out.println("ERROR|Không lưu được vào Database");
+                                }
+                            }
+                        } catch (Exception e) {
+                            System.err.println("Lỗi khi thêm sản phẩm: " + e.getMessage());
+                            e.printStackTrace();
+                            out.println("ERROR|Lỗi dữ liệu Server");
+                        }
+                    }
+                    case "LOGOUT" -> {
+                        System.out.println("Một Client đã yêu cầu đăng xuất và ngắt kết nối.");
+
+                        out.println("LOGOUT_SUCCESS");
+
+                        return;
+                    }
+                    case "GET_USER_INFO" -> {
+                        try {
+                            String targetUsername = parts[1]; // Lấy username Client gửi lên
+                            UserDAO userDAO = new UserDAO();
+
+                            // Trả về một đối tượng đa hình (Bidder/Seller) đã được fix lỗi ID
+                            User user = userDAO.getUserByUsername(targetUsername);
+
+                            if (user != null) {
+                                // Gson sẽ tự động gom cả các trường riêng (như balance của Bidder) vào JSON
+                                String jsonString = new Gson().toJson(user);
+                                out.println("USER_INFO_SUCCESS|" + jsonString);
+                            } else {
+                                out.println("ERROR|Không tìm thấy người dùng");
+                            }
+                        } catch (Exception e) {
+                            out.println("ERROR|Lỗi server khi lấy thông tin");
+                            e.printStackTrace();
+                        }
+                    }
+                    // ==============================================================
+                    // TÍNH NĂNG ADMIN: QUẢN LÝ SẢN PHẨM
+                    // ==============================================================
+
+                    // 1. Lấy danh sách sản phẩm đang chờ duyệt (WAITING)
+                    case "GET_WAITING_ITEMS" -> {
+                        try {
+                            ItemDAO itemDAO = new ItemDAO();
+                            List<Item> waitingList = itemDAO.takeWaitingItems(); // Hàm cậu vừa code xong
+                            String jsonResponse = new Gson().toJson(waitingList);
+                            out.println("WAITING_ITEMS_SUCCESS|" + jsonResponse);
+                        } catch (Exception e) {
+                            out.println("ERROR|Lỗi khi lấy danh sách chờ duyệt");
+                            e.printStackTrace();
+                        }
+                    }
+
+                    // Admin duyệt sản phẩm (Chuyển WAITING -> ACTIVE hoặc PREPARED tùy thời gian)
+                    case "APPROVE_ITEM" -> {
+                        try {
+                            String itemId = parts[1];
+
+                            // GỌI HÀM KIỂM TRA THỜI GIAN THÔNG MINH
+                            boolean success = ItemDAO.approveItemWithTimeCheck(itemId);
+
+                            if (success) {
+                                out.println("APPROVE_SUCCESS");
+                            } else {
+                                out.println("ERROR|Không thể duyệt sản phẩm này");
+                            }
+                        } catch (Exception e) {
+                            out.println("ERROR|Lỗi server khi duyệt sản phẩm");
+                            e.printStackTrace();
+                        }
+                    }
+
+                    // 3. Admin từ chối sản phẩm (Xóa luôn khỏi Database)
+                    case "REJECT_ITEM" -> {
+                        try {
+                            String itemId = parts[1];
+                            // LƯU Ý: Vương cần viết thêm hàm deleteItem(id) trong ItemDAO
+                            boolean success = ItemDAO.deleteItem(itemId);
+                            if (success) {
+                                out.println("REJECT_SUCCESS");
+                            } else {
+                                out.println("ERROR|Không thể xóa sản phẩm này");
+                            }
+                        } catch (Exception e) {
+                            out.println("ERROR|Lỗi server khi từ chối sản phẩm");
+                            e.printStackTrace();
+                        }
+                    }
+
+                    // ==============================================================
+                    // TÍNH NĂNG ADMIN: QUẢN LÝ NGƯỜI DÙNG (Cho Tab 2)
+                    // ==============================================================
+
+                    // 4. Lấy danh sách toàn bộ người dùng
+                    case "GET_ALL_USERS" -> {
+                        try {
+                            UserDAO userDAO = new UserDAO();
+                            // LƯU Ý: Vương cần viết hàm getAllUsers() trả về List<User>
+                            List<User> userList = userDAO.getAllUsers();
+                            String jsonResponse = new Gson().toJson(userList);
+                            out.println("ALL_USERS_SUCCESS|" + jsonResponse);
+                        } catch (Exception e) {
+                            out.println("ERROR|Lỗi khi lấy danh sách người dùng");
+                            e.printStackTrace();
+                        }
+                    }
+
+                    // 5. Khóa tài khoản (BANNED)
+                    case "BAN_USER" -> {
+                        try {
+                            String userId = parts[1]; // Gửi ID lên
+                            // Vương cần viết hàm updateUserStatus(id, status)
+                            boolean success = UserDAO.updateUserStatus(userId, "BANNED");
+                            out.println(success ? "BAN_SUCCESS" : "ERROR|Không thể khóa user");
+                        } catch (Exception e) {
+                            out.println("ERROR|Lỗi server khi khóa user");
+                        }
+                    }
+
+                    // 6. Mở khóa tài khoản (ACTIVE)
+                    case "UNBAN_USER" -> {
+                        try {
+                            String userId = parts[1];
+                            boolean success = UserDAO.updateUserStatus(userId, "ACTIVE");
+                            out.println(success ? "UNBAN_SUCCESS" : "ERROR|Không thể mở khóa user");
+                        } catch (Exception e) {
+                            out.println("ERROR|Lỗi server khi mở khóa user");
+                        }
+                    }
                 }
-                // ... (Các tính năng khác tương tự) ...
             }
         } catch (IOException e) {
-            System.out.println("Lỗi mạng!");
+            System.out.println("Lỗi mạng! Client đã ngắt kết nối.");
         }
     }
 }

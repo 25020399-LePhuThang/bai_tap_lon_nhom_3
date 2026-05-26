@@ -1,244 +1,291 @@
 package com.auction.client.controller;
 
 import com.auction.client.network.NetworkClient;
-import com.auction.shared.model.BidTransaction;
+import com.auction.server.dao.ItemDAO;
+import com.auction.shared.model.Auction;
+import com.auction.shared.model.item.Art;
+import com.auction.shared.model.item.Electronic;
 import com.auction.shared.model.item.Item;
-import javafx.application.Platform;
+import com.auction.shared.model.item.Vehicle;
+import com.auction.shared.model.user.Bidder;
+import com.auction.shared.model.user.User;
+import javafx.animation.Animation;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
-import javafx.scene.chart.LineChart;
-import javafx.scene.chart.NumberAxis;
-import javafx.scene.chart.XYChart;
+import javafx.scene.Node;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
 import javafx.stage.Stage;
+import javafx.event.ActionEvent;
 
-import java.net.URL;
-import java.text.NumberFormat;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.List;
-import java.util.Locale;
-import java.util.ResourceBundle;
+import java.io.IOException;
 
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.util.Duration;
-import javafx.event.ActionEvent;
+
+import java.net.URL;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.Date;
+import java.util.List;
+import java.util.ResourceBundle;
+import java.text.SimpleDateFormat;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
+
+
 
 public class AuctionDetailController implements Initializable {
 
-    // ─── Labels thông tin sản phẩm ───────────────────────────────────────────
+    // ================= HEADER & FOOTER =================
+    @FXML private Label lblUsername2;
+    @FXML private Button btnLogout;
+    @FXML private Label lblTime4;
+    @FXML private Button btnBack;
+
+    // ================= CHI TIẾT SẢN PHẨM =================
+    @FXML private ImageView imgProduct;
     @FXML private Label lblProductname;
     @FXML private Label lblProductID;
     @FXML private Label lblSeller;
     @FXML private Label lblTimeStart;
     @FXML private Label lblTimeEnd;
-    @FXML private Label lblRecentPrice;
+
+    // ================= THÔNG TIN GIÁ & ĐẤU GIÁ =================
+    @FXML private Label lblClock;
     @FXML private Label lblStartPrice;
     @FXML private Label lblStepPrice;
-    @FXML private Label lblClock;       // Đồng hồ đếm ngược
-    @FXML private Label lblTime4;       // Đồng hồ thực tế
-    @FXML private Label lblUsername2;
-
-    // ─── Ô nhập giá + nút ────────────────────────────────────────────────────
+    @FXML private Label lblRecentPrice;
     @FXML private TextField txtPrice;
-    @FXML private Button    btnAuction;
-    @FXML private Button    btnBack;
-    @FXML private Button    btnLogout;
+    @FXML private Button btnAuction;
+    @FXML private Button btnDetail;
 
-    // ─── Ảnh sản phẩm ────────────────────────────────────────────────────────
-    @FXML private ImageView imgProduct;
+    // ================= BẢNG & THỐNG KÊ =================
+    // LƯU Ý: Thay chữ "History" bằng đúng tên Class lịch sử của cậu
+//    @FXML private TableView<History> tbvHistory;
+//    @FXML private TableColumn<History, String> colHistoryName;
+//    @FXML private TableColumn<History, Double> colHistoryPrice;
 
-    // ─── TableView lịch sử (text) ─────────────────────────────────────────────
-    @FXML private TableColumn<BidTransaction, String> tbvHistory; // cột "Số tiền"
+    @FXML private Label lblUserAuctionCount;
+    @FXML private Label lblBidCount;
 
-    // ─── LineChart lịch sử giá realtime ─────────────────────────────────────
-    @FXML private LineChart<Number, Number> priceChart;
-    @FXML private NumberAxis xAxis;
-    @FXML private NumberAxis yAxis;
-
-    // ─── State ───────────────────────────────────────────────────────────────
+    // ================= BIẾN TOÀN CỤC =================
     private Item currentItem;
-    private XYChart.Series<Number, Number> priceSeries;
-    private int  bidCount = 0;
-    private final NumberFormat fmt = NumberFormat.getNumberInstance(new Locale("vi", "VN"));
-    private String currentUser = "Bạn";
+    private User currentUser;
+    private Timeline countdownTimeline;
+    private Timeline clockTimeline;
 
-    // ─── initialize() ────────────────────────────────────────────────────────
     @Override
-    public void initialize(URL url, ResourceBundle rb) {
-        // Khởi tạo đồng hồ thực tế
-        DateTimeFormatter dtf = DateTimeFormatter.ofPattern("HH:mm:ss  dd/MM/yyyy");
-        Timeline clock = new Timeline(
-                new KeyFrame(Duration.ZERO, e -> {
-                    if (lblTime4 != null) lblTime4.setText(LocalDateTime.now().format(dtf));
-                }),
-                new KeyFrame(Duration.seconds(1))
-        );
+    public void initialize(URL url, ResourceBundle resourceBundle) {
+        clockInit();
+    }
+
+    public void clockInit() {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm:ss  dd/MM/yyyy");
+        Timeline clock = new Timeline(new KeyFrame(Duration.ZERO, e ->
+                lblTime4.setText(LocalDateTime.now().format(formatter))
+        ), new KeyFrame(Duration.seconds(1)));
         clock.setCycleCount(Timeline.INDEFINITE);
         clock.play();
-
-        // Khởi tạo LineChart
-        if (priceChart != null) {
-            priceSeries = new XYChart.Series<>();
-            priceSeries.setName("Giá đấu");
-            priceChart.getData().add(priceSeries);
-            priceChart.setAnimated(false);
-            priceChart.setCreateSymbols(true);
-            priceChart.setLegendVisible(false);
-            if (xAxis != null) xAxis.setLabel("Lần đặt");
-            if (yAxis != null) yAxis.setLabel("Giá (đ)");
-        }
     }
 
-    // ─── setItemData() — gọi từ MainScreenController ─────────────────────────
+    // Hàm nạp dữ liệu Sản phẩm
     public void setItemData(Item item) {
         this.currentItem = item;
+        if (currentItem != null) {
+            lblProductname.setText(currentItem.getName());
+            lblProductID.setText(currentItem.getItemID());
+            lblSeller.setText(currentItem.getSeller_ID());
+            lblStartPrice.setText(currentItem.getStartingPrice()+"$");
+            lblRecentPrice.setText(currentItem.getCurrentPrice()+"$");
+            lblStepPrice.setText(currentItem.getMinIncrement()+"$");
+            SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
 
-        // Hiển thị thông tin sản phẩm
-        setText(lblProductname, "            " + item.getName());
-        setText(lblProductID,   "    " + item.getId());
-        setText(lblSeller,      "    " + (item.getLastBidderId() != null ? item.getLastBidderId() : "N/A"));
-        setText(lblRecentPrice, fmt.format(item.getCurrentPrice()) + " đ");
-        setText(lblStartPrice,  fmt.format(item.getStartingPrice()) + " đ");
-        setText(lblStepPrice,   fmt.format(item.getMinIncrement()) + " đ");
+            if (currentItem.getStartTime() != null) {
+                lblTimeStart.setText(sdf.format(currentItem.getStartTime()));
+            } else {
+                lblTimeStart.setText("Chưa xác định");
+            }
 
-        if (item.getStartTime() != null)
-            setText(lblTimeStart, "           " + item.getStartTime().toString());
-        if (item.getEndTime() != null)
-            setText(lblTimeEnd, "           " + item.getEndTime().toString());
+            if (currentItem.getEndTime() != null) {
+                lblTimeEnd.setText(sdf.format(currentItem.getEndTime()));
+            } else {
+                lblTimeEnd.setText("Chưa xác định");
+            }
 
-        // Ảnh sản phẩm
-        if (imgProduct != null && item.getProductImageURL() != null && !item.getProductImageURL().isEmpty()) {
-            try {
-                imgProduct.setImage(new Image(item.getProductImageURL(), true));
-            } catch (Exception ignored) {}
+            String imageUrl = currentItem.getProductImageURL();
+
+            // 2. Kiểm tra xem URL có tồn tại không để tránh lỗi sập app
+            if (imageUrl != null && !imageUrl.trim().isEmpty()) {
+                try {
+                    // Tạo Bức ảnh từ URL (tham số 'true' giúp tải ảnh ngầm, không làm đơ giao diện)
+                    Image image = new javafx.scene.image.Image(imageUrl, true);
+
+                    // Lồng bức ảnh vào cái Khung imgProduct
+                    imgProduct.setImage(image);
+                } catch (Exception e) {
+                    System.err.println("Lỗi không tải được ảnh: " + e.getMessage());
+                }
+            } else {
+                System.out.println("Sản phẩm này chưa có link ảnh!");
+            }
         }
-
-        // Đồng hồ đếm ngược
-        startCountdown(item);
-
-        // Tải lịch sử giá ban đầu từ server (chạy nền)
-        loadBidHistory(item.getId());
-
-        // Bắt đầu lắng nghe BID_UPDATE realtime
-        NetworkClient.getInstance().startListening(message -> {
-            if (!message.startsWith("BID_UPDATE|")) return;
-            String[] p = message.split("\\|");
-            if (p.length < 4) return;
-            String msgItemId = p[1];
-            if (!msgItemId.equals(item.getId())) return;
-
-            double newPrice  = Double.parseDouble(p[2]);
-            String winner    = p[3];
-
-            Platform.runLater(() -> {
-                // Cập nhật label giá
-                setText(lblRecentPrice, fmt.format(newPrice) + " đ");
-                // Thêm điểm mới vào LineChart
-                addChartPoint(newPrice);
-            });
-        });
+        startCountdown();
     }
 
-    // ─── Nút "Đấu giá!" ──────────────────────────────────────────────────────
+    // Hàm nạp riêng Tên hiển thị (Tách biệt hoàn toàn)
+    public void setDisplayName(String displayName) {
+        if (displayName != null && !displayName.isEmpty()) {
+            lblUsername2.setText(displayName);
+        } else {
+            lblUsername2.setText("Khách");
+        }
+    }
+
+    public void toMainScreen(ActionEvent event){
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/MainScreen.fxml"));
+            Parent root = loader.load();
+
+            MainScreenController mainScreenController = loader.getController();
+            mainScreenController.setDisplayName(lblUsername2.getText());
+
+            Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
+            stage.setScene(new Scene(root));
+            stage.show();
+        } catch (IOException e) { e.printStackTrace(); }
+
+    }
+
+    private void switchScence(ActionEvent event, String fxmlFile) throws IOException {
+        Parent root = FXMLLoader.load(getClass().getResource(fxmlFile));
+        Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
+        stage.setScene(new Scene(root));
+        stage.show();
+    }
+
     @FXML
-    public void onBidButtonClicked(ActionEvent event) {
-        if (currentItem == null) return;
-        String raw = txtPrice.getText().trim();
-        if (raw.isEmpty()) {
-            showAlert("Vui lòng nhập mức giá muốn đặt.");
+    public void handleLogout(ActionEvent event) throws IOException {
+        NetworkClient.disconnect(lblUsername2.getText());
+        switchScence(event,"/SignInScreen.fxml");
+    }
+
+    private void startCountdown() {
+        // Dọn dẹp đồng hồ cũ nếu có chạy trước đó
+        if (countdownTimeline != null) {
+            countdownTimeline.stop();
+        }
+
+        // Nếu không có thời gian kết thúc thì cho nó về 0
+        if (currentItem == null || currentItem.getEndTime() == null) {
+            lblClock.setText("00:00:00");
             return;
         }
-        try {
-            double price = Double.parseDouble(raw.replace(",", "").replace(".", ""));
-            // Gửi lên server: BID|userId|price|itemId
-            String msg    = "BID|" + currentUser + "|" + price + "|" + currentItem.getId();
-            String result = NetworkClient.sendAndReceive(msg);
-            showAlert(result != null ? result : "Không nhận được phản hồi từ server.");
-            txtPrice.clear();
-        } catch (NumberFormatException e) {
-            showAlert("Giá không hợp lệ. Vui lòng nhập số.");
-        }
-    }
 
-    // ─── Nút "Quay lại" ──────────────────────────────────────────────────────
-    @FXML
-    public void onBackButtonClicked(ActionEvent event) {
-        onClose();
-        Stage stage = (Stage) btnBack.getScene().getWindow();
-        stage.close();
-    }
+        countdownTimeline = new Timeline(new KeyFrame(Duration.seconds(1), event -> {
+            Date now = new Date();
+            Date endTime = currentItem.getEndTime();
 
-    // ─── Dừng listener khi đóng màn hình ─────────────────────────────────────
-    public void onClose() {
-        NetworkClient.getInstance().stopListening();
-    }
+            // Tính khoảng cách giữa 2 mốc thời gian (bằng mili-giây)
+            long diffInMillis = endTime.getTime() - now.getTime();
 
-    // ─── Tải lịch sử bid từ server ───────────────────────────────────────────
-    private void loadBidHistory(String itemId) {
-        new Thread(() -> {
-            List<BidTransaction> history = NetworkClient.getBidHistory(itemId);
-            Platform.runLater(() -> {
-                if (priceSeries == null) return;
-                priceSeries.getData().clear();
-                bidCount = 0;
-                for (BidTransaction tx : history) {
-                    addChartPoint(tx.getBidAmount());
-                }
-            });
-        }, "load-history-thread").start();
-    }
-
-    // ─── Thêm điểm vào LineChart ──────────────────────────────────────────────
-    private void addChartPoint(double price) {
-        if (priceSeries == null) return;
-        bidCount++;
-        priceSeries.getData().add(new XYChart.Data<>(bidCount, price));
-        // Giữ tối đa 60 điểm để chart không quá dày
-        if (priceSeries.getData().size() > 60) {
-            priceSeries.getData().remove(0);
-        }
-    }
-
-    // ─── Đồng hồ đếm ngược ───────────────────────────────────────────────────
-    private void startCountdown(Item item) {
-        if (lblClock == null || item.getEndTime() == null) return;
-        Timeline countdown = new Timeline(new KeyFrame(Duration.seconds(1), e -> {
-            long diff = item.getEndTime().getTime() - System.currentTimeMillis();
-            if (diff <= 0) {
+            if (diffInMillis <= 0) {
+                // HẾT GIỜ!
                 lblClock.setText("ĐÃ KẾT THÚC");
+                lblClock.setStyle("-fx-text-fill: #e74c3c;"); // Đổi màu chữ thành đỏ
+                btnAuction.setDisable(true); // Khóa luôn nút Đấu giá không cho bấm nữa
+
+                if (countdownTimeline != null) {
+                    countdownTimeline.stop(); // Tắt đồng hồ
+                }
             } else {
-                long h = diff / 3_600_000;
-                long m = (diff % 3_600_000) / 60_000;
-                long s = (diff % 60_000) / 1_000;
-                lblClock.setText(String.format("%02d:%02d:%02d", h, m, s));
+                // CÒN GIỜ: Quy đổi mili-giây ra Giờ, Phút, Giây
+                long diffInSeconds = diffInMillis / 1000;
+                long hours = diffInSeconds / 3600;
+                long minutes = (diffInSeconds % 3600) / 60;
+                long seconds = diffInSeconds % 60;
+
+                // Nạp vào Label với format 2 chữ số (VD: 05:09:12)
+                lblClock.setText(String.format("%02d:%02d:%02d", hours, minutes, seconds));
             }
         }));
-        countdown.setCycleCount(Timeline.INDEFINITE);
-        countdown.play();
+
+        // Cho đồng hồ chạy lặp đi lặp lại vô hạn (đến khi mình gọi lệnh stop)
+        countdownTimeline.setCycleCount(Animation.INDEFINITE);
+        countdownTimeline.play();
     }
 
-    // ─── Tiện ích ─────────────────────────────────────────────────────────────
-    private void setText(Label lbl, String text) {
-        if (lbl != null) lbl.setText(text);
-    }
-
-    private void showAlert(String msg) {
+    @FXML
+    public void showProductDetails() {
+        if (currentItem == null) return;
         Alert alert = new Alert(Alert.AlertType.INFORMATION);
-        alert.setTitle("Thông báo");
-        alert.setHeaderText(null);
-        alert.setContentText(msg);
-        alert.showAndWait();
-    }
+        alert.setTitle("Chi tiết sản phẩm");
+        alert.setHeaderText("Tên sản phẩm: " + currentItem.getName());
 
-    public void setCurrentUser(String username) {
-        this.currentUser = username;
-        setText(lblUsername2, "            " + username);
+        String sellerId = currentItem.getSeller_ID();
+        if (sellerId == null || sellerId.trim().isEmpty() || sellerId.equalsIgnoreCase("null")) {
+            sellerId = "Không rõ";
+        }
+
+        String winnerId = currentItem.getLastBidderId();
+        if (winnerId == null || winnerId.trim().isEmpty() || winnerId.equalsIgnoreCase("null")) {
+            winnerId = "Chưa có người thắng";
+        }
+
+        String details = "Mã SP: " + currentItem.getId() + "\n"
+                + "Phân loại: " + currentItem.getType() + "\n"
+                + "Giá khởi điểm: " + currentItem.getStartingPrice() + " $\n"
+                + "Giá hiện tại: " + currentItem.getCurrentPrice() + " $\n"
+                + "ID Người bán: " + sellerId + "\n"
+                + "ID Người thắng: " + winnerId + "\n"
+                + "Trạng thái: " + currentItem.getStatus() + "\n";
+
+
+        String extraDetails = "\n Thông tin chi tiết \n";
+
+        if (currentItem instanceof Electronic) {
+            Electronic electronic = (Electronic) currentItem;
+            extraDetails += "Thương hiệu: " + electronic.getBrand() + "\n"
+                    + "Bảo hành: " + electronic.getWarrantyPeriod() + " tháng\n";
+
+        } else if (currentItem instanceof Art) {
+            Art art = (Art) currentItem;
+            extraDetails += "Tác giả: " + art.getAuthor() + "\n"
+                    + "Năm sáng tác: " + art.getCreationYear() + "\n";
+
+        } else if (currentItem instanceof Vehicle) {
+            Vehicle vehicle = (Vehicle) currentItem;
+            extraDetails += "Thương hiệu: "+vehicle.getBrand()+"\n"
+                    + "Bảo hành: "+vehicle.getWarrantyPeriod()+"tháng\n"
+                    +"Nhiên liệu: " + vehicle.getFuelType() + "\n"
+                    + "Dung tích động cơ: " + vehicle.getEngineCapacity() + "\n"
+            ;
+
+        } else {
+            extraDetails = "";
+        }
+
+        alert.setContentText(details + extraDetails);
+
+        try {
+            String imageUrl = currentItem.getProductImageURL();
+            if (imageUrl != null && !imageUrl.isEmpty()) {
+                javafx.scene.image.Image image = new javafx.scene.image.Image(imageUrl, 150, 150, true, true);
+                javafx.scene.image.ImageView imageView = new javafx.scene.image.ImageView(image);
+                imageView.setStyle("-fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.3), 5, 0, 0, 0);");
+                alert.setGraphic(imageView);
+            }
+        } catch (Exception e) {
+            System.err.println("Không thể load ảnh lên hộp thoại: " + e.getMessage());
+        }
+
+        alert.showAndWait();
     }
 }
