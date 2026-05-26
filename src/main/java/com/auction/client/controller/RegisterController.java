@@ -1,21 +1,17 @@
 package com.auction.client.controller;
 
 import com.auction.client.network.NetworkClient;
-import com.auction.shared.model.user.Bidder;
-import com.auction.shared.model.user.User;
+import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
 import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
-import javafx.scene.control.Label;
-import javafx.scene.control.PasswordField;
-import javafx.scene.control.TextField;
+import javafx.scene.control.*;
 import javafx.stage.Stage;
 import javafx.event.ActionEvent;
 
-import javafx.scene.control.Button;
 import java.io.IOException;
 
 import javafx.animation.KeyFrame;
@@ -48,9 +44,13 @@ public class RegisterController implements Initializable {
     private Button SignIN;
     @FXML
     private Label lblERROR;
+    @FXML
+    private ComboBox<String> cbRole;
 
     public void initialize(URL url, ResourceBundle resourceBundle) {
         clockInit();
+        cbRole.setItems(FXCollections.observableArrayList("Người mua (Bidder)", "Người bán (Seller)"));
+        cbRole.getSelectionModel().selectFirst();
     }
 
     public void clockInit() {
@@ -85,8 +85,9 @@ public class RegisterController implements Initializable {
         String password2 = txtPass2.getText();
         String email = txtEmail.getText().trim();
         String phone = txtPhone.getText().trim();
+        String role= cbRole.getValue().trim();
 
-        if (username.isEmpty() || phone.isEmpty() || email.isEmpty() || password1.isEmpty()) {
+        if (username.isEmpty() || phone.isEmpty() || email.isEmpty() || password1.isEmpty() || role == null) {
             lblERROR.setText("Nhập đủ thông tin để tiếp tục!");
         } else if (!username.matches("^[a-zA-Z0-9_]{4,20}$")) {
             lblERROR.setText("Tên đăng nhập từ 4-20 ký tự, không chứa kí tự đặc biệt");
@@ -110,14 +111,12 @@ public class RegisterController implements Initializable {
             lblERROR.setStyle("-fx-text-fill: #2E7D32;");
             lblERROR.setText("Dữ liệu hợp lệ. Đang xử lý đăng ký...");
 
-            Bidder newBidder = new Bidder();
-            newBidder.setName(username);
-            newBidder.setPassword(password1);
-            newBidder.setEmail(email);
-            newBidder.setPhoneNumber(phone);
-
+            String finalRole = "BIDDER"; // Mặc định là mua
+            if (role.contains("Seller") || role.contains("bán") || role.contains("Bán")) {
+                finalRole = "SELLER";
+            }
             // đợi liên kết với server
-            boolean isSuccess = NetworkClient.sendRegisterRequest(username, password1, email, phone);
+            boolean isSuccess = NetworkClient.sendRegisterRequest(username, password1, email, phone,finalRole);
             if (isSuccess) {
                 try {
                     switchScence(event, "/SignInScreen.fxml");

@@ -7,23 +7,11 @@ import com.auction.server.database.DatabaseManager;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.ArrayList;
 
 public class AuctionServer {
-    // 1. Khai báo danh sách — dùng CopyOnWriteArrayList để thread-safe
-    public static final CopyOnWriteArrayList<ClientHandler> clients = new CopyOnWriteArrayList<>();
-
-    /**
-     * Gửi một tin nhắn đến TẤT CẢ client đang kết nối.
-     * Được gọi sau mỗi bid hợp lệ để cập nhật realtime cho mọi người xem.
-     *
-     * @param message chuỗi tin nhắn (ví dụ: "BID_UPDATE|IPHONE_15|21000000|user1")
-     */
-    public static void broadcast(String message) {
-        for (ClientHandler client : clients) {
-            client.sendMessage(message);
-        }
-    }
+    // 1. Khai báo danh sách
+    public static ArrayList<ClientHandler> clients = new ArrayList<>();
 
     public static void main(String[] args) {
         DatabaseManager.initDB();

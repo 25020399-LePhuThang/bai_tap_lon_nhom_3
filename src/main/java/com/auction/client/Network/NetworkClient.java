@@ -1,4 +1,4 @@
-package com.auction.client.network;
+package com.auction.client.Network;
 
 import com.auction.shared.model.item.Item;
 import com.auction.shared.model.user.Admin;
