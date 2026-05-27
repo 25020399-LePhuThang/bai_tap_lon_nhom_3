@@ -25,7 +25,7 @@
                 <Insets bottom="15.0" left="20.0" right="20.0" top="15.0" />
             </padding>
 
-            <Button fx:id="btnProfile" mnemonicParsing="false" onAction="#toInfoScreen" style="-fx-background-color: transparent; -fx-padding: 0; -fx-cursor: hand;">
+            <Button fx:id="btnProfile" mnemonicParsing="false" onAction="#toInfoScreen" style="-fx-background-color: transparent; -fx-padding: 0; -fx-cursor: hand;" styleClass="avatar-button" stylesheets="@Style.css">
                 <graphic>
                     <Circle fill="#bdc3c7" radius="22.0" stroke="#f1c40f" strokeType="INSIDE" strokeWidth="2.0" />
                 </graphic>
@@ -40,13 +40,13 @@
                 </Label>
             </HBox>
 
-            <Region HBox.hgrow="ALWAYS" />
+            <Region stylesheets="@Style.css" HBox.hgrow="ALWAYS" />
 
             <HBox alignment="CENTER_LEFT" spacing="5.0">
                 <Label text="Số dư:" textFill="#f1c40f">
                     <font><Font name="System Bold" size="16.0" /></font>
                 </Label>
-                <Label fx:id="lblBalance" text="0$" textFill="#f1c40f">
+                <Label fx:id="lblBalance" styleClass="price-text" stylesheets="@Style.css" text="0$" textFill="#f1c40f">
                     <font><Font name="System Bold" size="16.0" /></font>
                 </Label>
             </HBox>
@@ -123,7 +123,7 @@
                 </Label>
                 <Region HBox.hgrow="ALWAYS" />
 
-                <Button fx:id="btnDeleteItem" mnemonicParsing="false" onAction="#handleDeleteItem" prefHeight="30.0" style="-fx-background-color: transparent; -fx-border-color: #c0392b; -fx-text-fill: #c0392b; -fx-cursor: hand; -fx-border-radius: 3;" text=" Xóa sản phẩm">
+                <Button fx:id="btnDeleteItem" mnemonicParsing="false" onAction="#handleDeleteItem" prefHeight="30.0" style="-fx-background-color: transparent; -fx-border-color: #c0392b; -fx-text-fill: #c0392b; -fx-cursor: hand; -fx-border-radius: 3;" styleClass="btn-primary" stylesheets="@Style.css" text=" Xóa sản phẩm">
                     <font><Font name="System Bold" size="13.0" /></font>
                 </Button>
 
@@ -155,7 +155,7 @@
                 <Label fx:id="lblTime" style="-fx-text-fill: #7f8c8d;" text="Thời gian hiển thị tại đây" StackPane.alignment="CENTER">
                     <font><Font name="System Italic" size="14.0" /></font>
                 </Label>
-                <Button fx:id="btnBackFromSeller" mnemonicParsing="false" onAction="#toSignInScreen" prefHeight="35.0" prefWidth="110.0" style="-fx-background-color: transparent; -fx-border-color: #95a5a6; -fx-text-fill: #7f8c8d; -fx-border-radius: 5; -fx-font-weight: bold; -fx-cursor: hand;" text="Quay lại" StackPane.alignment="CENTER_RIGHT" />
+                <Button fx:id="btnBackFromSeller" mnemonicParsing="false" onAction="#toSignInScreen" prefHeight="35.0" prefWidth="110.0" style="-fx-background-color: transparent; -fx-border-color: #95a5a6; -fx-text-fill: #7f8c8d; -fx-border-radius: 5; -fx-font-weight: bold; -fx-cursor: hand;" styleClass="btn-primary" stylesheets="@Style.css" text="Quay lại" StackPane.alignment="CENTER_RIGHT" />
             </children>
         </StackPane>
     </bottom>

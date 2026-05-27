@@ -85,7 +85,7 @@
                         </VBox>
 
                         <Region HBox.hgrow="ALWAYS" />
-                        <Button fx:id="btnDeleteAccount" mnemonicParsing="false" onAction="#DeleteUser" prefHeight="35.0" style="-fx-background-color: transparent; -fx-border-color: #c0392b; -fx-text-fill: #c0392b; -fx-border-radius: 5; -fx-cursor: hand;" text=" Xóa tài khoản">
+                        <Button fx:id="btnDeleteAccount" mnemonicParsing="false" onAction="#DeleteUser" prefHeight="35.0" style="-fx-background-color: transparent; -fx-border-color: #c0392b; -fx-text-fill: #c0392b; -fx-border-radius: 5; -fx-cursor: hand;" styleClass="btn-primary" stylesheets="@Style.css" text=" Xóa tài khoản">
                             <font>
                                 <Font name="System Bold" size="13.0" />
                             </font>
@@ -162,7 +162,7 @@
                         <HBox alignment="CENTER_LEFT">
                             <Label fx:id="lblChangePassError" style="-fx-text-fill: #e74c3c; -fx-font-style: italic;" text="" />
                             <Region HBox.hgrow="ALWAYS" />
-                            <Button fx:id="btnChangePass" mnemonicParsing="false" onAction="#changePassLogic" prefHeight="32.0" prefWidth="120.0" style="-fx-background-color: #e74c3c; -fx-text-fill: white; -fx-font-weight: bold; -fx-cursor: hand; -fx-background-radius: 5;" styleClass="btn-danger" text="Đổi mật khẩu" />
+                            <Button fx:id="btnChangePass" mnemonicParsing="false" onAction="#changePassLogic" prefHeight="32.0" prefWidth="120.0" style="-fx-background-color: #e74c3c; -fx-text-fill: white; -fx-font-weight: bold; -fx-cursor: hand; -fx-background-radius: 5;" styleClass="btn-primary" text="Đổi mật khẩu" />
                         </HBox>
                     </VBox>
 
@@ -184,7 +184,7 @@
                         <Font name="System Italic" size="14.0" />
                     </font>
                 </Label>
-                <Button fx:id="btnBackFromSettings" mnemonicParsing="false" onAction="#toPreviousScreen" prefHeight="35.0" prefWidth="110.0" style="-fx-background-color: transparent; -fx-border-color: #95a5a6; -fx-text-fill: #7f8c8d; -fx-border-radius: 5; -fx-font-weight: bold; -fx-cursor: hand;" styleClass="btn-danger" stylesheets="@Style.css" text="Quay lại" StackPane.alignment="CENTER_RIGHT" />
+                <Button fx:id="btnBackFromSettings" mnemonicParsing="false" onAction="#toPreviousScreen" prefHeight="35.0" prefWidth="110.0" style="-fx-background-color: transparent; -fx-border-color: #95a5a6; -fx-text-fill: #7f8c8d; -fx-border-radius: 5; -fx-font-weight: bold; -fx-cursor: hand;" styleClass="btn-primary" stylesheets="@Style.css" text="Quay lại" StackPane.alignment="CENTER_RIGHT" />
             </children>
         </StackPane>
     </bottom>

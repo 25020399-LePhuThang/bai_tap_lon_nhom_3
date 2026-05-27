@@ -94,8 +94,7 @@ public class MainScreenController implements Initializable {
                         // Lấy cửa sổ (Stage) hiện tại thông qua cái bảng tbvItems của màn hình chính
                         Stage stage = (Stage) tbvIsPresenting.getScene().getWindow();
                         stage.setTitle("Chi tiết: " + selectedItem.getName());
-                        stage.setScene(new Scene(root));
-                        stage.setMaximized(true);
+                        stage.getScene().setRoot(root);
                         stage.show();
                     } catch (IOException e) { e.printStackTrace(); }
                 };
@@ -117,8 +116,7 @@ public class MainScreenController implements Initializable {
                         // Lấy cửa sổ (Stage) hiện tại thông qua cái bảng tbvItems của màn hình chính
                         Stage stage = (Stage) tbvWillPresent.getScene().getWindow();
                         stage.setTitle("Chi tiết: " + selectedItem.getName());
-                        stage.setScene(new Scene(root));
-                        stage.setMaximized(true);
+                        stage.getScene().setRoot(root);
                         stage.show();
                     } catch (IOException e) { e.printStackTrace(); }
                 };

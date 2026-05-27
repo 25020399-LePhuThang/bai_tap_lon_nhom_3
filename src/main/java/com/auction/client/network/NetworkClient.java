@@ -1,5 +1,6 @@
-package com.auction.client.Network;
+package com.auction.client.network;
 
+import com.auction.shared.model.BidTransaction;
 import com.auction.shared.model.item.Item;
 import com.auction.shared.model.user.Admin;
 import com.auction.shared.model.user.Bidder;
@@ -16,6 +17,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.io.*;
 import java.net.*;
+import java.util.function.Consumer;
 
 public class NetworkClient {
     private static NetworkClient instance;
@@ -23,8 +25,14 @@ public class NetworkClient {
     private static BufferedReader in;
     private static PrintWriter out;
 
-    private static final String SERVER_IP ="10.11.200.243";
+    private static final String SERVER_IP ="192.168.1.2";
     private static final int SERVER_PORT = 5000;
+
+    // Callback được gọi mỗi khi nhận được BID_UPDATE từ server
+    private Consumer<String> bidUpdateListener;
+
+    // Thread lắng nghe server push tin về
+    private Thread listenerThread;
 
     private NetworkClient() {
         connect(SERVER_IP, SERVER_PORT);
@@ -36,10 +44,6 @@ public class NetworkClient {
         }
         return instance;
     }
-
-    // =========================================================================
-    // LÕI KẾT NỐI VÀ CHỐNG NGHẼN MẠNG
-    // =========================================================================
     private static boolean connect(String host, int port) {
         try {
             socket = new Socket(host, port);
@@ -91,11 +95,6 @@ public class NetworkClient {
         return s == null ? "" : s.replace("\n", "").replace("\r", "").replace("|", "");
     }
 
-    // =========================================================================
-    // CÁC HÀM XỬ LÝ DỮ LIỆU TÀI KHOẢN (ĐĂNG NHẬP, ĐĂNG KÝ, ĐỔI MK)
-    // =========================================================================
-
-    // 🌟 HÀM ĐĂNG NHẬP MỚI ĐƯỢC BỔ SUNG (Chuẩn 3 tham số)
     public static String login(String username, String password, String role) {
         String msg = "LOGIN|" + safe(username) + "|" + safe(password) + "|" + safe(role);
         return sendAndReceive(msg);
@@ -137,7 +136,8 @@ public class NetworkClient {
             if (response != null && response.startsWith("USER_INFO_SUCCESS|")) {
                 String jsonString = response.split("\\|", 2)[1];
 
-                com.google.gson.Gson gson = new com.google.gson.GsonBuilder()
+                 Gson gson = new GsonBuilder()
+
                         .registerTypeAdapter(User.class, new com.google.gson.JsonDeserializer<User>() {
                             @Override
                             public User deserialize(com.google.gson.JsonElement json, java.lang.reflect.Type typeOfT, com.google.gson.JsonDeserializationContext context) throws com.google.gson.JsonParseException {
@@ -150,7 +150,24 @@ public class NetworkClient {
 
                                 throw new com.google.gson.JsonParseException("Không nhận diện được vai trò: " + role);
                             }
-                        }).create();
+                        })
+
+                        .registerTypeAdapter(java.time.LocalDateTime.class, new com.google.gson.JsonDeserializer<java.time.LocalDateTime>() {
+                            @Override
+                            public java.time.LocalDateTime deserialize(com.google.gson.JsonElement json, java.lang.reflect.Type typeOfT, com.google.gson.JsonDeserializationContext context) throws com.google.gson.JsonParseException {
+                                return java.time.LocalDateTime.parse(json.getAsString(), java.time.format.DateTimeFormatter.ISO_LOCAL_DATE_TIME);
+                            }
+                        })
+
+                        // 3. Dạy Gson cách ghi LocalDateTime (Dùng khi Client của cậu gửi gói tin lên Server)
+                        .registerTypeAdapter(java.time.LocalDateTime.class, new com.google.gson.JsonSerializer<java.time.LocalDateTime>() {
+                            @Override
+                            public com.google.gson.JsonElement serialize(java.time.LocalDateTime src, java.lang.reflect.Type typeOfSrc, com.google.gson.JsonSerializationContext context) {
+                                return new com.google.gson.JsonPrimitive(src.format(java.time.format.DateTimeFormatter.ISO_LOCAL_DATE_TIME));
+                            }
+                        })
+
+                        .create(); // Chốt sổ tạo ra cục Gson hoàn hảo
                 return gson.fromJson(jsonString, User.class);
             }
         } catch (Exception e) {
@@ -158,10 +175,6 @@ public class NetworkClient {
         }
         return null;
     }
-
-    // =========================================================================
-    // CÁC HÀM GIAO DỊCH VÀ TIỀN TỆ
-    // =========================================================================
 
     public static String getBalanceRequest(String username) {
         return sendAndReceive("GET_BALANCE|" + safe(username));
@@ -262,10 +275,6 @@ public class NetworkClient {
         }
     }
 
-    // =========================================================================
-    // CÁC HÀM DÀNH CHO ADMIN
-    // =========================================================================
-
     public static List<User> getAllUsers() {
         try {
             out.println("GET_ALL_USERS");
@@ -296,7 +305,6 @@ public class NetworkClient {
         return new ArrayList<>();
     }
 
-    // Đã xóa hàm getAllUsersRequest (vì nó trùng lặp với getAllUsers)
 
     public static boolean approveItem(String itemId) {
         try {
@@ -370,5 +378,90 @@ public class NetworkClient {
             System.err.println("Lỗi lấy danh sách SP chờ duyệt: " + e.getMessage());
         }
         return new ArrayList<>();
+    }
+
+    /**
+     * Lấy lịch sử bid của một sản phẩm (sắp xếp tăng dần) để vẽ LineChart.
+     * Gửi GET_BID_HISTORY|itemId → server trả về JSON array.
+     */
+    public static List<BidTransaction> getBidHistory(String itemId) {
+        String response = sendAndReceive("GET_BID_HISTORY|" + itemId);
+        if (response == null || response.isEmpty()) return new ArrayList<>();
+        Gson gson = new Gson();
+        Type listType = new TypeToken<ArrayList<BidTransaction>>(){}.getType();
+        return gson.fromJson(response, listType);
+    }
+
+    public void startListening(Consumer<String> listener) {
+        this.bidUpdateListener = listener;
+
+        if (listenerThread != null && listenerThread.isAlive()) {
+            return;
+        }
+
+        listenerThread = new Thread(() -> {
+            try {
+                String line;
+                while ((line = in.readLine()) != null) {
+                    if (line.startsWith("BID_UPDATE|") && bidUpdateListener != null) {
+                        bidUpdateListener.accept(line);
+                    }
+                }
+            } catch (IOException e) {
+                System.err.println("Client: Listener bị đứt kết nối: " + e.getMessage());
+            }
+        }, "bid-listener-thread");
+
+        listenerThread.setDaemon(true);
+        listenerThread.start();
+    }
+    public void stopListening() {
+        bidUpdateListener = null;
+    }
+    /**
+     * Gửi yêu cầu xóa tài khoản lên Server
+     * Trả về nguyên chuỗi phản hồi từ Server (vd: "DELETE_SUCCESS|..." hoặc "DELETE_FAIL|...")
+     */
+    public static String deleteUser(String username) {
+        try {
+            out.println("DELETE_USER|" + username);
+
+            String responseStr = in.readLine();
+            System.out.println("Client nhận phản hồi xóa: " + responseStr);
+            if (responseStr != null) {
+                return responseStr;
+            } else {
+                return "DELETE_FAIL|Lỗi: Không nhận được phản hồi từ Server.";
+            }
+        } catch (Exception e) {
+            System.out.println("Lỗi mất kết nối khi xóa User: " + e.getMessage());
+            e.printStackTrace();
+            return "DELETE_FAIL|Lỗi mạng: Mất kết nối tới Server.";
+        }
+    }
+
+    /**
+     * Gửi yêu cầu rút/xóa sản phẩm (Item) lên Server dựa vào ID
+     * Trả về nguyên chuỗi phản hồi từ Server (vd: "DELETE_SUCCESS|..." hoặc "DELETE_FAIL|...")
+     */
+    public static String deleteItem(String itemId) {
+        try {
+            // Gửi lệnh xóa kèm ID sản phẩm xuống ống nước
+            out.println("DELETE_ITEM|" + itemId);
+
+            // Chờ Server (chỗ code của Vương) phản hồi
+            String responseStr = in.readLine();
+            System.out.println("Client nhận phản hồi xóa Item: " + responseStr);
+
+            if (responseStr != null) {
+                return responseStr;
+            } else {
+                return "DELETE_FAIL|Lỗi: Không nhận được phản hồi từ Server.";
+            }
+        } catch (Exception e) {
+            System.out.println("Lỗi mất kết nối khi xóa Item: " + e.getMessage());
+            e.printStackTrace();
+            return "DELETE_FAIL|Lỗi mạng: Đứt cáp hoặc mất kết nối tới Server.";
+        }
     }
 }

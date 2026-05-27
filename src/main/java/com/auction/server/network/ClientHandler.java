@@ -119,7 +119,7 @@ public class ClientHandler implements Runnable {
                         double price = Double.parseDouble(parts[2]);
                         String itemId = parts[3];
 
-                        Item targetItem = itemDAO.getItemById(itemId);
+                        Item targetItem = ProductManager.getItemById(itemId);
 
                         if (targetItem != null) {
                             String result = biddingService.placeBid(targetItem, price, user);
@@ -154,7 +154,7 @@ public class ClientHandler implements Runnable {
                         double increment = Double.parseDouble(parts[3]);
                         String itemId    = parts[4];
 
-                        Item targetItem = itemDAO.getItemById(itemId);
+                        Item targetItem = ProductManager.getItemById(itemId);
 
                         if (targetItem != null) {
                             String result = biddingService.registerAutoBid(
@@ -503,6 +503,25 @@ public class ClientHandler implements Runnable {
                                     out.println("DELETE_FAIL|Lỗi hệ thống Database khi xóa.");
                                 }
                             }
+                        }
+                    }
+                    case "DELETE_USER" -> {
+                        try {
+                            String targetUsername = parts[1]; // Lấy username từ Client gửi lên
+                            System.out.println("Server: Đang xử lý yêu cầu xóa User [" + targetUsername + "]");
+
+                            // Gọi hàm xóa trong UserDAO
+                            boolean isDeleted = userDAO.deleteUser(targetUsername);
+
+                            if (isDeleted) {
+                                out.println("DELETE_SUCCESS|Đã xóa người dùng thành công!");
+                                System.out.println("Server: Đã xóa xong User " + targetUsername);
+                            } else {
+                                out.println("ERROR|Không tìm thấy tài khoản hoặc không thể xóa!");
+                            }
+                        } catch (Exception e) {
+                            out.println("ERROR|Lỗi server khi xóa tài khoản");
+                            e.printStackTrace();
                         }
                     }
                     }}

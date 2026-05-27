@@ -43,7 +43,7 @@
 
                 <Button fx:id="btnProfileAdmin" mnemonicParsing="false" onAction="#toInfoScreen" style="-fx-background-color: transparent; -fx-padding: 0; -fx-cursor: hand;">
                     <graphic>
-                        <ImageView fitHeight="45.0" fitWidth="45.0" pickOnBounds="true">
+                        <ImageView fitHeight="45.0" fitWidth="45.0" pickOnBounds="true" styleClass="text-input-modern">
                             <image>
                                 <Image url="@Image/8f1ca2029e2efceebd22fa05cca423d7.jpg" />
                             </image>
@@ -69,15 +69,15 @@
                 <Region HBox.hgrow="ALWAYS" />
 
                 <HBox alignment="CENTER" spacing="15.0">
-                    <Button fx:id="btnRefreshAdmin" mnemonicParsing="false" onAction="#handleRefresh" prefHeight="35.0" style="-fx-background-color: #3498db; -fx-text-fill: white; -fx-cursor: hand; -fx-border-radius: 5;" text="Làm mới dữ liệu">
+                    <Button fx:id="btnRefreshAdmin" mnemonicParsing="false" onAction="#handleRefresh" prefHeight="35.0" style="-fx-background-color: #3498db; -fx-text-fill: white; -fx-cursor: hand; -fx-border-radius: 5;" styleClass="btn-primary" text="Làm mới dữ liệu">
                         <font><Font name="System Bold" size="13.0" /></font>
                     </Button>
 
-                    <Button fx:id="btnSettingsAdmin" mnemonicParsing="false" onAction="#toSettingScreen" prefHeight="35.0" style="-fx-background-color: #34495e; -fx-text-fill: white; -fx-cursor: hand; -fx-border-radius: 5;" text="Cài đặt">
+                    <Button fx:id="btnSettingsAdmin" mnemonicParsing="false" onAction="#toSettingScreen" prefHeight="35.0" style="-fx-background-color: #34495e; -fx-text-fill: white; -fx-cursor: hand; -fx-border-radius: 5;" styleClass="btn-primary" text="Cài đặt">
                         <font><Font name="System Bold" size="13.0" /></font>
                     </Button>
 
-                    <Button fx:id="btnLogoutAdmin" mnemonicParsing="false" onAction="#handleLogout" prefHeight="35.0" style="-fx-background-color: transparent; -fx-border-color: #e74c3c; -fx-text-fill: #e74c3c; -fx-border-radius: 5; -fx-cursor: hand;" text="Đăng xuất">
+                    <Button fx:id="btnLogoutAdmin" mnemonicParsing="false" onAction="#handleLogout" prefHeight="35.0" style="-fx-background-color: transparent; -fx-border-color: #e74c3c; -fx-text-fill: #e74c3c; -fx-border-radius: 5; -fx-cursor: hand;" styleClass="btn-primary" text="Đăng xuất">
                         <font><Font name="System Bold" size="13.0" /></font>
                     </Button>
                 </HBox>
@@ -86,7 +86,7 @@
     </top>
 
     <center>
-        <TabPane style="-fx-background-color: white;" tabClosingPolicy="UNAVAILABLE" BorderPane.alignment="CENTER">
+        <TabPane style="-fx-background-color: white;" stylesheets="@Style.css" tabClosingPolicy="UNAVAILABLE" BorderPane.alignment="CENTER">
             <tabs>
                 <Tab text="  📦 Kiểm Duyệt Sản Phẩm  ">
                     <content>
@@ -102,7 +102,7 @@
                                 <ImageView fitHeight="22.0" fitWidth="50.0" pickOnBounds="true" preserveRatio="true">
                                     <image><Image url="@Image/images.jpg" /></image>
                                 </ImageView>
-                                <TextField fx:id="txtSearchItem" prefHeight="35.0" prefWidth="250.0" promptText="Tìm mã SP, tên SP..." style="-fx-background-radius: 15; -fx-border-radius: 15; -fx-border-color: #bdc3c7;" />
+                                <TextField fx:id="txtSearchItem" prefHeight="35.0" prefWidth="250.0" promptText="Tìm mã SP, tên SP..." style="-fx-background-radius: 15; -fx-border-radius: 15; -fx-border-color: #bdc3c7;" styleClass="text-input-modern" />
                             </HBox>
 
                             <TableView fx:id="tbvPendingItems" style="-fx-selection-bar: #3498db;" VBox.vgrow="ALWAYS">
@@ -122,8 +122,8 @@
                                     <font><Font name="System Italic" size="14.0" /></font>
                                 </Label>
                                 <Region HBox.hgrow="ALWAYS" />
-                                <Button fx:id="btnRejectItem" mnemonicParsing="false" onAction="#handleRejectItem" prefHeight="40.0" prefWidth="130.0" style="-fx-background-color: red; -fx-border-color: #e74c3c; -fx-text-fill: #f7faf9; -fx-font-weight: bold; -fx-cursor: hand; -fx-border-radius: 5;" text="Xóa (Từ chối)" />
-                                <Button fx:id="btnApproveItem" mnemonicParsing="false" onAction="#handleApproveItem" prefHeight="40.0" prefWidth="185.0" style="-fx-background-color: #27ae60; -fx-text-fill: white; -fx-font-weight: bold; -fx-cursor: hand; -fx-background-radius: 5;" text=" Duyệt lên sàn " />
+                                <Button fx:id="btnRejectItem" mnemonicParsing="false" onAction="#handleRejectItem" prefHeight="40.0" prefWidth="130.0" style="-fx-background-color: red; -fx-border-color: #e74c3c; -fx-text-fill: #f7faf9; -fx-font-weight: bold; -fx-cursor: hand; -fx-border-radius: 5;" styleClass="btn-primary" text="Xóa (Từ chối)" />
+                                <Button fx:id="btnApproveItem" mnemonicParsing="false" onAction="#handleApproveItem" prefHeight="40.0" prefWidth="185.0" style="-fx-background-color: #27ae60; -fx-text-fill: white; -fx-font-weight: bold; -fx-cursor: hand; -fx-background-radius: 5;" styleClass="btn-primary" text=" Duyệt lên sàn " />
                             </HBox>
                         </VBox>
                     </content>
@@ -180,7 +180,7 @@
             <padding>
                 <Insets bottom="10.0" left="20.0" right="20.0" top="10.0" />
             </padding>
-            <Button fx:id="btnBackFromAdmin" mnemonicParsing="false" onAction="#toSignInScreen" prefHeight="35.0" prefWidth="110.0" style="-fx-background-color: transparent; -fx-border-color: #95a5a6; -fx-text-fill: #7f8c8d; -fx-border-radius: 5; -fx-font-weight: bold; -fx-cursor: hand;" text="Quay lại" />
+            <Button fx:id="btnBackFromAdmin" mnemonicParsing="false" onAction="#toSignInScreen" prefHeight="35.0" prefWidth="110.0" style="-fx-background-color: transparent; -fx-border-color: #95a5a6; -fx-text-fill: #7f8c8d; -fx-border-radius: 5; -fx-font-weight: bold; -fx-cursor: hand;" styleClass="btn-primary" text="Quay lại" />
 
             <Region HBox.hgrow="ALWAYS" />
 

@@ -14,7 +14,7 @@ public class BidDAO {
      * Dùng field getBidAmount() khớp với BidTransaction hiện có.
      */
     public boolean save(BidTransaction bid) {
-        String sql = "INSERT INTO Bids (item_id, bidder_id, bid_amount, bid_time) " +
+        String sql = "INSERT INTO BidTransactions (itemId, bidderId, amount, timestamp) " +
                 "VALUES (?, ?, ?, ?)";
         try (Connection conn = DatabaseManager.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -37,7 +37,7 @@ public class BidDAO {
      */
     public List<BidTransaction> findByItemIdAsc(String itemId) {
         List<BidTransaction> list = new ArrayList<>();
-        String sql = "SELECT * FROM Bids WHERE item_id = ? ORDER BY timestamp ASC";
+        String sql = "SELECT * FROM BidTransactions WHERE itemId = ? ORDER BY timestamp ASC";
 
         try (Connection conn = DatabaseManager.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -47,9 +47,9 @@ public class BidDAO {
 
             while (rs.next()) {
                 BidTransaction bid = new BidTransaction();
-                bid.setItemId(rs.getString("item_id"));
-                bid.setBidderId(rs.getString("bidder_id"));
-                bid.setBidAmount(rs.getDouble("bid_amount"));
+                bid.setItemId(rs.getString("itemId"));
+                bid.setBidderId(rs.getString("bidderId"));
+                bid.setBidAmount(rs.getDouble("amount"));
                 list.add(bid);
             }
 
@@ -64,7 +64,7 @@ public class BidDAO {
      */
     public List<BidTransaction> findByItemId(String itemId) {
         List<BidTransaction> list = new ArrayList<>();
-        String sql = "SELECT * FROM Bids WHERE item_id = ? ORDER BY timestamp DESC";
+        String sql = "SELECT * FROM BidTransactions WHERE itemId = ? ORDER BY timestamp DESC";
 
         try (Connection conn = DatabaseManager.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -74,9 +74,9 @@ public class BidDAO {
 
             while (rs.next()) {
                 BidTransaction bid = new BidTransaction();
-                bid.setItemId(rs.getString("item_id"));
-                bid.setBidderId(rs.getString("bidder_id"));
-                bid.setBidAmount(rs.getDouble("bid_amount"));
+                bid.setItemId(rs.getString("itemId"));
+                bid.setBidderId(rs.getString("bidderId"));
+                bid.setBidAmount(rs.getDouble("amount"));
                 list.add(bid);
             }
 
@@ -90,7 +90,7 @@ public class BidDAO {
      * Lấy bid cao nhất (mới nhất) của 1 sản phẩm.
      */
     public BidTransaction findLatestByItemId(String itemId) {
-        String sql = "SELECT * FROM Bids WHERE itemId = ? " +
+        String sql = "SELECT * FROM BidTransactions WHERE itemId = ? " +
                 "ORDER BY amount DESC, timestamp DESC LIMIT 1";
 
         try (Connection conn = DatabaseManager.getConnection();
@@ -101,9 +101,9 @@ public class BidDAO {
 
             if (rs.next()) {
                 BidTransaction bid = new BidTransaction();
-                bid.setItemId(rs.getString("item_id"));
-                bid.setBidderId(rs.getString("bidder_id"));
-                bid.setBidAmount(rs.getDouble("bid_amount"));
+                bid.setItemId(rs.getString("itemId"));
+                bid.setBidderId(rs.getString("bidderId"));
+                bid.setBidAmount(rs.getDouble("amount"));
                 return bid;
             }
 
@@ -117,7 +117,7 @@ public class BidDAO {
      * Đếm số lần bid của 1 sản phẩm.
      */
     public int countByItemId(String itemId) {
-        String sql = "SELECT COUNT(*) FROM Bids WHERE itemId = ?";
+        String sql = "SELECT COUNT(*) FROM BidTransactions WHERE itemId = ?";
 
         try (Connection conn = DatabaseManager.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
