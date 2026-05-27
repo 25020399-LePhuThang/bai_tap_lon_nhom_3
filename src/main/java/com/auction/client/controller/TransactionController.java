@@ -12,7 +12,6 @@ import javafx.stage.Stage;
 
 public class TransactionController {
 
-
     @FXML private Label lblTitle;
     @FXML private TextField txtAmount;
     @FXML private Button btnConfirm;
@@ -21,10 +20,8 @@ public class TransactionController {
     private String actionType;
     private String username;
 
-
     private SellerController sellerParent;
     private MainScreenController bidderParent;
-
 
     public void initData(String type, String user, Object parent) {
         this.actionType = type;
@@ -63,6 +60,12 @@ public class TransactionController {
             lblStatusMsg.setStyle("-fx-text-fill: #e74c3c;");
             return;
         }
+        else if ("NAP_TIEN".equals(actionType) && amount > 1000000) {
+            lblStatusMsg.setText("Số tiền nạp một lần không vượt quá 1,000,000$");
+            lblStatusMsg.setStyle("-fx-text-fill: #e74c3c;");
+            return;
+        }
+
         btnConfirm.setDisable(true);
         lblStatusMsg.setText("⏳ Đang xử lý giao dịch...");
         lblStatusMsg.setStyle("-fx-text-fill: #3498db;");
@@ -87,13 +90,25 @@ public class TransactionController {
 
                     Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
                     stage.close();
-                } else {
+                }
+                // BẮT LỖI TỪ SERVER ĐỂ HIỂN THỊ LÊN UI
+                else if (response != null && response.contains("FAIL")) {
                     btnConfirm.setDisable(false);
-                    lblStatusMsg.setText("Giao dịch thất bại! Có thể do số dư không đủ.");
+                    String[] parts = response.split("\\|");
+                    // Nếu Server có gửi kèm lời nhắn (parts[1]), thì lấy nó, nếu không thì báo lỗi chung chung
+                    String errorMsg = (parts.length > 1) ? parts[1] : "Giao dịch thất bại!";
+
+                    lblStatusMsg.setText(errorMsg);
+                    lblStatusMsg.setStyle("-fx-text-fill: #e74c3c;");
+                }
+                else {
+                    btnConfirm.setDisable(false);
+                    lblStatusMsg.setText("Lỗi: Không nhận được phản hồi từ Server!");
                     lblStatusMsg.setStyle("-fx-text-fill: #e74c3c;");
                 }
             });
-        }).start();}
+        }).start();
+    }
 
     @FXML
     public void handleCancel(javafx.event.ActionEvent event) {

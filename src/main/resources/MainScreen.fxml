@@ -12,9 +12,10 @@
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.VBox?>
+<?import javafx.scene.shape.Circle?>
 <?import javafx.scene.text.Font?>
 
-<BorderPane prefHeight="789.0" prefWidth="1000.0" style="-fx-background-color: #f8f9fa;" stylesheets="@Style.css" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.auction.client.controller.MainScreenController">
+<BorderPane style="-fx-background-color: #f8f9fa;" stylesheets="@Style.css" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.auction.client.controller.MainScreenController">
 
     <top>
         <VBox BorderPane.alignment="CENTER">
@@ -49,15 +50,19 @@
                 <padding>
                     <Insets bottom="15.0" left="20.0" right="20.0" top="15.0" />
                 </padding>
-                <Button fx:id="btnAvatar" mnemonicParsing="false" onAction="#toInfoScreen" styleClass="avatar-button">
+                <Button fx:id="btnAvatar" mnemonicParsing="false" onAction="#toInfoScreen" style="-fx-background-color: transparent; -fx-cursor: hand; -fx-padding: 0;">
                     <graphic>
-                        <ImageView fx:id="imgUserAvatar" fitHeight="29.0" fitWidth="31.0" pickOnBounds="true" styleClass="avatar-button">
+                        <ImageView fx:id="imgUserAvatar" fitHeight="35.0" fitWidth="35.0" pickOnBounds="true">
                             <image>
                                 <Image url="@Image/8f1ca2029e2efceebd22fa05cca423d7.jpg" />
                             </image>
+                            <clip>
+                                <Circle centerX="17.5" centerY="17.5" radius="17.5" />
+                            </clip>
                         </ImageView>
                     </graphic>
                 </Button>
+
                 <VBox alignment="CENTER_LEFT">
                     <Label text="Xin chào," textFill="#7f8c8d">
                         <font><Font size="12.0" /></font>
@@ -114,6 +119,10 @@
                     <Label text="CÁC PHIÊN ĐẤU GIÁ ĐANG DIỄN RA" textFill="#2c3e50">
                         <font><Font name="System Bold" size="18.0" /></font>
                     </Label>
+                    <Region HBox.hgrow="ALWAYS" />
+                    <Button fx:id="btnRefresh" mnemonicParsing="false" onAction="#handleRefresh" prefHeight="32.0" style="-fx-background-color: #3498db; -fx-text-fill: white; -fx-border-radius: 5; -fx-cursor: hand;" text="🔄 Làm mới bảng">
+                        <font><Font name="System Bold" size="13.0" /></font>
+                    </Button>
                 </HBox>
                 <TableView fx:id="tbvIsPresenting" style="-fx-selection-bar: #3498db;" styleClass="table-row-cell" VBox.vgrow="ALWAYS">
                     <columns>
@@ -135,6 +144,7 @@
                     <Label text="CÁC PHIÊN ĐẤU GIÁ SẮP DIỄN RA" textFill="#2c3e50">
                         <font><Font name="System Bold" size="18.0" /></font>
                     </Label>
+                    <Region HBox.hgrow="ALWAYS" />
                 </HBox>
                 <TableView fx:id="tbvWillPresent" style="-fx-selection-bar: #3498db;" styleClass="table-row-cell" VBox.vgrow="ALWAYS">
                     <columns>

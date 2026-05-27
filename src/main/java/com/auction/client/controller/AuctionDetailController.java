@@ -3,6 +3,7 @@ package com.auction.client.controller;
 import com.auction.client.network.NetworkClient;
 import com.auction.server.dao.ItemDAO;
 import com.auction.shared.model.Auction;
+import com.auction.shared.model.BidTransaction;
 import com.auction.shared.model.item.Art;
 import com.auction.shared.model.item.Electronic;
 import com.auction.shared.model.item.Item;
@@ -10,6 +11,7 @@ import com.auction.shared.model.item.Vehicle;
 import com.auction.shared.model.user.Bidder;
 import com.auction.shared.model.user.User;
 import javafx.animation.Animation;
+import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
@@ -19,17 +21,20 @@ import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
-import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.image.Image;
 import javafx.stage.Stage;
 import javafx.event.ActionEvent;
+import java.text.NumberFormat;
+import java.util.Locale;
 
 import java.io.IOException;
 
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.util.Duration;
-
+import javafx.scene.chart.LineChart;
+import javafx.scene.chart.NumberAxis;
+import javafx.scene.chart.XYChart;
 import java.net.URL;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -66,6 +71,7 @@ public class AuctionDetailController implements Initializable {
     @FXML private TextField txtPrice;
     @FXML private Button btnAuction;
     @FXML private Button btnDetail;
+    @FXML private Button btnAvt;
 
     // ================= BẢNG & THỐNG KÊ =================
     // LƯU Ý: Thay chữ "History" bằng đúng tên Class lịch sử của cậu
@@ -82,9 +88,30 @@ public class AuctionDetailController implements Initializable {
     private Timeline countdownTimeline;
     private Timeline clockTimeline;
 
+    // ─── LineChart lịch sử giá realtime ─────────────────────────────────────
+    @FXML private LineChart<Number, Number> priceChart;
+    @FXML private NumberAxis xAxis;
+    @FXML private NumberAxis yAxis;
+
+
+    private XYChart.Series<Number, Number> priceSeries;
+    private int  bidCount = 0;
+    private final NumberFormat fmt = NumberFormat.getNumberInstance(new Locale("vi", "VN"));
+
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
         clockInit();
+
+        if (priceChart != null) {
+            priceSeries = new XYChart.Series<>();
+            priceSeries.setName("Giá đấu");
+            priceChart.getData().add(priceSeries);
+            priceChart.setAnimated(false);
+            priceChart.setCreateSymbols(true);
+            priceChart.setLegendVisible(false);
+            if (xAxis != null) xAxis.setLabel("Lần đặt");
+            if (yAxis != null) yAxis.setLabel("Giá (đ)");
+        }
     }
 
     public void clockInit() {
@@ -138,6 +165,28 @@ public class AuctionDetailController implements Initializable {
             }
         }
         startCountdown();
+        loadBidHistory(item.getId());
+
+
+        // Bắt đầu lắng nghe BID_UPDATE realtime
+        NetworkClient.getInstance().startListening(respone -> {
+            if (!respone.startsWith("BID_UPDATE|")) return;
+            String[] p = respone.split("\\|");
+            if (p.length < 4) return;
+            String msgItemId = p[1];
+            if (!msgItemId.equals(item.getId())) return;
+
+            double newPrice  = Double.parseDouble(p[2]);
+            String winner    = p[3];
+
+            Platform.runLater(() -> {
+                // Cập nhật label giá
+                setText(lblRecentPrice, fmt.format(newPrice) + " đ");
+                // Thêm điểm mới vào LineChart
+                addChartPoint(newPrice);
+            });
+        });
+
     }
 
     // Hàm nạp riêng Tên hiển thị (Tách biệt hoàn toàn)
@@ -150,7 +199,7 @@ public class AuctionDetailController implements Initializable {
     }
 
     public void toMainScreen(ActionEvent event){
-        try {
+        try {onClose();
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/MainScreen.fxml"));
             Parent root = loader.load();
 
@@ -158,7 +207,7 @@ public class AuctionDetailController implements Initializable {
             mainScreenController.setDisplayName(lblUsername2.getText());
 
             Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
-            stage.setScene(new Scene(root));
+            stage.getScene().setRoot(root);
             stage.show();
         } catch (IOException e) { e.printStackTrace(); }
 
@@ -167,12 +216,12 @@ public class AuctionDetailController implements Initializable {
     private void switchScence(ActionEvent event, String fxmlFile) throws IOException {
         Parent root = FXMLLoader.load(getClass().getResource(fxmlFile));
         Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
-        stage.setScene(new Scene(root));
-        stage.show();
+        stage.getScene().setRoot(root);
     }
 
     @FXML
     public void handleLogout(ActionEvent event) throws IOException {
+        onClose();
         NetworkClient.disconnect(lblUsername2.getText());
         switchScence(event,"/SignInScreen.fxml");
     }
@@ -288,4 +337,91 @@ public class AuctionDetailController implements Initializable {
 
         alert.showAndWait();
     }
+
+    @FXML
+    public void onBidButtonClicked() {
+        if (currentItem == null) return;
+        String raw = txtPrice.getText().trim();
+        if (raw.isEmpty()) {
+            showAlert("Vui lòng nhập mức giá muốn đặt.");
+            return;
+        }
+        try {
+            double price = Double.parseDouble(raw.replace(",", "").replace(".", ""));
+            // Gửi lên server: BID|userId|price|itemId
+            String msg    = "BID|" + currentUser + "|" + price + "|" + currentItem.getId();
+            String result = NetworkClient.sendAndReceive(msg);
+            showAlert(result != null ? result : "Không nhận được phản hồi từ server.");
+            txtPrice.clear();
+        } catch (NumberFormatException e) {
+            showAlert("Giá không hợp lệ. Vui lòng nhập số.");
+        }
+
+    }
+
+    // ─── Tải lịch sử bid từ server ───────────────────────────────────────────
+    private void loadBidHistory(String itemId) {
+        new Thread(() -> {
+            List<BidTransaction> history = NetworkClient.getBidHistory(itemId.trim());
+            Platform.runLater(() -> {
+                if (priceSeries == null) return;
+                priceSeries.getData().clear();
+                bidCount = 0;
+                for (BidTransaction tx : history) {
+                    addChartPoint(tx.getBidAmount());
+                }
+            });
+        }, "load-history-thread").start();
+    }
+
+    // ─── Thêm điểm vào LineChart ──────────────────────────────────────────────
+    private void addChartPoint(double price) {
+        if (priceSeries == null) return;
+        bidCount++;
+        priceSeries.getData().add(new XYChart.Data<>(bidCount, price));
+        // Giữ tối đa 60 điểm để chart không quá dày
+        if (priceSeries.getData().size() > 60) {
+            priceSeries.getData().remove(0);
+        }
+    }
+
+    private void showAlert(String msg) {
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setTitle("Thông báo");
+        alert.setHeaderText(null);
+        alert.setContentText(msg);
+        alert.showAndWait();
+    }
+
+
+    // ─── Tiện ích ─────────────────────────────────────────────────────────────
+    private void setText(Label lbl, String text) {
+        if (lbl != null) lbl.setText(text);
+    }
+
+    public void onAutoBidButtonClicked(){}
+
+    // ─── Dừng listener khi đóng màn hình ─────────────────────────────────────
+    public void onClose() {
+        NetworkClient.getInstance().stopListening();
+    }
+
+    @FXML
+    public void toInfoScreen()  {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/InfoScreen.fxml"));
+            Parent root = loader.load();
+
+            InfoController infoController = loader.getController();
+            infoController.initData(lblUsername2.getText(), this);
+
+
+            Stage popUpStage = new Stage();
+            popUpStage.setScene(new Scene(root));
+            popUpStage.initModality(javafx.stage.Modality.APPLICATION_MODAL);
+            popUpStage.setResizable(false);
+            popUpStage.show();
+        } catch (IOException e) { e.printStackTrace(); }
+    }
+
 }

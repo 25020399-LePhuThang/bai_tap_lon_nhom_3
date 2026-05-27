@@ -66,9 +66,7 @@ public class RegisterController implements Initializable {
     private void switchScence(ActionEvent event, String fxmlFile) throws IOException {
         Parent root = FXMLLoader.load(getClass().getResource(fxmlFile));
         Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
-        Scene scene = new Scene(root);
-        stage.setScene(scene);
-        stage.show();
+        stage.getScene().setRoot(root);
     }
 
     public void toWelcomeScreen(ActionEvent event) throws IOException {
