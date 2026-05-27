@@ -25,7 +25,7 @@ public class NetworkClient {
     private static BufferedReader in;
     private static PrintWriter out;
 
-    private static final String SERVER_IP ="192.168.1.2";
+    private static final String SERVER_IP ="127.0.0.1";
     private static final int SERVER_PORT = 5000;
 
     // Callback được gọi mỗi khi nhận được BID_UPDATE từ server

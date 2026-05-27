@@ -117,7 +117,9 @@ public class ClientHandler implements Runnable {
                     case "BID" -> {
                         String user = parts[1];
                         double price = Double.parseDouble(parts[2]);
-                        String itemId = parts[3];
+                        String itemId = parts[3].trim();
+                        System.out.println("===> CHECK SERVER NHẬN ĐƯỢC:");
+                        System.out.println("User: " + parts[1] + " | Price: " + parts[2] + " | ItemID: '" + itemId + "'");
 
                         Item targetItem = ProductManager.getItemById(itemId);
 

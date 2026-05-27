@@ -16,10 +16,14 @@ public class AuctionServer {
     public static void main(String[] args) {
         DatabaseManager.initDB();
         try {
-            // 2. Mở cổng
-            ServerSocket serverSocket = new ServerSocket(5000);
-
-            AuctionTimer timer = new AuctionTimer(); // (Nhớ kêu Tâmi đưa class này cho cưng)
+            // 2. Mở cổng - đọc PORT từ Railway
+            int port = System.getenv("PORT") != null
+                     ? Integer.parseInt(System.getenv("PORT"))
+                     : 5000;
+            ServerSocket serverSocket = new ServerSocket(port);
+            System.out.println("Server đang chạy trên cổng: " + port);
+            
+            AuctionTimer timer = new AuctionTimer(); 
             BiddingService sharedBiddingService = new BiddingService();
 
             // 3. Vòng lặp chờ khách

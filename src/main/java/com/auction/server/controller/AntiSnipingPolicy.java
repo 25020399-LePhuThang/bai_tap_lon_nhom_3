@@ -12,7 +12,7 @@ public class AntiSnipingPolicy {
         if (timeLeft > 0 && timeLeft < 30000) {
             long newEndTime = item.getEndTime().getTime() + 60000; // Cộng thêm 60s
             item.setEndTime(new java.util.Date(newEndTime));
-            System.out.println(">>> He thong: Phat hien Sniping! Gia han them 60s.");
+            System.out.println(">>> Hệ thống: Phát hiện Sniping! Gia han thêm 60s.");
             return true; // Trả về true để báo là có gia hạn
         }
         return false; // Không cần gia hạn
