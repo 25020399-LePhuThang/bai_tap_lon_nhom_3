@@ -56,6 +56,8 @@ public class SettingController implements Initializable {
     private Label lblSettingsMessage;
     @FXML
     private TextField txtUpdateName;
+    @FXML
+    private Button btnDeleteAccount;
 
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
@@ -86,7 +88,7 @@ public class SettingController implements Initializable {
             mainScreenController.setDisplayName(currentUser);
 
             Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
-            stage.setScene(new Scene(root));
+            stage.getScene().setRoot(root);
             stage.setTitle("Cài đặt tài khoản");
             stage.show();
 
@@ -105,7 +107,7 @@ public class SettingController implements Initializable {
                 sellerController.setDisplayName(currentUser);
 
                 Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
-                stage.setScene(new Scene(root));
+                stage.getScene().setRoot(root);
                 stage.setTitle("Cài đặt tài khoản");
                 stage.show();
             }catch (IOException e) {
@@ -117,15 +119,11 @@ public class SettingController implements Initializable {
             try {
                 FXMLLoader loader = new FXMLLoader(getClass().getResource("/AdminScreen.fxml"));
                 Parent root = loader.load();
-
                 AdminController adminController = loader.getController();
-
                 String currentUser = lblUsernameSettings1.getText();
-
                 adminController.setDisplayName(currentUser);
-
                 Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
-                stage.setScene(new Scene(root));
+                stage.getScene().setRoot(root);
                 stage.setTitle("Cài đặt tài khoản");
                 stage.show();
             }catch (IOException e) {
@@ -188,10 +186,8 @@ public class SettingController implements Initializable {
             String response = NetworkClient.sendChangePasswordRequest(currentUser, oldPass, newPass);
 
             javafx.application.Platform.runLater(() -> {
-                // ĐÃ SỬA: Dùng từ khóa mới khớp với Server
                 if (response != null && response.startsWith("CHANGE_PASS_SUCCESS")) {
                     lblSettingsMessage.setStyle("-fx-text-fill: #27ae60;");
-                    // Lấy câu thông báo từ Server
                     String msg = response.contains("|") ? response.split("\\|")[1] : "Đổi mật khẩu thành công!";
                     lblSettingsMessage.setText(" " + msg);
 
@@ -201,7 +197,6 @@ public class SettingController implements Initializable {
 
                 } else if (response != null && response.startsWith("CHANGE_PASS_FAIL")) {
                     lblSettingsMessage.setStyle("-fx-text-fill: #e74c3c;");
-                    // Lấy câu chửi từ Server (ví dụ: "Mật khẩu cũ sai")
                     String errorMsg = response.contains("|") ? response.split("\\|")[1] : "Đổi mật khẩu thất bại!";
                     lblSettingsMessage.setText(" " + errorMsg);
 
@@ -214,7 +209,7 @@ public class SettingController implements Initializable {
     }
 
     @FXML
-    public void updateInfoLogic(ActionEvent event) {
+    public void updateInfoLogic() {
         String newName = txtUpdateName.getText().trim();
         String newEmail = txtUpdateEmail.getText().trim();
         String newPhone = txtUpdatePhone.getText().trim();
@@ -251,7 +246,6 @@ public class SettingController implements Initializable {
 
                 } else if (response != null && response.startsWith("UPDATE_FAIL")) {
                     lblSettingsMessage.setStyle("-fx-text-fill: #e74c3c;");
-                    // Lấy chính xác lỗi trùng Email, SĐT... từ Server đưa lên giao diện
                     String errorMsg = response.contains("|") ? response.split("\\|")[1] : "Cập nhật thất bại!";
                     lblSettingsMessage.setText(" " + errorMsg);
 
@@ -262,4 +256,33 @@ public class SettingController implements Initializable {
             });
         }).start();
     }
-}
+    public void DeleteUser(ActionEvent event) throws IOException{
+        String response = NetworkClient.deleteUser(lblUsernameSettings1.getText());
+
+        String[] parts = response.split("\\|");
+        String status = parts[0];
+        String message = (parts.length > 1) ? parts[1] : "Lỗi không xác định";
+
+        if (status.equals("DELETE_SUCCESS")) {
+            Alert alert = new Alert(Alert.AlertType.INFORMATION);
+            alert.setTitle("Thành công");
+            alert.setHeaderText(null);
+            alert.setContentText(message);
+            alert.showAndWait();
+
+            switchScence(event,"/SignInScreen.fxml");
+        } else {
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setTitle("Lỗi xóa tài khoản");
+            alert.setHeaderText(null);
+            alert.setContentText(message);
+            alert.showAndWait();
+        }
+        }
+
+    private void switchScence(ActionEvent event, String fxmlFile) throws IOException {
+        Parent root = FXMLLoader.load(getClass().getResource(fxmlFile));
+        Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
+        stage.getScene().setRoot(root);
+    }
+    }

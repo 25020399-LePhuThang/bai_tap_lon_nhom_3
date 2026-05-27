@@ -37,4 +37,16 @@ public class AuctionServer {
             e.printStackTrace();
         }
     }
+
+    /**
+     * Gửi một tin nhắn đến TẤT CẢ client đang kết nối.
+     * Được gọi sau mỗi bid hợp lệ để cập nhật realtime cho mọi người xem.
+     *
+     * @param message chuỗi tin nhắn (ví dụ: "BID_UPDATE|IPHONE_15|21000000|user1")
+     */
+    public static void broadcast(String message) {
+        for (ClientHandler client : clients) {
+            client.sendMessage(message);
+        }
+    }
 }

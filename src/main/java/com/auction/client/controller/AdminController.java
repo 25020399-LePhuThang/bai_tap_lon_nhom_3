@@ -110,6 +110,8 @@ public class AdminController implements Initializable {
     private Label lblItemMessage;
     @FXML
     private Label lblUserMessage;
+    @FXML
+    private Button DeleteUser;
 
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
@@ -120,8 +122,7 @@ public class AdminController implements Initializable {
     private void switchScence(ActionEvent event, String fxmlFile) throws IOException {
         Parent root = FXMLLoader.load(getClass().getResource(fxmlFile));
         Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
-        stage.setScene(new Scene(root));
-        stage.show();
+        stage.getScene().setRoot(root);
     }
 
     public void clockInit() {
@@ -162,7 +163,7 @@ public class AdminController implements Initializable {
             settingController.initData(lblAdminName.getText(), "ADMIN");
 
             Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
-            stage.setScene(new Scene(root));
+            stage.getScene().setRoot(root);
             stage.setTitle("Cài đặt tài khoản");
             stage.show();
         } catch (IOException e) { e.printStackTrace(); }
@@ -181,32 +182,25 @@ public class AdminController implements Initializable {
 
         new Thread(() -> {
 
-            // Bước 2: Xin danh sách bảng 1
             List<Item> waitingItems;
             try {
                 waitingItems = NetworkClient.takeWaitingItemRequest();
             } catch (Exception e) { waitingItems = new ArrayList<>(); }
 
-            // Bước 3: Xin danh sách bảng 2
             List<User> AllUsers;
             try {
                 AllUsers = NetworkClient.getAllUsers();
             } catch (Exception e) { AllUsers = new ArrayList<>(); }
 
-            // Đẩy tất cả dữ liệu lên UI cùng lúc cho mượt
             final List<Item> finalActive = waitingItems;
             final List<User> finalPrepared = AllUsers;
 
 
-                // Đập hàng vào 2 bảng + Gắn bộ lọc tìm kiếm
                 bindItemDataAndSearch(tbvPendingItems, finalActive,txtSearchItem);
                 bindUserDataAndSearch(tbvUsers, finalPrepared,txtSearchUser);
             }).start();
     }
 
-    // ==========================================
-    // TÌM KIẾM SẢN PHẨM (TAB 1)
-    // ==========================================
     private void bindItemDataAndSearch(TableView<Item> table, List<Item> items, TextField searchField) {
         if (items == null) items = new ArrayList<>();
 
@@ -237,10 +231,6 @@ public class AdminController implements Initializable {
         table.setItems(sortedData);
     }
 
-
-    // ==========================================
-    // TÌM KIẾM NGƯỜI DÙNG (TAB 2)
-    // ==========================================
     private void bindUserDataAndSearch(TableView<User> table, List<User> users, TextField searchField) {
         if (users == null) users = new ArrayList<>();
 
@@ -271,18 +261,7 @@ public class AdminController implements Initializable {
         table.setItems(sortedData);
     }
 
-
-// ... (Các phần code khác của AdminController)
-
-    // ==========================================
-    // CÀI ĐẶT CỘT CHO CẢ 2 BẢNG (GỌI TRONG INITIALIZE)
-    // ==========================================
     private void setupTableColumns() {
-        // --- 1. BẢNG SẢN PHẨM CHỜ DUYỆT (Tab 1) ---
-        // LƯU Ý: Chuỗi trong ngoặc kép phải khớp CHÍNH XÁC với tên biến
-        // hoặc phần sau chữ "get" trong class Item của cậu.
-
-        // Vì lúc chiều cậu bảo dùng getItemID() nên tôi để là "itemID"
         colItemId.setCellValueFactory(new PropertyValueFactory<>("itemID"));
         colItemName.setCellValueFactory(new PropertyValueFactory<>("name"));
         colItemType.setCellValueFactory(new PropertyValueFactory<>("type"));
@@ -388,15 +367,36 @@ public class AdminController implements Initializable {
         }
     }
 
-    // ==========================================
-    // 3. HÀM TIỆN ÍCH: HIỂN THỊ THÔNG BÁO (POPUP)
-    // ==========================================
 
     @FXML
-    public void handleRefresh(ActionEvent event) {
+    public void handleRefresh() {
         String currentUser = lblAdminName.getText();
         if (currentUser != null && !currentUser.isEmpty()) {
             setDisplayName(currentUser);
+        }
+    }
+
+    public void DeleteUser(ActionEvent event) throws IOException{
+        String response = NetworkClient.deleteUser(lblAdminName.getText());
+
+        String[] parts = response.split("\\|");
+        String status = parts[0];
+        String message = (parts.length > 1) ? parts[1] : "Lỗi không xác định";
+
+        if (status.equals("DELETE_SUCCESS")) {
+            Alert alert = new Alert(Alert.AlertType.INFORMATION);
+            alert.setTitle("Thành công");
+            alert.setHeaderText(null);
+            alert.setContentText(message);
+            alert.showAndWait();
+
+            switchScence(event,"/SignInScreen.fxml");
+        } else {
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setTitle("Lỗi xóa tài khoản");
+            alert.setHeaderText(null);
+            alert.setContentText(message);
+            alert.showAndWait();
         }
     }
     }

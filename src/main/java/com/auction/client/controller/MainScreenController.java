@@ -65,6 +65,7 @@ public class MainScreenController implements Initializable {
     @FXML private TableColumn<Item, Double> StartPriceColumn;
     @FXML private TableColumn<Item, Date> StartTimeColumn;
     @FXML private TableColumn<Item, Date> EndTimeColumn2;
+    @FXML private Button btnRefresh;
 
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
@@ -93,7 +94,7 @@ public class MainScreenController implements Initializable {
                         // Lấy cửa sổ (Stage) hiện tại thông qua cái bảng tbvItems của màn hình chính
                         Stage stage = (Stage) tbvIsPresenting.getScene().getWindow();
                         stage.setTitle("Chi tiết: " + selectedItem.getName());
-                        stage.setScene(new Scene(root));
+                        stage.getScene().setRoot(root);
                         stage.show();
                     } catch (IOException e) { e.printStackTrace(); }
                 };
@@ -115,7 +116,7 @@ public class MainScreenController implements Initializable {
                         // Lấy cửa sổ (Stage) hiện tại thông qua cái bảng tbvItems của màn hình chính
                         Stage stage = (Stage) tbvWillPresent.getScene().getWindow();
                         stage.setTitle("Chi tiết: " + selectedItem.getName());
-                        stage.setScene(new Scene(root));
+                        stage.getScene().setRoot(root);
                         stage.show();
                     } catch (IOException e) { e.printStackTrace(); }
                 };
@@ -246,8 +247,7 @@ public class MainScreenController implements Initializable {
     private void switchScence(ActionEvent event, String fxmlFile) throws IOException {
         Parent root = FXMLLoader.load(getClass().getResource(fxmlFile));
         Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
-        stage.setScene(new Scene(root));
-        stage.show();
+        stage.getScene().setRoot(root);
     }
 
     @FXML
@@ -282,7 +282,7 @@ public class MainScreenController implements Initializable {
             settingController.initData(lblName.getText(), "BIDDER");
 
             Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
-            stage.setScene(new Scene(root));
+            stage.getScene().setRoot(root);
             stage.setTitle("Cài đặt tài khoản");
             stage.show();
         } catch (IOException e) { e.printStackTrace(); }
@@ -312,7 +312,6 @@ public class MainScreenController implements Initializable {
             Parent root = loader.load();
 
             TransactionController transactionController = loader.getController();
-            // Truyền "this" để Pop-up biết đường trả kết quả về màn hình Main
             transactionController.initData("RUT_TIEN", lblName.getText(), this);
 
             Stage popUpStage = new Stage();
@@ -329,4 +328,11 @@ public class MainScreenController implements Initializable {
         NetworkClient.disconnect(lblName.getText());
         switchScence(event,"/SignInScreen.fxml");
     }
-}
+
+    public void handleRefresh(ActionEvent event){
+       String currentUser=lblName.getText();
+        if (currentUser != null && !currentUser.isEmpty()) {
+            setDisplayName(currentUser);
+        }
+    }
+    }

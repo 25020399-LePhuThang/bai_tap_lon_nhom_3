@@ -65,9 +65,7 @@ public class LoginController implements Initializable {
     private void switchScence(ActionEvent event, String fxmlFile) throws IOException {
         Parent root = FXMLLoader.load(getClass().getResource(fxmlFile));
         Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
-        Scene scene = new Scene(root);
-        stage.setScene(scene);
-        stage.show();
+        stage.getScene().setRoot(root);
     }
 
     @FXML
@@ -97,20 +95,15 @@ public class LoginController implements Initializable {
         // 3. Đóng gói chuỗi gửi đi (Thêm roleCode vào cuối)
         String request = "LOGIN|" + user + "|" + pass + "|" + roleCode;
 
-        // Gọi Server và chờ phản hồi
         String response = NetworkClient.sendAndReceive(request);
 
-        // 4. Xử lý phản hồi từ Server và Phân luồng màn hình
         if (response != null && response.startsWith("LOGIN_SUCCESS")) {
             System.out.println("Đăng nhập thành công với vai trò: " + roleCode);
 
-            // GỌI HÀM TRUYỀN DỮ LIỆU Ở ĐÂY
             if (roleCode.equals("BIDDER")) {
-                // Thay vì dùng switchScence, ta gọi hàm UsernamePass và ném tên user vào
                 UsernamePass(user);
 
             } else if (roleCode.equals("SELLER")) {
-                // Nếu sau này màn Seller cậu cũng muốn hiện tên, cậu có thể viết thêm 1 hàm giống hệt UsernamePass dành cho SellerController
                 UsernamePass2(user);
 
             } else if (roleCode.equals("ADMIN")) {
@@ -118,14 +111,13 @@ public class LoginController implements Initializable {
             }
 
         } else {
-            // Nếu Server trả về LOGIN_FAIL, bóc tách lý do lỗi để hiển thị
+
             String errorMsg = "Đăng nhập thất bại! Không kết nối được Server.";
             if (response != null && response.contains("|")) {
-                errorMsg = response.split("\\|")[1]; // Lấy phần chữ phía sau dấu |
+                errorMsg = response.split("\\|")[1];
             }
-
-            System.out.println(errorMsg); // In ra console
-            lblError1.setText(errorMsg); // Hiển thị lỗi lên màn hình cho người dùng thấy
+            System.out.println(errorMsg);
+            lblError1.setText(errorMsg);
         }
     }
     public void toRegisterScreen(ActionEvent event) throws IOException {
@@ -147,8 +139,7 @@ public class LoginController implements Initializable {
             mainController.setDisplayName(currentUser);
 
             Stage stage = (Stage) btnLogin2.getScene().getWindow();
-            stage.setScene(new Scene(root));
-            stage.show();
+            stage.getScene().setRoot(root);
 
         } catch (IOException e) {
             e.printStackTrace();
@@ -166,8 +157,7 @@ public class LoginController implements Initializable {
             sellerController.setDisplayName(currentUser);
 
             Stage stage = (Stage) btnLogin2.getScene().getWindow();
-            stage.setScene(new Scene(root));
-            stage.show();
+            stage.getScene().setRoot(root);
 
         } catch (IOException e) {
             e.printStackTrace();
@@ -179,15 +169,10 @@ public class LoginController implements Initializable {
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/AdminScreen.fxml"));
             Parent root = loader.load();
-
             AdminController adminController = loader.getController();
-
-
             adminController.setDisplayName(currentUser);
-
             Stage stage = (Stage) btnLogin2.getScene().getWindow();
-            stage.setScene(new Scene(root));
-            stage.show();
+            stage.getScene().setRoot(root);
 
         } catch (IOException e) {
             e.printStackTrace();

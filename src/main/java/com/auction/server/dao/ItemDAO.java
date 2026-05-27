@@ -247,7 +247,6 @@ public class ItemDAO {
     }
 
     public boolean createItem(Item item) {
-        // 🔴 ĐÃ THÊM MA THUẬT SUBQUERY Ở VỊ TRÍ SỐ 9
         String sql = "INSERT INTO Items (item_name, type, start_price, current_price, step_price, " +
                 "StartTime, EndTime, status, seller_id, productImageURL, " +
                 "warranty_period, brand, engine_capacity, fuel_type, author, creation_year) " +
@@ -262,18 +261,15 @@ public class ItemDAO {
             pstmt.setDouble(4, item.getCurrentPrice());
             pstmt.setDouble(5, item.getMinIncrement());
 
-            // 🔴 ĐÃ CHUẨN HÓA NGÀY THÁNG ĐỂ KHÔNG BỊ BIẾN THÀNH SỐ LỚN
             java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
             pstmt.setString(6, item.getStartTime() != null ? sdf.format(item.getStartTime()) : null);
             pstmt.setString(7, item.getEndTime() != null ? sdf.format(item.getEndTime()) : null);
 
             pstmt.setString(8, item.getStatus());
 
-            // Nhét "TesterLan2" vào đây, Database sẽ tự động tìm và đổi ra số 8!
             pstmt.setString(9, item.getSeller_ID());
             pstmt.setString(10, item.getProductImageURL());
 
-            // Phân loại để nạp thông số riêng
             if (item instanceof Electronic) {
                 Electronic el = (Electronic) item;
                 pstmt.setInt(11, el.getWarrantyPeriod());
@@ -322,8 +318,6 @@ public class ItemDAO {
             while (rs.next()) {
                 String type = rs.getString("type");
                 Item item = null;
-
-                // 1. Khởi tạo Object bằng các lớp con (Concrete Classes)
                 if (type != null) {
                     if (type.equalsIgnoreCase("Electronic")) {
                         item = new Electronic();
@@ -337,11 +331,9 @@ public class ItemDAO {
                         continue;
                     }
                 } else {
-                    continue; // Bỏ qua nếu type bị null
+                    continue;
                 }
 
-                // 2. Nạp các thông số chung của lớp cha (Abstract Item)
-                // LƯU Ý: Đổi rs.getString / rs.getInt cho khớp với kiểu dữ liệu trong DB nhé
                 item.setId(rs.getString("item_id"));
                 item.setName(rs.getString("item_name"));
                 item.setType(type);
@@ -352,17 +344,6 @@ public class ItemDAO {
 
                 String imageUrl = rs.getString("productImageURL");
                 if (imageUrl != null) item.setProductImageURL(imageUrl);
-
-                // Nạp thêm các thuộc tính riêng (Đa hình) nếu DB cậu có lưu:
-                if (item instanceof Electronic) {
-                    // ((Electronic) item).setBrand(rs.getString("brand"));
-                } else if (item instanceof Art) {
-                    // ((Art) item).setAuthor(rs.getString("author"));
-                } else if (item instanceof Vehicle) {
-                    // ((Vehicle) item).setEngineCapacity(rs.getString("engine_capacity"));
-                }
-
-                // 3. Thêm vào danh sách
                 waitingItems.add(item);
             }
 
@@ -376,16 +357,8 @@ public class ItemDAO {
 
 
 
-    // ==========================================
-    // CÁC HÀM CHO ADMIN: QUẢN LÝ SẢN PHẨM
-    // ==========================================
-
-    // Cập nhật trạng thái sản phẩm (Dùng để duyệt WAITING -> ACTIVE)
-    // ==========================================
-    // DUYỆT SẢN PHẨM THÔNG MINH TỰ ĐỘNG CHỌN TRẠNG THÁI
-    // ==========================================
     public static boolean approveItemWithTimeCheck(String itemId) {
-        // LƯU Ý 1: Sửa "start_time" thành tên cột lưu thời gian bắt đầu trong bảng SQLite của cậu
+
         String queryTime = "SELECT StartTime FROM Items WHERE item_id = ?";
         String updateStatus = "UPDATE Items SET status = ? WHERE item_id = ?";
 
@@ -393,26 +366,22 @@ public class ItemDAO {
              PreparedStatement pstmtQuery = conn.prepareStatement(queryTime);
              PreparedStatement pstmtUpdate = conn.prepareStatement(updateStatus)) {
 
-            // 1. Quét tìm thời gian bắt đầu của sản phẩm này
-            // LƯU Ý 2: Nếu id của cậu là int thì nhớ đổi thành pstmtQuery.setInt(1, Integer.parseInt(itemId));
             pstmtQuery.setString(1, itemId);
             ResultSet rs = pstmtQuery.executeQuery();
 
             if (rs.next()) {
-                // Mặc định cho nó lên sàn luôn (ACTIVE)
+
                 String newStatus = "ACTIVE";
 
-                // Lấy ra thời gian từ DB để so sánh
                 java.sql.Timestamp startTime = rs.getTimestamp("StartTime");
 
-                // Nếu có cài đặt thời gian bắt đầu, VÀ thời gian đó nằm ở TƯƠNG LAI -> Cất vào kho (PREPARED)
                 if (startTime != null && startTime.after(new java.sql.Timestamp(System.currentTimeMillis()))) {
                     newStatus = "PREPARED";
                 }
 
                 // 2. Chốt hạ trạng thái mới vào Database
                 pstmtUpdate.setString(1, newStatus);
-                pstmtUpdate.setString(2, itemId); // Tương tự, nếu id là int thì parse ra
+                pstmtUpdate.setString(2, itemId);
 
                 return pstmtUpdate.executeUpdate() > 0;
             }
@@ -423,15 +392,13 @@ public class ItemDAO {
             return false;
         }
     }
-
-    // Xóa thẳng tay sản phẩm (Dùng để từ chối)
     public static boolean deleteItem(String itemId) {
-        String sql = "DELETE FROM Items WHERE id = ?";
+        String sql = "DELETE FROM Items WHERE item_id = ?";
 
         try (Connection conn = DatabaseManager.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
-            pstmt.setString(1, itemId); // Tương tự, nếu id là Int thì parse sang Int
+            pstmt.setString(1, itemId);
 
             int rowsAffected = pstmt.executeUpdate();
             return rowsAffected > 0;
@@ -442,66 +409,53 @@ public class ItemDAO {
             return false;
         }
     }
-    // TÌM 1 SẢN PHẨM THEO ID (Dùng cho BID và AUTO_BID)
-    public Item getItemById(String itemId) {
+
+    public Item getItemById(String id) {
         String sql = "SELECT * FROM Items WHERE item_id = ?";
 
         try (Connection conn = DatabaseManager.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
-            pstmt.setString(1, itemId);
+            pstmt.setString(1, id);
+            ResultSet rs = pstmt.executeQuery();
 
-            try (ResultSet rs = pstmt.executeQuery()) {
-                if (rs.next()) {
-                    String type = rs.getString("type");
-                    Item foundItem = null;
+            if (rs.next()) {
+                String type = rs.getString("type");
+                Item item = null;
 
-                    if (type != null) {
-                        switch (type.toUpperCase()) {
-                            case "ELECTRONIC":
-                                Electronic el = new Electronic();
-                                el.setWarrantyPeriod(rs.getInt("warranty_period"));
-                                el.setBrand(rs.getString("brand"));
-                                foundItem = el;
-                                break;
-                            case "VEHICLE":
-                                Vehicle v = new Vehicle();
-                                v.setWarrantyPeriod(rs.getInt("warranty_period"));
-                                v.setBrand(rs.getString("brand"));
-                                v.setEngineCapacity(rs.getString("engine_capacity"));
-                                v.setFuelType(rs.getString("fuel_type"));
-                                foundItem = v;
-                                break;
-                            case "ART":
-                                Art a = new Art();
-                                a.setAuthor(rs.getString("author"));
-                                a.setCreationYear(rs.getInt("creation_year"));
-                                foundItem = a;
-                                break;
-                        }
+                if (type != null) {
+                    switch (type.toUpperCase()) {
+                        case "ART":
+                            item = new Art();
+                            break;
+                        case "VEHICLE":
+                            item = new Vehicle();
+                            break;
+                        case "ELECTRONIC":
+                            item = new Electronic();
+                            break;
+                        default:
+                            System.out.println("Cảnh báo: Loại sản phẩm không xác định: " + type);
+                            break;
                     }
+                }
 
-                    if (foundItem != null) {
-                        foundItem.setId(rs.getString("item_id"));
-                        foundItem.setName(rs.getString("item_name"));
-                        foundItem.setStartingPrice(rs.getDouble("start_price"));
-                        foundItem.setCurrentPrice(rs.getDouble("current_price"));
-                        foundItem.setMinIncrement(rs.getDouble("step_price"));
-                        foundItem.setLastBidderId(rs.getString("last_bidder_id"));
-                        foundItem.setType(type);
-                        foundItem.setStatus(rs.getString("status"));
-                        foundItem.setProductImageURL(rs.getString("productImageURL"));
-                        foundItem.setStartTime(rs.getTimestamp("StartTime"));
-                        foundItem.setEndTime(rs.getTimestamp("EndTime"));
-                        foundItem.setSeller_ID(rs.getString("seller_id"));
-                    }
 
-                    return foundItem;
+                if (item != null) {
+                    item.setId(rs.getString("item_id"));
+                    item.setName(rs.getString("item_name"));
+                    item.setType(type);
+                    item.setStartingPrice(rs.getDouble("start_price"));
+                    item.setCurrentPrice(rs.getDouble("current_price"));
+                    item.setStatus(rs.getString("status"));
+
+                    return item;
                 }
             }
         } catch (SQLException e) {
-            System.err.println("Lỗi khi tìm Item theo ID (" + itemId + "): " + e.getMessage());
+            System.out.println("Lỗi khi tìm Item theo ID: " + e.getMessage());
+            e.printStackTrace();
         }
-        return null; // Không tìm thấy
+        return null;
     }
-}
+    }

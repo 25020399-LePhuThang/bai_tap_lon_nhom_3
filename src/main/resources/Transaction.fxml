@@ -26,7 +26,7 @@
                         <Font size="14.0" />
                     </font>
                 </Label>
-                <TextField fx:id="txtAmount" prefHeight="40.0" promptText="Ví dụ: 500000" style="-fx-border-color: #bdc3c7; -fx-border-radius: 5; -fx-background-radius: 5;">
+                <TextField fx:id="txtAmount" prefHeight="40.0" promptText="Ví dụ: 500000" style="-fx-border-color: #bdc3c7; -fx-border-radius: 5; -fx-background-radius: 5;" styleClass="text-input-modern" stylesheets="@Style.css">
                     <font>
                         <Font size="16.0" />
                     </font>
@@ -37,7 +37,7 @@
             </VBox.margin>
         </VBox>
 
-        <Label fx:id="lblStatusMsg" alignment="CENTER" prefHeight="40.0" prefWidth="320.0" text="" textAlignment="CENTER" wrapText="true" textFill="#e74c3c">
+        <Label fx:id="lblStatusMsg" alignment="CENTER" prefHeight="40.0" prefWidth="320.0" text="" textAlignment="CENTER" textFill="#e74c3c" wrapText="true">
             <font>
                 <Font name="System Italic" size="13.0" />
             </font>
@@ -45,8 +45,8 @@
 
         <HBox spacing="15.0">
             <children>
-                <Button fx:id="btnCancel" mnemonicParsing="false" onAction="#handleCancel" prefHeight="40.0" prefWidth="150.0" style="-fx-background-color: #95a5a6; -fx-text-fill: white; -fx-font-weight: bold; -fx-cursor: hand;" text="HỦY BỎ" />
-                <Button fx:id="btnConfirm" mnemonicParsing="false" onAction="#handleConfirm" prefHeight="40.0" prefWidth="150.0" style="-fx-background-color: #27ae60; -fx-text-fill: white; -fx-font-weight: bold; -fx-cursor: hand;" text="XÁC NHẬN" />
+                <Button fx:id="btnCancel" mnemonicParsing="false" onAction="#handleCancel" prefHeight="40.0" prefWidth="150.0" style="-fx-background-color: #95a5a6; -fx-text-fill: white; -fx-font-weight: bold; -fx-cursor: hand;" styleClass="btn-primary" stylesheets="@Style.css" text="HỦY BỎ" />
+                <Button fx:id="btnConfirm" mnemonicParsing="false" onAction="#handleConfirm" prefHeight="40.0" prefWidth="150.0" style="-fx-background-color: #27ae60; -fx-text-fill: white; -fx-font-weight: bold; -fx-cursor: hand;" styleClass="btn-primary" stylesheets="@Style.css" text="XÁC NHẬN" />
             </children>
         </HBox>
     </children>

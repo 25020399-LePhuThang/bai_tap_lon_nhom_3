@@ -179,10 +179,8 @@ public class UserDAO {
     }
 
     public String withdraw(String username, double amount) {
-        // 1. Kiểm tra số tiền hợp lệ (Trả về chuỗi thay vì false)
         if (amount <= 0) return "INVALID_AMOUNT";
 
-        // SQL cực kỳ thông minh: Chỉ cho phép trừ nếu balance >= số tiền rút
         String sql = "UPDATE Users SET balance = balance - ? WHERE username = ? AND balance >= ?";
 
         try (Connection conn = DatabaseManager.getConnection();
@@ -452,6 +450,25 @@ public class UserDAO {
 
         } catch (Exception e) {
             System.err.println("Lỗi khi update status của User: " + e.getMessage());
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public boolean deleteUser(String username) {
+        String sql = "DELETE FROM users WHERE username = ?";
+
+        try (Connection conn = DatabaseManager.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setString(1, username);
+
+            int rowsAffected = pstmt.executeUpdate();
+
+            return rowsAffected > 0;
+
+        } catch (SQLException e) {
+            System.out.println("Lỗi DB khi xóa User: " + e.getMessage());
             e.printStackTrace();
             return false;
         }

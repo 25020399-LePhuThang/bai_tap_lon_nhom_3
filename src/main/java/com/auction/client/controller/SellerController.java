@@ -17,6 +17,7 @@ import java.util.Locale;
 import java.util.ResourceBundle;
 
 import com.auction.shared.model.item.Vehicle;
+import com.auction.shared.model.user.User;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.application.Platform;
@@ -35,41 +36,72 @@ import javafx.util.Duration;
 
 public class SellerController implements Initializable {
 
-    @FXML private Label lblSellerName;
-    @FXML private Label lblBalance;
-    @FXML private Label lblTime;
+    @FXML
+    private Label lblSellerName;
+    @FXML
+    private Label lblBalance;
+    @FXML
+    private Label lblTime;
 
 
-    @FXML private Button btnDeposit;
-    @FXML private Button btnWithdraw;
-    @FXML private Button btnSettings;
-    @FXML private Button btnLogout;
-    @FXML private Button btnRefresh;
-    @FXML private Button btnAddItem;
-    @FXML private Button btnBackFromSeller;
+    @FXML
+    private Button btnDeposit;
+    @FXML
+    private Button btnWithdraw;
+    @FXML
+    private Button btnSettings;
+    @FXML
+    private Button btnLogout;
+    @FXML
+    private Button btnRefresh;
+    @FXML
+    private Button btnAddItem;
+    @FXML
+    private Button btnBackFromSeller;
 
 
-    @FXML private TableView<Item> tableItems;
-    @FXML private TableColumn<Item, Integer> colId;
-    @FXML private TableColumn<Item, String> colName;
-    @FXML private TableColumn<Item, String> colType;
-    @FXML private TableColumn<Item, Double> colStartPrice;
-    @FXML private TableColumn<Item, Double> colCurrentPrice;
-    @FXML private TableColumn<Item, String> colStatus;
+    @FXML
+    private TableView<Item> tableItems;
+    @FXML
+    private TableColumn<Item, Integer> colId;
+    @FXML
+    private TableColumn<Item, String> colName;
+    @FXML
+    private TableColumn<Item, String> colType;
+    @FXML
+    private TableColumn<Item, Double> colStartPrice;
+    @FXML
+    private TableColumn<Item, Double> colCurrentPrice;
+    @FXML
+    private TableColumn<Item, String> colStatus;
 
 
-    @FXML private TextField txtItemName;
-    @FXML private TextField txtStartPrice;
-    @FXML private TextField txtStepPrice;
-    @FXML private TextField txtImageUrl;
-    @FXML private DatePicker dpEndDate;
-    @FXML private ComboBox<String> cbItemType;
-    @FXML private TextField txtBrand;
-    @FXML private TextField txtWarranty;
-    @FXML private TextField txtAuthor;
-    @FXML private TextField txtCreationYear;
-    @FXML private TextField txtFuelType;
-    @FXML private TextField txtEngineCapacity;
+    @FXML
+    private TextField txtItemName;
+    @FXML
+    private TextField txtStartPrice;
+    @FXML
+    private TextField txtStepPrice;
+    @FXML
+    private TextField txtImageUrl;
+    @FXML
+    private DatePicker dpEndDate;
+    @FXML
+    private DatePicker dpStartDate;
+    @FXML
+    private ComboBox<String> cbItemType;
+    @FXML
+    private TextField txtBrand;
+    @FXML
+    private TextField txtWarranty;
+    @FXML
+    private TextField txtAuthor;
+    @FXML
+    private TextField txtCreationYear;
+    @FXML
+    private TextField txtFuelType;
+    @FXML
+    private TextField txtEngineCapacity;
 
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
@@ -201,9 +233,9 @@ public class SellerController implements Initializable {
 
         } else if (selectedItem instanceof Vehicle) {
             Vehicle vehicle = (Vehicle) selectedItem;
-            extraDetails += "Thương hiệu: "+vehicle.getBrand()+"\n"
-                    + "Bảo hành: "+vehicle.getWarrantyPeriod()+"tháng\n"
-                    +"Nhiên liệu: " + vehicle.getFuelType() + "\n"
+            extraDetails += "Thương hiệu: " + vehicle.getBrand() + "\n"
+                    + "Bảo hành: " + vehicle.getWarrantyPeriod() + "tháng\n"
+                    + "Nhiên liệu: " + vehicle.getFuelType() + "\n"
                     + "Dung tích động cơ: " + vehicle.getEngineCapacity() + "\n"
             ;
 
@@ -232,9 +264,7 @@ public class SellerController implements Initializable {
     private void switchScence(ActionEvent event, String fxmlFile) throws IOException {
         Parent root = FXMLLoader.load(getClass().getResource(fxmlFile));
         Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
-        stage.setScene(new Scene(root));
-        stage.show();
-    }
+        stage.getScene().setRoot(root);    }
 
     public void toSignInScreen(ActionEvent event) throws IOException {
         switchScence(event, "/SignInScreen.fxml");
@@ -249,7 +279,7 @@ public class SellerController implements Initializable {
             settingController.initData(lblSellerName.getText(), "SELLER");
 
             Stage stage = (Stage) btnSettings.getScene().getWindow();
-            stage.setScene(new Scene(root));
+            stage.getScene().setRoot(root);
             stage.show();
         } catch (IOException e) {
             e.printStackTrace();
@@ -311,13 +341,20 @@ public class SellerController implements Initializable {
             double startPrice = Double.parseDouble(txtStartPrice.getText());
             double stepPrice = Double.parseDouble(txtStepPrice.getText());
 
+            if (dpStartDate.getValue() == null) {
+                showAlert(Alert.AlertType.WARNING, "Thiếu thông tin", "Vui lòng chọn Ngày bắt đầu");
+                return;
+            }
+            LocalDate localStartDate = dpStartDate.getValue();
+            Date startTime = Date.from(localStartDate.atStartOfDay(java.time.ZoneId.systemDefault()).toInstant());
+
             if (dpEndDate.getValue() == null) {
                 showAlert(Alert.AlertType.WARNING, "Thiếu thông tin", "Vui lòng chọn Ngày kết thúc!");
                 return;
             }
-           LocalDate localEndDate = dpEndDate.getValue();
-            Date endTime = java.util.Date.from(localEndDate.atStartOfDay(java.time.ZoneId.systemDefault()).toInstant());
-            Date startTime = new java.util.Date(); // Bắt đầu ngay lúc này
+            LocalDate localEndDate = dpEndDate.getValue();
+            Date endTime = Date.from(localEndDate.atStartOfDay(java.time.ZoneId.systemDefault()).toInstant());
+
 
             Item newItem = null;
 
@@ -369,6 +406,7 @@ public class SellerController implements Initializable {
                 showAlert(Alert.AlertType.INFORMATION, "Thành công", "Đã đăng sản phẩm lên sàn đấu giá thành công!");
                 clearForm();
                 setDisplayName(sellerName);
+                handleRefresh();
             } else {
                 showAlert(Alert.AlertType.ERROR, "Thất bại", "Lỗi Server! Không thể tạo sản phẩm lúc này.");
             }
@@ -382,16 +420,13 @@ public class SellerController implements Initializable {
     }
 
     @FXML
-    public void handleRefresh(ActionEvent event) {
+    public void handleRefresh() {
         String currentUser = lblSellerName.getText();
         if (currentUser != null && !currentUser.isEmpty()) {
             setDisplayName(currentUser);
         }
     }
 
-    // =========================================================================
-    // CÁC HÀM TIỆN ÍCH HỖ TRỢ
-    // =========================================================================
     private void clearForm() {
         txtItemName.clear();
         txtStartPrice.clear();
@@ -419,10 +454,10 @@ public class SellerController implements Initializable {
     @FXML
     public void handleLogout(ActionEvent event) throws IOException {
         NetworkClient.disconnect(lblSellerName.getText());
-        switchScence(event,"/SignInScreen.fxml");
+        switchScence(event, "/SignInScreen.fxml");
     }
 
-    public void toInfoScreen(){
+    public void toInfoScreen() {
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/InfoScreen.fxml"));
             Parent root = loader.load();
@@ -435,6 +470,30 @@ public class SellerController implements Initializable {
             popUpStage.initModality(javafx.stage.Modality.APPLICATION_MODAL);
             popUpStage.setResizable(false);
             popUpStage.show();
-        } catch (IOException e) { e.printStackTrace(); }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @FXML
+    public void handleDeleteItem() {
+        Item selectedItem = tableItems.getSelectionModel().getSelectedItem();
+        String itemID = selectedItem.getItemID();
+
+        if (selectedItem == null) {
+            showAlert(Alert.AlertType.ERROR, "Lỗi không xác định", "Không tìm thấy sản phẩm");
+            return;
+        }
+        String status = selectedItem.getStatus();
+        if (!"WAITING".equalsIgnoreCase(status) && !"PREPARED".equalsIgnoreCase(status)) {
+            showAlert(Alert.AlertType.ERROR, "Lỗi thực thi", "Sản phẩm đang trong thời kì đấu giá, không được phép xóa.");
+            return;
+        }
+
+        String msg = NetworkClient.deleteItem(itemID);
+        if(msg.startsWith("DELETE_SUCCESS")){
+            showAlert(Alert.AlertType.INFORMATION,"Thông báo","Xóa sản phẩm thành công");
+            handleRefresh();
+        }
     }
 }

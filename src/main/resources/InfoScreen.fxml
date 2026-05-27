@@ -72,6 +72,6 @@
         <VBox.margin>
             <Insets top="5.0" />
         </VBox.margin>
-        <Button fx:id="btnClose" mnemonicParsing="false" onAction="#handleCancel" prefHeight="35.0" prefWidth="100.0" style="-fx-background-color: #e74c3c; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 5; -fx-cursor: hand;" text="ĐÓNG" />
+        <Button fx:id="btnClose" mnemonicParsing="false" onAction="#handleCancel" prefHeight="35.0" prefWidth="100.0" style="-fx-background-color: #e74c3c; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 5; -fx-cursor: hand;" styleClass="btn-primary" stylesheets="@Style.css" text="ĐÓNG" />
     </HBox>
 </VBox>
