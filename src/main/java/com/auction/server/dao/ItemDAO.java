@@ -442,4 +442,66 @@ public class ItemDAO {
             return false;
         }
     }
+    // TÌM 1 SẢN PHẨM THEO ID (Dùng cho BID và AUTO_BID)
+    public Item getItemById(String itemId) {
+        String sql = "SELECT * FROM Items WHERE item_id = ?";
+
+        try (Connection conn = DatabaseManager.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setString(1, itemId);
+
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    String type = rs.getString("type");
+                    Item foundItem = null;
+
+                    if (type != null) {
+                        switch (type.toUpperCase()) {
+                            case "ELECTRONIC":
+                                Electronic el = new Electronic();
+                                el.setWarrantyPeriod(rs.getInt("warranty_period"));
+                                el.setBrand(rs.getString("brand"));
+                                foundItem = el;
+                                break;
+                            case "VEHICLE":
+                                Vehicle v = new Vehicle();
+                                v.setWarrantyPeriod(rs.getInt("warranty_period"));
+                                v.setBrand(rs.getString("brand"));
+                                v.setEngineCapacity(rs.getString("engine_capacity"));
+                                v.setFuelType(rs.getString("fuel_type"));
+                                foundItem = v;
+                                break;
+                            case "ART":
+                                Art a = new Art();
+                                a.setAuthor(rs.getString("author"));
+                                a.setCreationYear(rs.getInt("creation_year"));
+                                foundItem = a;
+                                break;
+                        }
+                    }
+
+                    if (foundItem != null) {
+                        foundItem.setId(rs.getString("item_id"));
+                        foundItem.setName(rs.getString("item_name"));
+                        foundItem.setStartingPrice(rs.getDouble("start_price"));
+                        foundItem.setCurrentPrice(rs.getDouble("current_price"));
+                        foundItem.setMinIncrement(rs.getDouble("step_price"));
+                        foundItem.setLastBidderId(rs.getString("last_bidder_id"));
+                        foundItem.setType(type);
+                        foundItem.setStatus(rs.getString("status"));
+                        foundItem.setProductImageURL(rs.getString("productImageURL"));
+                        foundItem.setStartTime(rs.getTimestamp("StartTime"));
+                        foundItem.setEndTime(rs.getTimestamp("EndTime"));
+                        foundItem.setSeller_ID(rs.getString("seller_id"));
+                    }
+
+                    return foundItem;
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("Lỗi khi tìm Item theo ID (" + itemId + "): " + e.getMessage());
+        }
+        return null; // Không tìm thấy
     }
+}

@@ -104,7 +104,7 @@ public class ClientHandler implements Runnable {
                         double price = Double.parseDouble(parts[2]);
                         String itemId = parts[3];
 
-                        Item targetItem = ProductManager.getItemById(itemId);
+                        Item targetItem = itemDAO.getItemById(itemId);
 
                         if (targetItem != null) {
                             String result = biddingService.placeBid(targetItem, price, user);
@@ -121,7 +121,7 @@ public class ClientHandler implements Runnable {
                         double increment = Double.parseDouble(parts[3]);
                         String itemId = parts[4];
 
-                        Item targetItem = ProductManager.getItemById(itemId);
+                        Item targetItem = itemDAO.getItemById(itemId);
 
                         if (targetItem != null) {
                             String result = biddingService.registerAutoBid(
