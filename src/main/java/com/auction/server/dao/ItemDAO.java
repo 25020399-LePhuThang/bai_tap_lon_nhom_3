@@ -412,6 +412,7 @@ public class ItemDAO {
 
     public Item getItemById(String id) {
         String sql = "SELECT * FROM Items WHERE item_id = ?";
+        java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
         try (Connection conn = DatabaseManager.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -426,13 +427,24 @@ public class ItemDAO {
                 if (type != null) {
                     switch (type.toUpperCase()) {
                         case "ART":
-                            item = new Art();
+                            Art a = new Art();
+                            a.setAuthor(rs.getString("author"));
+                            a.setCreationYear(rs.getInt("creation_year"));
+                            item = a;
                             break;
                         case "VEHICLE":
-                            item = new Vehicle();
+                            Vehicle v = new Vehicle();
+                            v.setBrand(rs.getString("brand"));
+                            v.setEngineCapacity(rs.getString("engine_capacity"));
+                            v.setFuelType(rs.getString("fuel_type"));
+                            v.setWarrantyPeriod(rs.getInt("warranty_period"));
+                            item = v;
                             break;
                         case "ELECTRONIC":
-                            item = new Electronic();
+                            Electronic el = new Electronic();
+                            el.setBrand(rs.getString("brand"));
+                            el.setWarrantyPeriod(rs.getInt("warranty_period"));
+                            item = el;
                             break;
                         default:
                             System.out.println("Cảnh báo: Loại sản phẩm không xác định: " + type);
@@ -447,7 +459,23 @@ public class ItemDAO {
                     item.setType(type);
                     item.setStartingPrice(rs.getDouble("start_price"));
                     item.setCurrentPrice(rs.getDouble("current_price"));
+                    item.setMinIncrement(rs.getDouble("step_price"));
+                    item.setLastBidderId(rs.getString("last_bidder_id"));
                     item.setStatus(rs.getString("status"));
+                    item.setProductImageURL(rs.getString("productImageURL"));
+                    item.setStartTime(rs.getTimestamp("StartTime"));
+                    item.setEndTime(rs.getTimestamp("EndTime"));
+                    item.setSeller_ID(rs.getString("seller_id"));
+
+                    // Db lưu dạng TEXT "yyyy-MM-dd HH:mm:ss" - phải parse thủ công
+                    try {
+                        String startStr = rs.getString("StartTime");
+                        String endStr = rs.getString("EndTime");
+                        if (startStr != null) item.setStartTime(new java.sql.Timestamp(sdf.parse(startStr).getTime()));
+                        if (startStr != null) item.setEndTime(new java.sql.Timestamp(sdf.parse(endStr).getTime()));
+                    } catch (java.text.ParseException pe) {
+                        System.out.println("Lỗi parse StartTime/EndTime:" + pe.getMessage());
+                    }
 
                     return item;
                 }
@@ -458,4 +486,4 @@ public class ItemDAO {
         }
         return null;
     }
-    }
+}
