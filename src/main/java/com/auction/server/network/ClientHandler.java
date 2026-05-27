@@ -121,7 +121,7 @@ public class ClientHandler implements Runnable {
                         System.out.println("===> CHECK SERVER NHẬN ĐƯỢC:");
                         System.out.println("User: " + parts[1] + " | Price: " + parts[2] + " | ItemID: '" + itemId + "'");
 
-                        Item targetItem = ProductManager.getItemById(itemId);
+                        Item targetItem = itemDAO.getItemById(itemId);
 
                         if (targetItem != null) {
                             String result = biddingService.placeBid(targetItem, price, user);
@@ -156,7 +156,7 @@ public class ClientHandler implements Runnable {
                         double increment = Double.parseDouble(parts[3]);
                         String itemId    = parts[4];
 
-                        Item targetItem = ProductManager.getItemById(itemId);
+                        Item targetItem = itemDAO.getItemById(itemId);
 
                         if (targetItem != null) {
                             String result = biddingService.registerAutoBid(
