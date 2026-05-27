@@ -107,23 +107,23 @@ public class MainScreenController implements Initializable {
                 Item selectedItem = tbvWillPresent.getSelectionModel().getSelectedItem();
                 if (selectedItem != null){
                     try {
-                        FXMLLoader loader = new FXMLLoader(getClass().getResource("/AuctionDetail.fxml"));
+                        FXMLLoader loader = new FXMLLoader(getClass().getResource("/InfoScreen.fxml"));
                         Parent root = loader.load();
-                        AuctionDetailController auctionDetailController = loader.getController();
-                        auctionDetailController.setItemData(selectedItem);
-                        auctionDetailController.setDisplayName(lblName.getText());
 
-                        // Lấy cửa sổ (Stage) hiện tại thông qua cái bảng tbvItems của màn hình chính
-                        Stage stage = (Stage) tbvWillPresent.getScene().getWindow();
-                        stage.setTitle("Chi tiết: " + selectedItem.getName());
-                        stage.getScene().setRoot(root);
-                        stage.show();
+                        InfoController infoController = loader.getController();
+                        infoController.initData(lblName.getText(), this);
+
+
+                        Stage popUpStage = new Stage();
+                        popUpStage.setScene(new Scene(root));
+                        popUpStage.initModality(javafx.stage.Modality.APPLICATION_MODAL);
+                        popUpStage.setResizable(false);
+                        popUpStage.show();
                     } catch (IOException e) { e.printStackTrace(); }
                 };
             }
         });
 
-        // KHÔNG GỌI LOAD MẠNG Ở ĐÂY NỮA, ĐỂ NHƯỜNG CHO HÀM setDisplayName!
     }
 
     private void setupTableColumns() {
