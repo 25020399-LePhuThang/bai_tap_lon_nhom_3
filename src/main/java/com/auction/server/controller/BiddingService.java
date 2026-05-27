@@ -11,6 +11,19 @@ public class BiddingService {
     // Mỗi phiên (itemId) có một AuctionAutoBid riêng — thread-safe map
     private final Map<String, AuctionAutoBid> autoBidMap = new ConcurrentHashMap<>();
 
+    // Dùng AntiSnipingPolicy thay vì viết logic trực tiếp
+    private final AntiSnipingPolicy antiSnipingPolicy;
+
+    // Constructor mặc định — dùng AntiSnipingPolicy với 30s / 60s
+    public BiddingService() {
+        this.antiSnipingPolicy = new AntiSnipingPolicy();
+    }
+
+    // Constructor cho phép tùy chỉnh policy
+    public BiddingService(AntiSnipingPolicy policy) {
+        this.antiSnipingPolicy = policy;
+    }
+
     //   private AuctionTimer auctionTimer;
     //   public BiddingService(AuctionTimer timer) { this.auctionTimer = timer; }
 
@@ -50,7 +63,7 @@ public class BiddingService {
                 item.setLastBidderId(userId);
 
                 // Kiểm tra gia hạn tự động ở giây cuối (Anti-Sniping)
-                if (handleAntiSniping(item)) {
+                if (antiSnipingPolicy.apply(item)) {
                     // Gọi AuctionTimer để hủy lịch cũ, lập lịch mới
                     // auctionTimer.reschedule();
                 }
@@ -119,20 +132,5 @@ public class BiddingService {
             return result.message != null ? result.message
                     : "Auto-bid đã được đăng ký. Giá hiện tại: " + item.getCurrentPrice() + "đ";
         }
-    }
-
-    //Anti-Sniping
-    private boolean handleAntiSniping(Item item) {
-        // Tính thời gian còn lại (ms)
-        long timeLeft = item.getEndTime().getTime() - System.currentTimeMillis();
-
-        // Nếu còn dưới 30 giây thì gia hạn
-        if (timeLeft > 0 && timeLeft < 30000) {
-            long newEndTime = item.getEndTime().getTime() + 60000; // Cộng thêm 60s
-            item.setEndTime(new java.util.Date(newEndTime));
-            System.out.println(">>> He thong: Phat hien Sniping! Gia han them 60s.");
-            return true; // Trả về true để báo là có gia hạn
-        }
-        return false; // Không cần gia hạn
     }
 }
