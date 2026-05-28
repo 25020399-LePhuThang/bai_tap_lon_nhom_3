@@ -1,6 +1,8 @@
 package com.auction.client.controller;
 
 import com.auction.client.network.NetworkClient;
+import com.auction.shared.model.item.Art;
+import com.auction.shared.model.item.Electronic;
 import com.auction.shared.model.item.Item;
 
 import java.io.IOException;
@@ -14,6 +16,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.ResourceBundle;
 
+import com.auction.shared.model.item.Vehicle;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.application.Platform;
@@ -105,22 +108,73 @@ public class MainScreenController implements Initializable {
         tbvWillPresent.setOnMouseClicked(event -> {
             if (event.getClickCount() == 2) {
                 Item selectedItem = tbvWillPresent.getSelectionModel().getSelectedItem();
-                if (selectedItem != null){
+                if (selectedItem != null) {
+                    //Chi tiết sản phẩm
+                    if (selectedItem == null) return;
+
+                    Alert alert = new Alert(Alert.AlertType.INFORMATION);
+                    alert.setTitle("Chi tiết sản phẩm");
+                    alert.setHeaderText("Tên sản phẩm: " + selectedItem.getName());
+
+                    String sellerId = selectedItem.getSeller_ID();
+                    if (sellerId == null || sellerId.trim().isEmpty() || sellerId.equalsIgnoreCase("null")) {
+                        sellerId = "Không rõ";
+                    }
+
+                    String winnerId = selectedItem.getLastBidderId();
+                    if (winnerId == null || winnerId.trim().isEmpty() || winnerId.equalsIgnoreCase("null")) {
+                        winnerId = "Chưa có người thắng";
+                    }
+
+                    String details = "Mã SP: " + selectedItem.getId() + "\n"
+                            + "Phân loại: " + selectedItem.getType() + "\n"
+                            + "Giá khởi điểm: " + selectedItem.getStartingPrice() + " $\n"
+                            + "Giá hiện tại: " + selectedItem.getCurrentPrice() + " $\n"
+                            + "ID Người bán: " + sellerId + "\n"
+                            + "ID Người thắng: " + winnerId + "\n"
+                            + "Trạng thái: " + selectedItem.getStatus() + "\n";
+
+                    //Thuộc tính phụ
+                    String extraDetails = "\n Thông tin chi tiết \n";
+
+                    if (selectedItem instanceof Electronic) {
+                        Electronic electronic = (Electronic) selectedItem;
+                        extraDetails += "Thương hiệu: " + electronic.getBrand() + "\n"
+                                + "Bảo hành: " + electronic.getWarrantyPeriod() + " tháng\n";
+
+                    } else if (selectedItem instanceof Art) {
+                        Art art = (Art) selectedItem;
+                        extraDetails += "Tác giả: " + art.getAuthor() + "\n"
+                                + "Năm sáng tác: " + art.getCreationYear() + "\n";
+
+                    } else if (selectedItem instanceof Vehicle) {
+                        Vehicle vehicle = (Vehicle) selectedItem;
+                        extraDetails += "Thương hiệu: " + vehicle.getBrand() + "\n"
+                                + "Bảo hành: " + vehicle.getWarrantyPeriod() + "tháng\n"
+                                + "Nhiên liệu: " + vehicle.getFuelType() + "\n"
+                                + "Dung tích động cơ: " + vehicle.getEngineCapacity() + "\n"
+                        ;
+
+                    } else {
+                        extraDetails = "";
+                    }
+
+                    alert.setContentText(details + extraDetails);
+
                     try {
-                        FXMLLoader loader = new FXMLLoader(getClass().getResource("/InfoScreen.fxml"));
-                        Parent root = loader.load();
+                        String imageUrl = selectedItem.getProductImageURL();
+                        if (imageUrl != null && !imageUrl.isEmpty()) {
+                            javafx.scene.image.Image image = new javafx.scene.image.Image(imageUrl, 150, 150, true, true);
+                            javafx.scene.image.ImageView imageView = new javafx.scene.image.ImageView(image);
+                            imageView.setStyle("-fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.3), 5, 0, 0, 0);");
+                            alert.setGraphic(imageView);
+                        }
+                    } catch (Exception e) {
+                        System.err.println("Không thể load ảnh lên hộp thoại: " + e.getMessage());
+                    }
 
-                        InfoController infoController = loader.getController();
-                        infoController.initData(lblName.getText(), this);
-
-
-                        Stage popUpStage = new Stage();
-                        popUpStage.setScene(new Scene(root));
-                        popUpStage.initModality(javafx.stage.Modality.APPLICATION_MODAL);
-                        popUpStage.setResizable(false);
-                        popUpStage.show();
-                    } catch (IOException e) { e.printStackTrace(); }
-                };
+                    alert.showAndWait();
+                }
             }
         });
 
