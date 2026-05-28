@@ -3,6 +3,8 @@ package com.auction.server.controller;
 import java.util.Date;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+
+import com.auction.server.dao.ItemDAO;
 import com.auction.shared.model.AutoBid;
 import com.auction.shared.model.item.Item;
 
@@ -13,6 +15,18 @@ public class BiddingService {
 
     // Dùng AntiSnipingPolicy thay vì viết logic trực tiếp
     private final AntiSnipingPolicy antiSnipingPolicy;
+
+    // Trong BiddingService, đổi field:
+    private ItemDAO itemDao; // bỏ final
+
+    // Tạo hàm getItemDao():
+    private ItemDAO getItemDao() {
+        if (itemDao == null) {
+            itemDao = new ItemDAO();
+        }
+        return itemDao;
+    }
+
 
     // Constructor mặc định — dùng AntiSnipingPolicy với 30s / 60s
     public BiddingService() {
@@ -61,6 +75,7 @@ public class BiddingService {
             try {
                 item.setCurrentPrice(amount);
                 item.setLastBidderId(userId);
+                getItemDao().updatePrice(item);
 
                 // Kiểm tra gia hạn tự động ở giây cuối (Anti-Sniping)
                 if (antiSnipingPolicy.apply(item)) {
@@ -75,6 +90,7 @@ public class BiddingService {
                     if (result.priceChanged) {
                         item.setCurrentPrice(result.finalPrice);
                         item.setLastBidderId(result.finalWinnerId);
+                        getItemDao().updatePrice(item);
                         // Auto-bid đã phản ứng — trả về kết quả cuối cùng
                         return "THÀNH CÔNG: Giá hiện tại " + result.finalPrice
                                 + "đ — dẫn đầu bởi " + result.finalWinnerId
@@ -82,7 +98,7 @@ public class BiddingService {
                     }
                 }
 
-                return "THÀNH CÔNG: Bạn đang là người dẫn đầu với mức giá " + amount + "đ";
+                return "THÀNH CÔNG: Bạn đang là người dẫn đầu với mức giá " + amount + "$";
             } catch (Exception e) {
                 return "LỖI HỆ THỐNG: Không thể cập nhật giá lúc này. Vui lòng thử lại.";
             }
@@ -130,7 +146,7 @@ public class BiddingService {
             }
 
             return result.message != null ? result.message
-                    : "Auto-bid đã được đăng ký. Giá hiện tại: " + item.getCurrentPrice() + "đ";
+                    : "Auto-bid đã được đăng ký. Giá hiện tại: " + item.getCurrentPrice() + "$";
         }
     }
 }

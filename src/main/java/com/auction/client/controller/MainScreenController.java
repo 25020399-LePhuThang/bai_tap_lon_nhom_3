@@ -261,6 +261,24 @@ public class MainScreenController implements Initializable {
                 bindDataAndSearch(tbvWillPresent, finalPrepared);
             });
         }).start();
+        NetworkClient.getInstance().startListening(response -> {
+            if (!response.startsWith("BID_UPDATE|")) return;
+            String[] p = response.split("\\|");
+            if (p.length < 3) return;
+
+            String itemId = p[1];
+            double newPrice = Double.parseDouble(p[2]);
+
+            Platform.runLater(() -> {
+                // Cập nhật giá trong ObservableList → bảng tự refresh
+                tbvIsPresenting.getItems().forEach(item -> {
+                    if (String.valueOf(item.getItemID()).equals(itemId)) {
+                        item.setCurrentPrice(newPrice);
+                    }
+                });
+                tbvIsPresenting.refresh(); // ← bắt buộc để UI cập nhật
+            });
+        });
     }
 
     /**
