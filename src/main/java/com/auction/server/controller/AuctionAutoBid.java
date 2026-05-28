@@ -116,6 +116,19 @@ public class AuctionAutoBid {
                 break;
             }
 
+            // ✅ THÊM: Nếu challenger chỉ có thể đặt đúng bằng maxBid của winner hiện tại
+            // → kiểm tra xem winner hiện tại có auto-bid với maxBid >= challengerBid không
+            // → nếu có và đăng ký trước → challenger thua, dừng luôn
+            AutoBid currentWinnerBid = autoBids.stream()
+                    .filter(b -> b.getBidderId().equals(currentWinnerId))
+                    .findFirst().orElse(null);
+
+            if (currentWinnerBid != null
+                    && currentWinnerBid.getMaxBid() == challenger.getMaxBid()
+                    && currentWinnerBid.getTimestamp() < challenger.getTimestamp()) {
+                // Hòa maxBid, winner hiện tại đăng ký trước → dừng, không cho challenger vượt
+                break;
+            }
             // Challenger vượt được → cập nhật giá và winner
             currentPrice = challengerBid;
             currentWinnerId = challenger.getBidderId();
