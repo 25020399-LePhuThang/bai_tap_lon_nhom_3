@@ -179,9 +179,13 @@ public class AuctionDetailController implements Initializable {
             double newPrice  = Double.parseDouble(p[2]);
             String winner    = p[3];
 
+            // Cập nhật currentItem để đồng bộ dữ liệu
+            currentItem.setCurrentPrice(newPrice);
+            currentItem.setLastBidderId(winner);
+
             Platform.runLater(() -> {
                 // Cập nhật label giá
-                setText(lblRecentPrice, fmt.format(newPrice) + " đ");
+                setText(lblRecentPrice, fmt.format(newPrice) + " $");
                 // Thêm điểm mới vào LineChart
                 addChartPoint(newPrice);
             });
@@ -348,15 +352,41 @@ public class AuctionDetailController implements Initializable {
         }
         try {
             double price = Double.parseDouble(raw.replace(",", "").replace(".", ""));
-            // Gửi lên server: BID|userId|price|itemId
-            String msg    = "BID|" + currentUser + "|" + price + "|" + currentItem.getId();
+
+            // ✅ THÊM ĐOẠN NÀY - validate giá
+            double currentPrice = currentItem.getCurrentPrice();
+            double minIncrement = currentItem.getMinIncrement();
+            double minRequired = currentPrice + minIncrement;
+
+            if (price <= currentPrice) {
+                showAlert("Giá đấu tối thiểu phải là "
+                        + minRequired + " $ (giá hiện tại + bước giá).");
+                return;
+            }
+            if (price < minRequired) {
+                showAlert("Giá đấu tối thiểu phải là "
+                        + minRequired + " $ (giá hiện tại + bước giá).");
+                return;
+            }
+            // ✅ KẾT THÚC ĐOẠN THÊM
+
+            // Gửi lên server
+            String msg = "BID|" + currentUser + "|" + price + "|" + currentItem.getId();
             String result = NetworkClient.sendAndReceive(msg);
-            showAlert(result != null ? result : "Không nhận được phản hồi từ server.");
+
+            if (result != null && (result.startsWith("THÀNH CÔNG") || result.startsWith("BID_UPDATE"))) {
+                currentItem.setCurrentPrice(price);
+                Platform.runLater(() -> {
+                    lblRecentPrice.setText(price + "$");
+                    addChartPoint(price);
+                });
+            }
+
+            showAlert("Đấu giá thành công với giá " + price + " $!");
             txtPrice.clear();
         } catch (NumberFormatException e) {
             showAlert("Giá không hợp lệ. Vui lòng nhập số.");
         }
-
     }
 
     // ─── Tải lịch sử bid từ server ───────────────────────────────────────────

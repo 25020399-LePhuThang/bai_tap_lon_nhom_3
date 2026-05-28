@@ -167,6 +167,7 @@ public class ClientHandler implements Runnable {
                             if (result.startsWith("AutoBid")) {
                                 double finalPrice = targetItem.getCurrentPrice();
                                 String finalWinner = targetItem.getLastBidderId();
+                                itemDAO.updatePrice(targetItem);
                                 BidTransaction tx = new BidTransaction(finalWinner, itemId, finalPrice);
                                 bidDAO.save(tx);
                                 AuctionServer.broadcast(

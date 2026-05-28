@@ -23,7 +23,7 @@ public class AuctionServer {
             ServerSocket serverSocket = new ServerSocket(port);
             System.out.println("Server đang chạy trên cổng: " + port);
             
-            AuctionTimer timer = new AuctionTimer(); 
+            AuctionTimer timer = new AuctionTimer();
             BiddingService sharedBiddingService = new BiddingService();
 
             // 3. Vòng lặp chờ khách

@@ -140,6 +140,38 @@ public class ItemDAO {
             return false;
         }
     }
+    // HÀM MỚI: Cập nhật giá và người dẫn đầu sau mỗi lần bid thành công
+    public boolean updatePrice(Item item) {
+        String sql = "UPDATE items SET current_price = ?, last_bidder_id = ? WHERE item_id = ?";
+        try (Connection conn = DatabaseManager.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setDouble(1, item.getCurrentPrice());
+            pstmt.setString(2, item.getLastBidderId());
+            pstmt.setString(3, item.getId());
+
+            return pstmt.executeUpdate() > 0;
+        } catch (SQLException e) {
+            System.err.println("Lỗi khi cập nhật giá sau bid: " + e.getMessage());
+            return false;
+        }
+    }
+
+    // HÀM MỚI: Cập nhật EndTime sau khi Anti-Sniping gia hạn
+    public boolean updateEndTime(Item item) {
+        String sql = "UPDATE items SET EndTime = ? WHERE item_id = ?";
+        try (Connection conn = DatabaseManager.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setTimestamp(1, new java.sql.Timestamp(item.getEndTime().getTime()));
+            pstmt.setString(2, item.getId());
+
+            return pstmt.executeUpdate() > 0;
+        } catch (SQLException e) {
+            System.err.println("Lỗi khi cập nhật EndTime: " + e.getMessage());
+            return false;
+        }
+    }
 
     // 6. CẬP NHẬT TRẠNG THÁI SANG ACTIVE
     public void updateToActive() {
@@ -151,13 +183,14 @@ public class ItemDAO {
 
             pstmt.setTimestamp(1, now);
             pstmt.setTimestamp(2, now);
-
             pstmt.executeUpdate();
 
         } catch (SQLException e) {
             System.err.println("Lỗi khi updateToActive: " + e.getMessage());
         }
     }
+
+
 
     // 7. CẬP NHẬT TRẠNG THÁI SANG SOLD
     public void updateToSold() {
