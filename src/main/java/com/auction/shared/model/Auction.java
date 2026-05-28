@@ -53,26 +53,6 @@ public class Auction implements Serializable {
     }
 
 
-    // Đăng ký auto-bid
-    public void registerAutoBid() {
-        // Nhung code ở đây
-    }
-
-    // User đặt giá thường
-    public void placeBid() {
-        // Nhung code ở đây
-    }
-
-    // 🔥 LOGIC AUTO-BID
-    private void processAutoBid() {
-        // Nhung code ở đây
-    }
-
-    public void printResult() {
-        // Nhung code ở đây
-    }
-
-
     public String getAuctionId() { return auctionId; }
     public void setAuctionId(String auctionId) { this.auctionId = auctionId; }
 

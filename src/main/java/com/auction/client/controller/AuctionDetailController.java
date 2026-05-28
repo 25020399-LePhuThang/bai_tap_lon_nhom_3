@@ -44,7 +44,7 @@ import java.util.ResourceBundle;
 import java.text.SimpleDateFormat;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-
+import javafx.scene.layout.HBox;
 
 
 public class AuctionDetailController implements Initializable {
@@ -72,6 +72,12 @@ public class AuctionDetailController implements Initializable {
     @FXML private Button btnAuction;
     @FXML private Button btnDetail;
     @FXML private Button btnAvt;
+    @FXML private TextField txtMaxAutoBid;
+    @FXML private Button btnAutoBid;
+    @FXML private HBox boxSetupAuto;       // Khung nhập giá trần ban đầu
+    @FXML private HBox boxCurrentAuto;     // Khung trạng thái sau khi cài thành công
+    @FXML private Label lblCurrentMaxBid;  // Nhãn chữ hiển thị mức tiền trần đang cài
+    @FXML private Button btnEditAuto;      // Nút "Thay đổi giá trần"
 
     // ================= BẢNG & THỐNG KÊ =================
     // LƯU Ý: Thay chữ "History" bằng đúng tên Class lịch sử của cậu
@@ -96,6 +102,10 @@ public class AuctionDetailController implements Initializable {
 
     private XYChart.Series<Number, Number> priceSeries;
     private int  bidCount = 0;
+    // FIX: dùng volatile để đảm bảo thread nền thấy thay đổi ngay lập tức
+    private volatile boolean historyLoaded = false;
+    // FIX: hàng đợi chứa giá đến trong lúc lịch sử chưa load xong
+    private final java.util.Queue<Double> pendingPrices = new java.util.concurrent.ConcurrentLinkedQueue<>();
     private final NumberFormat fmt = NumberFormat.getNumberInstance(new Locale("vi", "VN"));
 
     @Override
@@ -110,7 +120,15 @@ public class AuctionDetailController implements Initializable {
             priceChart.setCreateSymbols(true);
             priceChart.setLegendVisible(false);
             if (xAxis != null) xAxis.setLabel("Lần đặt");
-            if (yAxis != null) yAxis.setLabel("Giá (đ)");
+            if (yAxis != null) {
+                yAxis.setLabel("Giá (đ)");
+                yAxis.setTickLabelFormatter(new NumberAxis.DefaultFormatter(yAxis) {
+                    @Override
+                    public String toString(Number value) {
+                        return String.format("%,.0f", value.doubleValue());
+                    }
+                });
+            }
         }
     }
 
@@ -165,6 +183,18 @@ public class AuctionDetailController implements Initializable {
             }
         }
         startCountdown();
+
+       // FIX: Reset trạng thái biểu đồ và hàng đợi pending trước khi tải dữ liệu mới
+        historyLoaded = false;
+        bidCount = 0;
+        pendingPrices.clear();
+        if (priceSeries != null) priceSeries.getData().clear();
+
+        // FIX: Dừng listener cũ (nếu có) trước khi đăng ký listener mới,
+        //      tránh bị chồng nhiều listener cùng lúc
+        NetworkClient.getInstance().stopListening();
+
+        // Tải lịch sử. Khi xong, hàng đợi pending sẽ được áp dụng (xem loadBidHistory).
         loadBidHistory(item.getId());
 
 
@@ -203,12 +233,47 @@ public class AuctionDetailController implements Initializable {
             Platform.runLater(() -> {
                 // Cập nhật label giá
                 setText(lblRecentPrice, fmt.format(newPrice) + " $");
-                // Thêm điểm mới vào LineChart
-                addChartPoint(newPrice);
+                // Chỉ thêm điểm sau khi lịch sử đã load xong (tránh race condition)
+                if (historyLoaded) {
+                    // Lịch sử đã sẵn sàng → vẽ thẳng lên biểu đồ
+                    addChartPoint(newPrice);
+                } else {
+                    // FIX: Lịch sử chưa load xong → đẩy vào hàng đợi,
+                    //      loadBidHistory sẽ áp dụng sau khi hoàn tất
+                    pendingPrices.offer(newPrice);
+                }
             });
         });
 
+        // 🔥 FIX ĐOẠN NÀY: Gom luồng check AutoBid chạy đồng bộ ngay sau khi dựng phòng
+        new Thread(() -> {
+            try {
+                // Nghỉ 150ms để luồng Socket cũ của phòng đấu giá ổn định đường truyền
+                Thread.sleep(150);
+
+                String username = lblUsername2.getText();
+                String msg = "CHECK_MY_AUTOBID|" + username + "|" + item.getId();
+
+                System.out.println("[UI CHECK] Hỏi trạng thái Auto-bid: " + msg);
+                String response = NetworkClient.sendAndReceive(msg);
+                System.out.println("[UI CHECK] Server phản hồi trạng thái: " + response);
+
+                Platform.runLater(() -> {
+                    if (response != null && response.startsWith("YES")) {
+                        double savedMaxBid = Double.parseDouble(response.split("\\|")[1]);
+                        lblCurrentMaxBid.setText("Đã đặt giá trần: " + savedMaxBid + " $");
+                        toggleAutoBidView(true); // Khôi phục trạng thái: Hiện thanh xanh, ẩn ô nhập số
+                    } else {
+                        toggleAutoBidView(false); // Chưa cài: Hiện ô nhập số bình thường
+                    }
+                });
+            } catch (Exception e) {
+                System.err.println("Lỗi khôi phục trạng thái AutoBid: " + e.getMessage());
+                Platform.runLater(() -> toggleAutoBidView(false));
+            }
+        }, "AutoBid-Status-Restore-Thread").start();
     }
+
 
     // Hàm nạp riêng Tên hiển thị (Tách biệt hoàn toàn)
     public void setDisplayName(String displayName) {
@@ -389,7 +454,12 @@ public class AuctionDetailController implements Initializable {
             // ✅ KẾT THÚC ĐOẠN THÊM
 
             // Gửi lên server
+<<<<<<< HEAD
             String msg = "BID|" + currentUser.getName() + "|" + price + "|" + currentItem.getId();
+=======
+            String username = lblUsername2.getText();
+            String msg = "BID|" + username + "|" + price + "|" + currentItem.getId();
+>>>>>>> 0d001fa8ac0b977cda990ceabcf08354901b4dd0
             String result = NetworkClient.sendAndReceive(msg);
 
             if (result != null && (result.startsWith("THÀNH CÔNG") || result.startsWith("BID_UPDATE"))) {
@@ -419,6 +489,12 @@ public class AuctionDetailController implements Initializable {
                 for (BidTransaction tx : history) {
                     addChartPoint(tx.getBidAmount());
                 }
+                // FIX: Áp dụng các giá đến trong lúc đang tải lịch sử (tránh mất điểm)
+                while (!pendingPrices.isEmpty()) {
+                    addChartPoint(pendingPrices.poll());
+                }
+                // Đánh dấu đã sẵn sàng SAU KHI đã vẽ hết pending
+                historyLoaded = true;
             });
         }, "load-history-thread").start();
     }
@@ -431,6 +507,11 @@ public class AuctionDetailController implements Initializable {
         // Giữ tối đa 60 điểm để chart không quá dày
         if (priceSeries.getData().size() > 60) {
             priceSeries.getData().remove(0);
+            // Re-index các điểm còn lại để trục X luôn liên tục
+            int size = priceSeries.getData().size();
+            for (int i = 0; i < size; i++) {
+                priceSeries.getData().get(i).setXValue(bidCount - size + 1 + i);
+            }
         }
     }
 
@@ -448,7 +529,59 @@ public class AuctionDetailController implements Initializable {
         if (lbl != null) lbl.setText(text);
     }
 
-    public void onAutoBidButtonClicked(){}
+    @FXML
+    public void onAutoBidButtonClicked() {
+        if (currentItem == null) return;
+        String raw = txtMaxAutoBid.getText().trim();
+        if (raw.isEmpty()) {
+            showAlert("Vui lòng nhập mức giá trần muốn cài đặt tự động.");
+            return;
+        }
+        try {
+            double maxAutoPrice = Double.parseDouble(raw.replace(",", "").replace(".", ""));
+            double currentPrice = currentItem.getCurrentPrice();
+
+            if (maxAutoPrice <= currentPrice) {
+                showAlert("Giá trần tự động phải lớn hơn giá hiện tại (" + currentPrice + " $).");
+                return;
+            }
+
+            String username = lblUsername2.getText();
+            // Định dạng chuỗi truyền đi: REGISTER_AUTOBID|tên_user|giá_trần|mã_sp
+            String msg = "REGISTER_AUTOBID|" + username + "|" + maxAutoPrice + "|" + currentItem.getId();
+            String result = NetworkClient.sendAndReceive(msg);
+
+            if (result != null && result.startsWith("THÀNH CÔNG")) {
+                showAlert("Đã kích hoạt Auto-bid thành công! Giá trần: " + maxAutoPrice + " $");
+                Platform.runLater(() -> {
+                    lblCurrentMaxBid.setText("Đã đặt giá trần: " + maxAutoPrice + " $");
+                    toggleAutoBidView(true); // Chuyển giao diện sang trạng thái 2
+                    txtMaxAutoBid.clear();
+                });
+            } else if (result != null) {
+                showAlert(result); // Hiển thị lỗi từ server trả về nếu có
+            }
+        } catch (NumberFormatException e) {
+            showAlert("Mức giá trần không hợp lệ. Vui lòng nhập số.");
+        }
+    }
+
+    // Hàm xử lý khi người dùng bấm nút "Thay đổi giá trần" để nhập lại mức mới
+    @FXML
+    public void onEditAutoBidClicked() {
+        toggleAutoBidView(false); // Quay về giao diện Trạng thái 1 để nhập số
+        txtMaxAutoBid.requestFocus(); // Tự động nhấp nháy chuột vào ô nhập liệu
+    }
+
+    // Hàm tiện ích điều khiển ẩn/hiện mượt mà (không để lại khoảng trống thừa)
+    private void toggleAutoBidView(boolean isConfigured) {
+        boxSetupAuto.setVisible(!isConfigured);
+        boxSetupAuto.setManaged(!isConfigured);
+
+        boxCurrentAuto.setVisible(isConfigured);
+        boxCurrentAuto.setManaged(isConfigured);
+    }
+
 
     // ─── Dừng listener khi đóng màn hình ─────────────────────────────────────
     public void onClose() {
@@ -472,5 +605,4 @@ public class AuctionDetailController implements Initializable {
             popUpStage.show();
         } catch (IOException e) { e.printStackTrace(); }
     }
-
 }

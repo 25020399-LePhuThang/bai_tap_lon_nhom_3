@@ -10,9 +10,14 @@ public class DatabaseManager {
     public static Connection getConnection() {
         Connection conn = null;
         try {
+            Class.forName("org.sqlite.JDBC");
             conn = DriverManager.getConnection(URL);
+        } catch (ClassNotFoundException e) {
+            System.err.println("CRASH: Không tìm thấy thư viện SQLite trong lúc chạy (thiếu file jar)!");
+            e.printStackTrace();
         } catch (SQLException e) {
-            System.err.println("Lỗi kết nối tới dữ liệu.");
+            System.err.println("CRASH: Lỗi tạo hoặc đọc file Database trên Railway!");
+            e.printStackTrace();
         }
         return conn;
     }
@@ -43,7 +48,6 @@ public class DatabaseManager {
                         "  EndTime         TEXT" +
                         ");";
 
-        // Bảng lịch sử bid — dùng cho Bid History Visualization
         String sqlBidTransactions =
                 "CREATE TABLE IF NOT EXISTS BidTransactions (" +
                         "  id        INTEGER PRIMARY KEY AUTOINCREMENT," +
@@ -55,11 +59,14 @@ public class DatabaseManager {
 
         try (Connection conn = getConnection();
              var stmt = conn.createStatement()) {
-            stmt.execute(sqlUsers);
-            stmt.execute(sqlItems);
-            stmt.execute(sqlBidTransactions);
-            System.out.println("DB init OK!");
+            if (conn != null) {
+                stmt.execute(sqlUsers);
+                stmt.execute(sqlItems);
+                stmt.execute(sqlBidTransactions);
+                System.out.println("DB init OK!");
+            }
         } catch (Exception e) {
+            System.err.println("Lỗi khi tạo bảng trong Database: ");
             e.printStackTrace();
         }
     }
