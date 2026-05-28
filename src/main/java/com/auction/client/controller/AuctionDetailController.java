@@ -170,14 +170,31 @@ public class AuctionDetailController implements Initializable {
 
         // Bắt đầu lắng nghe BID_UPDATE realtime
         NetworkClient.getInstance().startListening(respone -> {
+            if (respone.startsWith("TIME_UPDATE|")) {
+                String[] p = respone.split("\\|");
+                long newEndTime = Long.parseLong(p[2]);
+                currentItem.setEndTime(new java.util.Date(newEndTime));
+                Platform.runLater(() -> startCountdown());
+                return;
+            }
+            if (respone.startsWith("AUCTION_END|")) {
+                String[] p = respone.split("\\|");
+                String winner = p[2];
+                double finalPrice = Double.parseDouble(p[3]);
+                Platform.runLater(() -> {
+                    showAlert("Phiên đấu giá kết thúc!\nNgười thắng: " + winner
+                            + "\nGiá: " + finalPrice + " $");
+                });
+                return;
+            }
             if (!respone.startsWith("BID_UPDATE|")) return;
-            String[] p = respone.split("\\|");
-            if (p.length < 4) return;
-            String msgItemId = p[1];
+            String[] parts = respone.split("\\|");
+            if (parts.length < 4) return;
+            String msgItemId = parts[1];
             if (!msgItemId.equals(item.getId())) return;
 
-            double newPrice  = Double.parseDouble(p[2]);
-            String winner    = p[3];
+            double newPrice = Double.parseDouble(parts[2]);
+            String winner = parts[3];
 
             // Cập nhật currentItem để đồng bộ dữ liệu
             currentItem.setCurrentPrice(newPrice);
@@ -197,6 +214,7 @@ public class AuctionDetailController implements Initializable {
     public void setDisplayName(String displayName) {
         if (displayName != null && !displayName.isEmpty()) {
             lblUsername2.setText(displayName);
+            this.currentUser = NetworkClient.getUserInfo(displayName);
         } else {
             lblUsername2.setText("Khách");
         }
@@ -371,7 +389,7 @@ public class AuctionDetailController implements Initializable {
             // ✅ KẾT THÚC ĐOẠN THÊM
 
             // Gửi lên server
-            String msg = "BID|" + currentUser + "|" + price + "|" + currentItem.getId();
+            String msg = "BID|" + currentUser.getName() + "|" + price + "|" + currentItem.getId();
             String result = NetworkClient.sendAndReceive(msg);
 
             if (result != null && (result.startsWith("THÀNH CÔNG") || result.startsWith("BID_UPDATE"))) {
@@ -380,10 +398,11 @@ public class AuctionDetailController implements Initializable {
                     lblRecentPrice.setText(price + "$");
                     addChartPoint(price);
                 });
+                showAlert("Đấu giá thành công với giá " + price + " $!");
+                txtPrice.clear();
+            } else {
+                showAlert(result != null ? result : "Không nhận được phản hồi từ server.");
             }
-
-            showAlert("Đấu giá thành công với giá " + price + " $!");
-            txtPrice.clear();
         } catch (NumberFormatException e) {
             showAlert("Giá không hợp lệ. Vui lòng nhập số.");
         }

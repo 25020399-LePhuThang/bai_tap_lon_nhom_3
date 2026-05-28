@@ -28,8 +28,17 @@ public class AuctionServer {
             ServerSocket serverSocket = new ServerSocket(port);
             System.out.println("Server đang chạy trên cổng: " + port);
             
-            AuctionTimer timer = new AuctionTimer();
+
             BiddingService sharedBiddingService = new BiddingService();
+            // Khởi động timer cho tất cả item ACTIVE
+            com.auction.server.dao.ItemDAO itemDAO = new com.auction.server.dao.ItemDAO();
+            java.util.List<Item> activeItems = itemDAO.getActiveItems();
+            for (Item item : activeItems) {
+                itemCache.put(item.getId(), item);
+                AuctionTimer timer = new AuctionTimer(item);
+                timer.start();
+                System.out.println("Timer started for: " + item.getName());
+            }
 
             // 3. Vòng lặp chờ khách
             while (true) {

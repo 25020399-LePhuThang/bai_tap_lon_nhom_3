@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import com.auction.server.dao.ItemDAO;
+import com.auction.server.network.AuctionServer;
 import com.auction.shared.model.AutoBid;
 import com.auction.shared.model.item.Item;
 
@@ -67,6 +68,12 @@ public class BiddingService {
 
             // 4. Kiểm tra Tiền: Có đủ bước giá không?
             double minRequired = item.getCurrentPrice() + item.getMinIncrement();
+            // Kiểm tra số dư
+            com.auction.server.dao.UserDAO userDAO = new com.auction.server.dao.UserDAO();
+            double balance = userDAO.getBalance(userId);
+            if (balance < amount) {
+                return "Số dư không đủ! Số dư hiện tại: " + balance + " $";
+            }
             if (amount < minRequired) {
                 return "Giá đặt không hợp lệ. Bạn cần đặt tối thiểu " + minRequired + "đ";
             }
@@ -75,12 +82,15 @@ public class BiddingService {
             try {
                 item.setCurrentPrice(amount);
                 item.setLastBidderId(userId);
+                System.out.println(">>> SET lastBidderId: " + userId + " cho item: " + item.getId());
                 getItemDao().updatePrice(item);
 
                 // Kiểm tra gia hạn tự động ở giây cuối (Anti-Sniping)
                 if (antiSnipingPolicy.apply(item)) {
-                    // Gọi AuctionTimer để hủy lịch cũ, lập lịch mới
-                    // auctionTimer.reschedule();
+                    getItemDao().updateEndTime(item);
+                    AuctionServer.broadcast(
+                            "TIME_UPDATE|" + item.getId() + "|" + item.getEndTime().getTime()
+                    );
                 }
 
                 // 6. Kích hoạt auto-bid phản ứng (nếu có người đã đăng ký)

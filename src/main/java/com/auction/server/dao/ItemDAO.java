@@ -17,7 +17,7 @@ public class ItemDAO {
 
     // 1. THÊM TÀI SẢN MỚI
     public boolean insertItem(Item item) {
-        String sql = "INSERT INTO items (item_name, start_price, current_price, step_price, lastbidder_id, status, type, productImageURL) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO items (item_name, start_price, current_price, step_price, last_bidder_id, status, type, productImageURL) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
 
         try (Connection conn = DatabaseManager.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -518,5 +518,16 @@ public class ItemDAO {
             e.printStackTrace();
         }
         return null;
+    }
+    public boolean updateStatusToSold(String itemId) {
+        String sql = "UPDATE items SET status = 'SOLD' WHERE item_id = ?";
+        try (Connection conn = DatabaseManager.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, itemId);
+            return pstmt.executeUpdate() > 0;
+        } catch (SQLException e) {
+            System.err.println("Lỗi update status SOLD: " + e.getMessage());
+            return false;
+        }
     }
 }
