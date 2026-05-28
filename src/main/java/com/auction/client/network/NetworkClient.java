@@ -33,6 +33,8 @@ public class NetworkClient {
 
     // Thread lắng nghe server push tin về
     private Thread listenerThread;
+    private static Socket listenerSocket;
+    private static BufferedReader listenerIn;
 
     private NetworkClient() {
         connect(SERVER_IP, SERVER_PORT);
@@ -395,20 +397,28 @@ public class NetworkClient {
     public void startListening(Consumer<String> listener) {
         this.bidUpdateListener = listener;
 
-        if (listenerThread != null && listenerThread.isAlive()) {
-            return;
-        }
+        if (listenerThread != null && listenerThread.isAlive()) return;
 
         listenerThread = new Thread(() -> {
             try {
+                listenerSocket = new Socket(SERVER_IP, SERVER_PORT);
+                listenerSocket.setSoTimeout(0); // Không timeout
+                listenerIn = new BufferedReader(
+                        new InputStreamReader(listenerSocket.getInputStream()));
+                PrintWriter listenerOut = new PrintWriter(
+                        listenerSocket.getOutputStream(), true);
+
+                // Báo server đây là kết nối listener
+                listenerOut.println("LISTEN_ONLY");
+
                 String line;
-                while ((line = in.readLine()) != null) {
-                    if (line.startsWith("BID_UPDATE|") && bidUpdateListener != null) {
+                while ((line = listenerIn.readLine()) != null) {
+                    if (bidUpdateListener != null) {
                         bidUpdateListener.accept(line);
                     }
                 }
             } catch (IOException e) {
-                System.err.println("Client: Listener bị đứt kết nối: " + e.getMessage());
+                System.err.println("Listener đứt: " + e.getMessage());
             }
         }, "bid-listener-thread");
 

@@ -121,7 +121,10 @@ public class ClientHandler implements Runnable {
                         System.out.println("===> CHECK SERVER NHẬN ĐƯỢC:");
                         System.out.println("User: " + parts[1] + " | Price: " + parts[2] + " | ItemID: '" + itemId + "'");
 
-                        Item targetItem = itemDAO.getItemById(itemId);
+                        Item targetItem = AuctionServer.itemCache.computeIfAbsent(
+                                itemId,
+                                id -> itemDAO.getItemById(id)
+                        );
 
                         if (targetItem != null) {
                             String result = biddingService.placeBid(targetItem, price, user);
@@ -156,7 +159,10 @@ public class ClientHandler implements Runnable {
                         double increment = Double.parseDouble(parts[3]);
                         String itemId    = parts[4];
 
-                        Item targetItem = itemDAO.getItemById(itemId);
+                        Item targetItem = AuctionServer.itemCache.computeIfAbsent(
+                                itemId,
+                                id -> itemDAO.getItemById(id)
+                        );
 
                         if (targetItem != null) {
                             String result = biddingService.registerAutoBid(
@@ -356,6 +362,11 @@ public class ClientHandler implements Runnable {
                             e.printStackTrace();
                             out.println("ERROR|Lỗi dữ liệu Server");
                         }
+                    }
+
+                    case "LISTEN_ONLY" -> {
+                        // Giữ kết nối để nhận broadcast, không làm gì thêm
+                        System.out.println("Client đăng ký listen-only");
                     }
                     case "LOGOUT" -> {
                         System.out.println("Một Client đã yêu cầu đăng xuất và ngắt kết nối.");

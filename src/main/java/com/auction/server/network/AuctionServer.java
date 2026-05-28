@@ -8,10 +8,15 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
+import com.auction.shared.model.item.Item;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
 
 public class AuctionServer {
     // 1. Khai báo danh sách
     public static ArrayList<ClientHandler> clients = new ArrayList<>();
+    public static Map<String, Item> itemCache = new ConcurrentHashMap<>();
 
     public static void main(String[] args) {
         DatabaseManager.initDB();
