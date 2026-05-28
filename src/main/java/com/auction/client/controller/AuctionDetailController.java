@@ -44,7 +44,7 @@ import java.util.ResourceBundle;
 import java.text.SimpleDateFormat;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-
+import javafx.scene.layout.HBox;
 
 
 public class AuctionDetailController implements Initializable {
@@ -74,6 +74,10 @@ public class AuctionDetailController implements Initializable {
     @FXML private Button btnAvt;
     @FXML private TextField txtMaxAutoBid;
     @FXML private Button btnAutoBid;
+    @FXML private HBox boxSetupAuto;       // Khung nhập giá trần ban đầu
+    @FXML private HBox boxCurrentAuto;     // Khung trạng thái sau khi cài thành công
+    @FXML private Label lblCurrentMaxBid;  // Nhãn chữ hiển thị mức tiền trần đang cài
+    @FXML private Button btnEditAuto;      // Nút "Thay đổi giá trần"
 
     // ================= BẢNG & THỐNG KÊ =================
     // LƯU Ý: Thay chữ "History" bằng đúng tên Class lịch sử của cậu
@@ -224,7 +228,35 @@ public class AuctionDetailController implements Initializable {
             });
         });
 
+        // 🔥 FIX ĐOẠN NÀY: Gom luồng check AutoBid chạy đồng bộ ngay sau khi dựng phòng
+        new Thread(() -> {
+            try {
+                // Nghỉ 150ms để luồng Socket cũ của phòng đấu giá ổn định đường truyền
+                Thread.sleep(150);
+
+                String username = lblUsername2.getText();
+                String msg = "CHECK_MY_AUTOBID|" + username + "|" + item.getId();
+
+                System.out.println("[UI CHECK] Hỏi trạng thái Auto-bid: " + msg);
+                String response = NetworkClient.sendAndReceive(msg);
+                System.out.println("[UI CHECK] Server phản hồi trạng thái: " + response);
+
+                Platform.runLater(() -> {
+                    if (response != null && response.startsWith("YES")) {
+                        double savedMaxBid = Double.parseDouble(response.split("\\|")[1]);
+                        lblCurrentMaxBid.setText("Đã đặt giá trần: " + savedMaxBid + " $");
+                        toggleAutoBidView(true); // Khôi phục trạng thái: Hiện thanh xanh, ẩn ô nhập số
+                    } else {
+                        toggleAutoBidView(false); // Chưa cài: Hiện ô nhập số bình thường
+                    }
+                });
+            } catch (Exception e) {
+                System.err.println("Lỗi khôi phục trạng thái AutoBid: " + e.getMessage());
+                Platform.runLater(() -> toggleAutoBidView(false));
+            }
+        }, "AutoBid-Status-Restore-Thread").start();
     }
+
 
     // Hàm nạp riêng Tên hiển thị (Tách biệt hoàn toàn)
     public void setDisplayName(String displayName) {
@@ -498,7 +530,11 @@ public class AuctionDetailController implements Initializable {
 
             if (result != null && result.startsWith("THÀNH CÔNG")) {
                 showAlert("Đã kích hoạt Auto-bid thành công! Giá trần: " + maxAutoPrice + " $");
-                txtMaxAutoBid.clear();
+                Platform.runLater(() -> {
+                    lblCurrentMaxBid.setText("Đã đặt giá trần: " + maxAutoPrice + " $");
+                    toggleAutoBidView(true); // Chuyển giao diện sang trạng thái 2
+                    txtMaxAutoBid.clear();
+                });
             } else if (result != null) {
                 showAlert(result); // Hiển thị lỗi từ server trả về nếu có
             }
@@ -506,6 +542,23 @@ public class AuctionDetailController implements Initializable {
             showAlert("Mức giá trần không hợp lệ. Vui lòng nhập số.");
         }
     }
+
+    // Hàm xử lý khi người dùng bấm nút "Thay đổi giá trần" để nhập lại mức mới
+    @FXML
+    public void onEditAutoBidClicked() {
+        toggleAutoBidView(false); // Quay về giao diện Trạng thái 1 để nhập số
+        txtMaxAutoBid.requestFocus(); // Tự động nhấp nháy chuột vào ô nhập liệu
+    }
+
+    // Hàm tiện ích điều khiển ẩn/hiện mượt mà (không để lại khoảng trống thừa)
+    private void toggleAutoBidView(boolean isConfigured) {
+        boxSetupAuto.setVisible(!isConfigured);
+        boxSetupAuto.setManaged(!isConfigured);
+
+        boxCurrentAuto.setVisible(isConfigured);
+        boxCurrentAuto.setManaged(isConfigured);
+    }
+
 
     // ─── Dừng listener khi đóng màn hình ─────────────────────────────────────
     public void onClose() {

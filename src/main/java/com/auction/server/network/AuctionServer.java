@@ -67,4 +67,22 @@ public class AuctionServer {
             client.sendMessage(message);
         }
     }
+
+    /**
+     * Kiểm tra xem một người dùng cụ thể đã đăng ký Auto-bid cho sản phẩm này chưa.
+     * Nếu rồi, trả về mức giá trần (maxBid) của họ. Nếu chưa, trả về -1.
+     */
+    public static double getUserMaxBid(String itemId, String bidderId) {
+        var autoManager = autoBidManagers.get(itemId);
+        if (autoManager == null) return -1;
+
+        // Sử dụng Reflection hoặc một hàm getter trong AuctionAutoBid để lấy danh sách autoBids
+        // Giả sử bạn thêm hàm getAutoBids() trả về List<AutoBid> trong class AuctionAutoBid:
+        for (com.auction.shared.model.AutoBid bid : autoManager.getAutoBids()) {
+            if (bid.getBidderId().equals(bidderId)) {
+                return bid.getMaxBid();
+            }
+        }
+        return -1;
+    }
 }

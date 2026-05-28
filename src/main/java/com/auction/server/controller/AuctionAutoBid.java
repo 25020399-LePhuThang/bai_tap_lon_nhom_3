@@ -211,4 +211,7 @@ public class AuctionAutoBid {
             this.message = message;
         }
     }
+    public List<AutoBid> getAutoBids() {
+        return this.autoBids;
+    }
 }
