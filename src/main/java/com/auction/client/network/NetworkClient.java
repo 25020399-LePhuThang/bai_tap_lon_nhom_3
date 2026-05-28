@@ -138,7 +138,7 @@ public class NetworkClient {
             if (response != null && response.startsWith("USER_INFO_SUCCESS|")) {
                 String jsonString = response.split("\\|", 2)[1];
 
-                 Gson gson = new GsonBuilder()
+                Gson gson = new GsonBuilder()
 
                         .registerTypeAdapter(User.class, new com.google.gson.JsonDeserializer<User>() {
                             @Override
@@ -427,6 +427,17 @@ public class NetworkClient {
     }
     public void stopListening() {
         bidUpdateListener = null;
+        // Đóng socket để thread listenerThread thoát khỏi readLine() và kết thúc
+        try {
+            if (listenerSocket != null && !listenerSocket.isClosed()) {
+                listenerSocket.close();
+            }
+        } catch (IOException e) {
+            System.err.println("Lỗi khi đóng listenerSocket: " + e.getMessage());
+        }
+        listenerSocket = null;
+        listenerIn = null;
+        listenerThread = null;
     }
     /**
      * Gửi yêu cầu xóa tài khoản lên Server

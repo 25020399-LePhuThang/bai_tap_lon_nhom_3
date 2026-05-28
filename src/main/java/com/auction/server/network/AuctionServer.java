@@ -17,6 +17,8 @@ public class AuctionServer {
     // 1. Khai báo danh sách
     public static ArrayList<ClientHandler> clients = new ArrayList<>();
     public static Map<String, Item> itemCache = new ConcurrentHashMap<>();
+    public static Map<String, com.auction.server.controller.AuctionAutoBid> autoBidManagers = new ConcurrentHashMap<>();
+
 
     public static void main(String[] args) {
         DatabaseManager.initDB();
@@ -45,6 +47,13 @@ public class AuctionServer {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    public static synchronized com.auction.server.controller.AuctionAutoBid getAutoBidManager(String itemId, double currentPrice, String currentWinnerId) {
+        if (!autoBidManagers.containsKey(itemId)) {
+            autoBidManagers.put(itemId, new com.auction.server.controller.AuctionAutoBid(currentPrice, currentWinnerId));
+        }
+        return autoBidManagers.get(itemId);
     }
 
     /**
