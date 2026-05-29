@@ -211,13 +211,14 @@ public class ClientHandler implements Runnable {
                         String username = parts[1];
                         String itemId = parts[2].trim();
 
-                        // Lấy bộ quản lý phòng đấu giá bằng itemId
+                        // Truy vấn ngầm bộ quản lý phòng đấu giá từ AuctionServer
                         var autoManager = AuctionServer.autoBidManagers.get(itemId);
 
                         if (autoManager != null) {
                             double userMaxBid = -1;
 
-                            // Duyệt tìm cấu hình AutoBid của User này trong phòng
+                            // Duyệt qua danh sách để tìm cấu hình của User hiện tại
+                            // Lưu ý: Đảm bảo class AuctionAutoBid của bạn đã thêm getter: public List<AutoBid> getAutoBids()
                             for (com.auction.shared.model.AutoBid bid : autoManager.getAutoBids()) {
                                 if (bid.getBidderId().equals(username)) {
                                     userMaxBid = bid.getMaxBid();
@@ -226,7 +227,6 @@ public class ClientHandler implements Runnable {
                             }
 
                             if (userMaxBid > 0) {
-                                // Định dạng trả về đúng chuẩn hiển thị nguyên bản dạng số thực gọn gàng
                                 out.println("YES|" + userMaxBid);
                             } else {
                                 out.println("NO");
