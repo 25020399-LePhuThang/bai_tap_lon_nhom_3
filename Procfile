@@ -1,1 +1,0 @@
-worker: java -jar bai_tap_lon_nhom_3.jar

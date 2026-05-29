@@ -44,10 +44,13 @@ import java.util.ResourceBundle;
 import java.text.SimpleDateFormat;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.scene.layout.HBox;
+
 
 
 public class AuctionDetailController implements Initializable {
+
+    private Parent previousRoot;
+    private MainScreenController mainController;
 
     // ================= HEADER & FOOTER =================
     @FXML private Label lblUsername2;
@@ -72,12 +75,10 @@ public class AuctionDetailController implements Initializable {
     @FXML private Button btnAuction;
     @FXML private Button btnDetail;
     @FXML private Button btnAvt;
-    @FXML private TextField txtMaxAutoBid;
     @FXML private Button btnAutoBid;
-    @FXML private HBox boxSetupAuto;       // Khung nhập giá trần ban đầu
-    @FXML private HBox boxCurrentAuto;     // Khung trạng thái sau khi cài thành công
-    @FXML private Label lblCurrentMaxBid;  // Nhãn chữ hiển thị mức tiền trần đang cài
-    @FXML private Button btnEditAuto;      // Nút "Thay đổi giá trần"
+
+
+
 
     // ================= BẢNG & THỐNG KÊ =================
     // LƯU Ý: Thay chữ "History" bằng đúng tên Class lịch sử của cậu
@@ -102,10 +103,6 @@ public class AuctionDetailController implements Initializable {
 
     private XYChart.Series<Number, Number> priceSeries;
     private int  bidCount = 0;
-    // FIX: dùng volatile để đảm bảo thread nền thấy thay đổi ngay lập tức
-    private volatile boolean historyLoaded = false;
-    // FIX: hàng đợi chứa giá đến trong lúc lịch sử chưa load xong
-    private final java.util.Queue<Double> pendingPrices = new java.util.concurrent.ConcurrentLinkedQueue<>();
     private final NumberFormat fmt = NumberFormat.getNumberInstance(new Locale("vi", "VN"));
 
     @Override
@@ -120,15 +117,7 @@ public class AuctionDetailController implements Initializable {
             priceChart.setCreateSymbols(true);
             priceChart.setLegendVisible(false);
             if (xAxis != null) xAxis.setLabel("Lần đặt");
-            if (yAxis != null) {
-                yAxis.setLabel("Giá (đ)");
-                yAxis.setTickLabelFormatter(new NumberAxis.DefaultFormatter(yAxis) {
-                    @Override
-                    public String toString(Number value) {
-                        return String.format("%,.0f", value.doubleValue());
-                    }
-                });
-            }
+            if (yAxis != null) yAxis.setLabel("Giá (đ)");
         }
     }
 
@@ -183,121 +172,40 @@ public class AuctionDetailController implements Initializable {
             }
         }
         startCountdown();
-
-       // FIX: Reset trạng thái biểu đồ và hàng đợi pending trước khi tải dữ liệu mới
-        historyLoaded = false;
-        bidCount = 0;
-        pendingPrices.clear();
-        if (priceSeries != null) priceSeries.getData().clear();
-
-        // FIX: Dừng listener cũ (nếu có) trước khi đăng ký listener mới,
-        //      tránh bị chồng nhiều listener cùng lúc
-        NetworkClient.getInstance().stopListening();
-
-        // Tải lịch sử. Khi xong, hàng đợi pending sẽ được áp dụng (xem loadBidHistory).
         loadBidHistory(item.getId());
 
 
-        // Bắt đầu lắng nghe BID_UPDATE realtime
         NetworkClient.getInstance().startListening(respone -> {
-            if (respone.startsWith("TIME_UPDATE|")) {
-                String[] p = respone.split("\\|");
-                long newEndTime = Long.parseLong(p[2]);
-                currentItem.setEndTime(new java.util.Date(newEndTime));
-                Platform.runLater(() -> startCountdown());
-                return;
-            }
-            if (respone.startsWith("AUCTION_END|")) {
-                String[] p = respone.split("\\|");
-                String winner = p[2];
-                double finalPrice = Double.parseDouble(p[3]);
-                Platform.runLater(() -> {
-                    showAlert("Phiên đấu giá kết thúc!\nNgười thắng: " + winner
-                            + "\nGiá: " + finalPrice + " $");
-                });
-                return;
-            }
             if (!respone.startsWith("BID_UPDATE|")) return;
-            String[] parts = respone.split("\\|");
-            if (parts.length < 4) return;
-            String msgItemId = parts[1];
-            if (!msgItemId.equals(item.getId())) return;
+            String[] p = respone.split("\\|");
+            if (p.length < 4) return;
+            String msgItemId = p[1];
+            if (!msgItemId.equals(currentItem.getId())) return; // Dùng biến toàn cục currentItem
 
-            double newPrice = Double.parseDouble(parts[2]);
-            String winner = parts[3];
+            double newPrice  = Double.parseDouble(p[2]);
+            String winner    = p[3];
 
-            // Cập nhật currentItem để đồng bộ dữ liệu
+            // Cập nhật dữ liệu vào object
             currentItem.setCurrentPrice(newPrice);
             currentItem.setLastBidderId(winner);
 
+            // 2. Cập nhật UI an toàn
             Platform.runLater(() -> {
-                // Cập nhật label giá
-                setText(lblRecentPrice, fmt.format(newPrice) + " $");
-                // Chỉ thêm điểm sau khi lịch sử đã load xong (tránh race condition)
-                if (historyLoaded) {
-                    // Lịch sử đã sẵn sàng → vẽ thẳng lên biểu đồ
-                    addChartPoint(newPrice);
-                } else {
-                    // FIX: Lịch sử chưa load xong → đẩy vào hàng đợi,
-                    //      loadBidHistory sẽ áp dụng sau khi hoàn tất
-                    pendingPrices.offer(newPrice);
-                }
+                lblRecentPrice.setText(fmt.format(newPrice) + " $");
+                addChartPoint(newPrice);
+                // THÊM: Nếu ông có thông báo ai vừa thắng, hiện ở đây luôn
+                // showNotification("Người thắng mới: " + winner);
             });
         });
-
-        // 🔥 FIX ĐOẠN NÀY: Gom luồng check AutoBid chạy đồng bộ ngay sau khi dựng phòng
-        new Thread(() -> {
-            try {
-                // Nghỉ 150ms để luồng Socket cũ của phòng đấu giá ổn định đường truyền
-                Thread.sleep(150);
-
-                String username = lblUsername2.getText();
-                String msg = "CHECK_MY_AUTOBID|" + username + "|" + item.getId();
-
-                System.out.println("[UI CHECK] Hỏi trạng thái Auto-bid: " + msg);
-                String response = NetworkClient.sendAndReceive(msg);
-                System.out.println("[UI CHECK] Server phản hồi trạng thái: " + response);
-
-                Platform.runLater(() -> {
-                    if (response != null && response.startsWith("YES")) {
-                        double savedMaxBid = Double.parseDouble(response.split("\\|")[1]);
-                        lblCurrentMaxBid.setText("Đã đặt giá trần: " + savedMaxBid + " $");
-                        toggleAutoBidView(true); // Khôi phục trạng thái: Hiện thanh xanh, ẩn ô nhập số
-                    } else {
-                        toggleAutoBidView(false); // Chưa cài: Hiện ô nhập số bình thường
-                    }
-                });
-            } catch (Exception e) {
-                System.err.println("Lỗi khôi phục trạng thái AutoBid: " + e.getMessage());
-                Platform.runLater(() -> toggleAutoBidView(false));
-            }
-        }, "AutoBid-Status-Restore-Thread").start();
     }
-
 
     // Hàm nạp riêng Tên hiển thị (Tách biệt hoàn toàn)
     public void setDisplayName(String displayName) {
         if (displayName != null && !displayName.isEmpty()) {
             lblUsername2.setText(displayName);
-            this.currentUser = NetworkClient.getUserInfo(displayName);
         } else {
             lblUsername2.setText("Khách");
         }
-    }
-
-    public void toMainScreen(ActionEvent event){
-        try {onClose();
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/MainScreen.fxml"));
-            Parent root = loader.load();
-
-            MainScreenController mainScreenController = loader.getController();
-            mainScreenController.setDisplayName(lblUsername2.getText());
-
-            Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
-            stage.getScene().setRoot(root);
-            stage.show();
-        } catch (IOException e) { e.printStackTrace(); }
-
     }
 
     private void switchScence(ActionEvent event, String fxmlFile) throws IOException {
@@ -430,54 +338,29 @@ public class AuctionDetailController implements Initializable {
         if (currentItem == null) return;
         String raw = txtPrice.getText().trim();
         if (raw.isEmpty()) {
-            showAlert("Vui lòng nhập mức giá muốn đặt.");
+            showAlert("Vui lòng nhập mức giá!");
             return;
         }
         try {
             double price = Double.parseDouble(raw.replace(",", "").replace(".", ""));
 
-            // ✅ THÊM ĐOẠN NÀY - validate giá
-            double currentPrice = currentItem.getCurrentPrice();
-            double minIncrement = currentItem.getMinIncrement();
-            double minRequired = currentPrice + minIncrement;
-
-            if (price <= currentPrice) {
-                showAlert("Giá đấu tối thiểu phải là "
-                        + minRequired + " $ (giá hiện tại + bước giá).");
-                return;
-            }
-            if (price < minRequired) {
-                showAlert("Giá đấu tối thiểu phải là "
-                        + minRequired + " $ (giá hiện tại + bước giá).");
-                return;
-            }
-            // ✅ KẾT THÚC ĐOẠN THÊM
-
             // Gửi lên server
-<<<<<<< HEAD
-            String msg = "BID|" + currentUser.getName() + "|" + price + "|" + currentItem.getId();
-=======
-            String username = lblUsername2.getText();
-            String msg = "BID|" + username + "|" + price + "|" + currentItem.getId();
->>>>>>> 0d001fa8ac0b977cda990ceabcf08354901b4dd0
+            String msg = "BID|" + currentUser + "|" + price + "|" + currentItem.getId();
             String result = NetworkClient.sendAndReceive(msg);
+            showAlert("Đấu giá thành công. Giá hiện tại của sản phẩm:"+price);
 
-            if (result != null && (result.startsWith("THÀNH CÔNG") || result.startsWith("BID_UPDATE"))) {
-                currentItem.setCurrentPrice(price);
-                Platform.runLater(() -> {
-                    lblRecentPrice.setText(price + "$");
-                    addChartPoint(price);
-                });
-                showAlert("Đấu giá thành công với giá " + price + " $!");
-                txtPrice.clear();
-            } else {
-                showAlert(result != null ? result : "Không nhận được phản hồi từ server.");
+            // CHỈ XỬ LÝ LỖI Ở ĐÂY THÔI
+            if (result != null && result.startsWith("BID_FAIL")) {
+                showAlert("Đấu giá thất bại: " + result.split("\\|")[1]);
             }
+            // KHÔNG CẬP NHẬT UI Ở ĐÂY.
+            // CỨ ĐỂ SERVER GỬI BID_UPDATE VỀ RỒI ĐỂ LISTENER CẬP NHẬT.
+
+            txtPrice.clear();
         } catch (NumberFormatException e) {
-            showAlert("Giá không hợp lệ. Vui lòng nhập số.");
+            showAlert("Giá không hợp lệ.");
         }
     }
-
     // ─── Tải lịch sử bid từ server ───────────────────────────────────────────
     private void loadBidHistory(String itemId) {
         new Thread(() -> {
@@ -489,12 +372,6 @@ public class AuctionDetailController implements Initializable {
                 for (BidTransaction tx : history) {
                     addChartPoint(tx.getBidAmount());
                 }
-                // FIX: Áp dụng các giá đến trong lúc đang tải lịch sử (tránh mất điểm)
-                while (!pendingPrices.isEmpty()) {
-                    addChartPoint(pendingPrices.poll());
-                }
-                // Đánh dấu đã sẵn sàng SAU KHI đã vẽ hết pending
-                historyLoaded = true;
             });
         }, "load-history-thread").start();
     }
@@ -507,11 +384,6 @@ public class AuctionDetailController implements Initializable {
         // Giữ tối đa 60 điểm để chart không quá dày
         if (priceSeries.getData().size() > 60) {
             priceSeries.getData().remove(0);
-            // Re-index các điểm còn lại để trục X luôn liên tục
-            int size = priceSeries.getData().size();
-            for (int i = 0; i < size; i++) {
-                priceSeries.getData().get(i).setXValue(bidCount - size + 1 + i);
-            }
         }
     }
 
@@ -525,63 +397,8 @@ public class AuctionDetailController implements Initializable {
 
 
     // ─── Tiện ích ─────────────────────────────────────────────────────────────
-    private void setText(Label lbl, String text) {
-        if (lbl != null) lbl.setText(text);
-    }
-
     @FXML
-    public void onAutoBidButtonClicked() {
-        if (currentItem == null) return;
-        String raw = txtMaxAutoBid.getText().trim();
-        if (raw.isEmpty()) {
-            showAlert("Vui lòng nhập mức giá trần muốn cài đặt tự động.");
-            return;
-        }
-        try {
-            double maxAutoPrice = Double.parseDouble(raw.replace(",", "").replace(".", ""));
-            double currentPrice = currentItem.getCurrentPrice();
-
-            if (maxAutoPrice <= currentPrice) {
-                showAlert("Giá trần tự động phải lớn hơn giá hiện tại (" + currentPrice + " $).");
-                return;
-            }
-
-            String username = lblUsername2.getText();
-            // Định dạng chuỗi truyền đi: REGISTER_AUTOBID|tên_user|giá_trần|mã_sp
-            String msg = "REGISTER_AUTOBID|" + username + "|" + maxAutoPrice + "|" + currentItem.getId();
-            String result = NetworkClient.sendAndReceive(msg);
-
-            if (result != null && result.startsWith("THÀNH CÔNG")) {
-                showAlert("Đã kích hoạt Auto-bid thành công! Giá trần: " + maxAutoPrice + " $");
-                Platform.runLater(() -> {
-                    lblCurrentMaxBid.setText("Đã đặt giá trần: " + maxAutoPrice + " $");
-                    toggleAutoBidView(true); // Chuyển giao diện sang trạng thái 2
-                    txtMaxAutoBid.clear();
-                });
-            } else if (result != null) {
-                showAlert(result); // Hiển thị lỗi từ server trả về nếu có
-            }
-        } catch (NumberFormatException e) {
-            showAlert("Mức giá trần không hợp lệ. Vui lòng nhập số.");
-        }
-    }
-
-    // Hàm xử lý khi người dùng bấm nút "Thay đổi giá trần" để nhập lại mức mới
-    @FXML
-    public void onEditAutoBidClicked() {
-        toggleAutoBidView(false); // Quay về giao diện Trạng thái 1 để nhập số
-        txtMaxAutoBid.requestFocus(); // Tự động nhấp nháy chuột vào ô nhập liệu
-    }
-
-    // Hàm tiện ích điều khiển ẩn/hiện mượt mà (không để lại khoảng trống thừa)
-    private void toggleAutoBidView(boolean isConfigured) {
-        boxSetupAuto.setVisible(!isConfigured);
-        boxSetupAuto.setManaged(!isConfigured);
-
-        boxCurrentAuto.setVisible(isConfigured);
-        boxCurrentAuto.setManaged(isConfigured);
-    }
-
+    public void onEditAutoBidClicked(){}
 
     // ─── Dừng listener khi đóng màn hình ─────────────────────────────────────
     public void onClose() {
@@ -605,4 +422,25 @@ public class AuctionDetailController implements Initializable {
             popUpStage.show();
         } catch (IOException e) { e.printStackTrace(); }
     }
+
+
+    public void setPreviousScreen(Parent root, MainScreenController controller) {
+        this.previousRoot = root;
+        this.mainController = controller;
+    }
+
+    @FXML
+    public void toMainScreen(ActionEvent event) {
+        if (previousRoot != null) {
+            if (mainController != null) {
+                mainController.resumeSocketListener();
+            }
+
+            Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
+            stage.getScene().setRoot(previousRoot);
+            stage.setTitle("Trang chủ Đấu giá");
+        }
+    }
+
+
 }

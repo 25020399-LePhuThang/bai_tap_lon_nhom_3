@@ -70,10 +70,19 @@ public class MainScreenController implements Initializable {
     @FXML private TableColumn<Item, Date> EndTimeColumn2;
     @FXML private Button btnRefresh;
 
+
+    private final  ObservableList<Item> activeMasterList = FXCollections.observableArrayList();
+    private final  ObservableList<Item> preparedMasterList = FXCollections.observableArrayList();
+
+    private static boolean isSocketListenerStarted = false;
+    private static MainScreenController currentActiveController;
+
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
         clockInit();
         setupTableColumns();
+        Search();
+        setupSocketListener();
 
         // Cắt avatar thành hình tròn
         if (imgUserAvatar != null) {
@@ -93,6 +102,10 @@ public class MainScreenController implements Initializable {
                         AuctionDetailController auctionDetailController = loader.getController();
                         auctionDetailController.setItemData(selectedItem);
                         auctionDetailController.setDisplayName(lblName.getText());
+
+                        Parent mainRoot = tbvIsPresenting.getScene().getRoot();
+
+                        auctionDetailController.setPreviousScreen(mainRoot, this);
 
                         // Lấy cửa sổ (Stage) hiện tại thông qua cái bảng tbvItems của màn hình chính
                         Stage stage = (Stage) tbvIsPresenting.getScene().getWindow();
@@ -180,6 +193,10 @@ public class MainScreenController implements Initializable {
 
     }
 
+
+
+
+
     private void setupTableColumns() {
         NumberFormat usdFormat = NumberFormat.getCurrencyInstance(Locale.US);
 
@@ -222,96 +239,55 @@ public class MainScreenController implements Initializable {
         clock.play();
     }
 
-    // =========================================================================
-    // 1 THREAD KIỂM SOÁT TẤT CẢ (TRÁNH NGHẼN MẠNG)
-    // =========================================================================
+
+
+
+
+
+
     public void setDisplayName(String currentUser) {
-        lblName.setText(currentUser);
+        // 1. Đưa cập nhật UI vào luồng JavaFX để tránh lỗi ngoại lệ
+        Platform.runLater(() -> lblName.setText(currentUser));
 
         new Thread(() -> {
-            // Bước 1: Xin số dư ví
+            // số dư ví
             String balanceResponse = NetworkClient.getBalanceRequest(currentUser);
 
-            // Bước 2: Xin danh sách bảng 1
+            // danh sách bảng 1
             List<Item> activeItems;
             try {
                 activeItems = NetworkClient.takeActiveItems();
             } catch (Exception e) { activeItems = new ArrayList<>(); }
 
-            // Bước 3: Xin danh sách bảng 2
+            // danh sách bảng 2
             List<Item> preparedItems;
             try {
                 preparedItems = NetworkClient.takePreparedItems();
             } catch (Exception e) { preparedItems = new ArrayList<>(); }
 
-            // Đẩy tất cả dữ liệu lên UI cùng lúc cho mượt
             final List<Item> finalActive = activeItems;
             final List<Item> finalPrepared = preparedItems;
 
             Platform.runLater(() -> {
-                // Đập tiền
+                // Cập nhật tiền
                 if (balanceResponse != null && balanceResponse.startsWith("BALANCE_SUCCESS")) {
                     lblBalance.setText(balanceResponse.split("\\|")[1] + " $");
                 } else {
                     lblBalance.setText("0.0 $");
                 }
+                activeMasterList.clear();
+                activeMasterList.addAll(finalActive);
 
-                // Đập hàng vào 2 bảng + Gắn bộ lọc tìm kiếm
-                bindDataAndSearch(tbvIsPresenting, finalActive);
-                bindDataAndSearch(tbvWillPresent, finalPrepared);
+                preparedMasterList.clear();
+                preparedMasterList.addAll(finalPrepared);
+
+                // Ép bảng vẽ lại giao diện
+                tbvIsPresenting.refresh();
+                tbvWillPresent.refresh();
             });
         }).start();
-        NetworkClient.getInstance().startListening(response -> {
-            if (!response.startsWith("BID_UPDATE|")) return;
-            String[] p = response.split("\\|");
-            if (p.length < 3) return;
-
-            String itemId = p[1];
-            double newPrice = Double.parseDouble(p[2]);
-
-            Platform.runLater(() -> {
-                // Cập nhật giá trong ObservableList → bảng tự refresh
-                tbvIsPresenting.getItems().forEach(item -> {
-                    if (String.valueOf(item.getItemID()).equals(itemId)) {
-                        item.setCurrentPrice(newPrice);
-                    }
-                });
-                tbvIsPresenting.refresh(); // ← bắt buộc để UI cập nhật
-            });
-        });
     }
 
-    /**
-     * Hàm dùng chung để đổ dữ liệu vào bảng và gắn chức năng ô tìm kiếm
-     */
-    private void bindDataAndSearch(TableView<Item> table, List<Item> items) {
-        if (items == null) items = new ArrayList<>();
-        ObservableList<Item> masterList = FXCollections.observableArrayList(items);
-        FilteredList<Item> filteredData = new FilteredList<>(masterList, b -> true);
-
-        txtSearch1.textProperty().addListener((observable, oldValue, newValue) -> {
-            filteredData.setPredicate(item -> {
-                if (newValue == null || newValue.isEmpty()) return true;
-
-                String lowerCaseFilter = newValue.toLowerCase();
-
-                // Đã fix lỗi toLowerCase() của Integer
-                if (item.getName() != null && item.getName().toLowerCase().contains(lowerCaseFilter)) return true;
-                if (String.valueOf(item.getItemID()).contains(lowerCaseFilter)) return true;
-                if (item.getSeller_ID() != null && item.getSeller_ID().toLowerCase().contains(lowerCaseFilter)) return true;
-
-                return false;
-            });
-        });
-
-        SortedList<Item> sortedData = new SortedList<>(filteredData);
-        sortedData.comparatorProperty().bind(table.comparatorProperty());
-        table.setItems(sortedData);
-    }
-
-    // =========================================================================
-    // HÀM DÀNH CHO POP-UP NẠP/RÚT TIỀN GỌI VỀ
-    // =========================================================================
     public void updateBalanceDisplay(String newBalance) {
         Platform.runLater(() -> lblBalance.setText(newBalance + " $"));
     }
@@ -401,10 +377,75 @@ public class MainScreenController implements Initializable {
         switchScence(event,"/SignInScreen.fxml");
     }
 
+    @FXML
     public void handleRefresh(ActionEvent event){
-       String currentUser=lblName.getText();
+        String currentUser = lblName.getText();
         if (currentUser != null && !currentUser.isEmpty()) {
+            if (btnRefresh != null) btnRefresh.setDisable(true);
+
             setDisplayName(currentUser);
+
+            new Thread(() -> {
+                try { Thread.sleep(1500); } catch (InterruptedException e) { }
+                Platform.runLater(() -> {
+                    if (btnRefresh != null) btnRefresh.setDisable(false);
+                });
+            }).start();
         }
+    }
+
+
+    private void Search() {
+        FilteredList<Item> filteredActive = new FilteredList<>(activeMasterList, b -> true);
+        FilteredList<Item> filteredPrepared = new FilteredList<>(preparedMasterList, b -> true);
+
+        txtSearch1.textProperty().addListener((observable, oldValue, newValue) -> {
+            String lowerCaseFilter = (newValue == null) ? "" : newValue.toLowerCase().trim();
+
+            java.util.function.Predicate<Item> filterPredicate = item -> {
+                if (lowerCaseFilter.isEmpty()) return true;
+                if (item.getName() != null && item.getName().toLowerCase().contains(lowerCaseFilter)) return true;
+                if (String.valueOf(item.getItemID()).contains(lowerCaseFilter)) return true;
+                if (item.getSeller_ID() != null && item.getSeller_ID().toLowerCase().contains(lowerCaseFilter)) return true;
+                return false;
+            };
+
+            filteredActive.setPredicate(filterPredicate);
+            filteredPrepared.setPredicate(filterPredicate);
+        });
+
+        SortedList<Item> sortedActive = new SortedList<>(filteredActive);
+        sortedActive.comparatorProperty().bind(tbvIsPresenting.comparatorProperty());
+        tbvIsPresenting.setItems(sortedActive);
+
+        SortedList<Item> sortedPrepared = new SortedList<>(filteredPrepared);
+        sortedPrepared.comparatorProperty().bind(tbvWillPresent.comparatorProperty());
+        tbvWillPresent.setItems(sortedPrepared);
+    }
+
+
+
+    private void setupSocketListener() {
+        NetworkClient.getInstance().startListening(response -> {
+            if (!response.startsWith("BID_UPDATE|")) return;
+            String[] p = response.split("\\|");
+            if (p.length < 3) return;
+
+            String itemId = p[1];
+            double newPrice = Double.parseDouble(p[2]);
+
+            Platform.runLater(() -> {
+                activeMasterList.forEach(item -> {
+                    if (String.valueOf(item.getItemID()).equals(itemId)) {
+                        item.setCurrentPrice(newPrice);
+                    }
+                });
+                tbvIsPresenting.refresh();
+            });
+        });
+    }
+
+    public void resumeSocketListener() {
+        setupSocketListener();
     }
     }
