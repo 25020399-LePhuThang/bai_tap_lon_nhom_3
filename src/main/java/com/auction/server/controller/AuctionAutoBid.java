@@ -51,11 +51,17 @@ public class AuctionAutoBid {
                 return new AutoBidResult(currentPrice, currentWinnerId, false,
                         "Bạn đang là người dẫn đầu, không cần đăng ký auto-bid lúc này.");
             }
+
             // Nếu maxBid thấp hơn hoặc bằng giá hiện tại → vô nghĩa
             if (newBid.getMaxBid() <= currentPrice) {
                 return new AutoBidResult(currentPrice, currentWinnerId, false,
                         "maxBid phải lớn hơn giá hiện tại (" + currentPrice + ").");
             }
+
+            // Xóa bỏ cấu hình AutoBid cũ của người này trước khi thêm cấu hình mới vào
+            autoBids.removeIf(b -> b.getBidderId().equals(newBid.getBidderId()));
+
+            // Sau đó mới thêm cấu hình mới vào danh sách
             autoBids.add(newBid);
             return processAutoBidding();
         } finally {

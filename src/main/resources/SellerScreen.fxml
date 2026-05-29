@@ -25,7 +25,7 @@
                 <Insets bottom="15.0" left="20.0" right="20.0" top="15.0" />
             </padding>
 
-            <Button fx:id="btnProfile" mnemonicParsing="false" onAction="#toInfoScreen" style="-fx-background-color: transparent; -fx-padding: 0; -fx-cursor: hand;" styleClass="avatar-button" stylesheets="@Style.css">
+            <Button fx:id="btnProfile" mnemonicParsing="false" onAction="#toInfoScreen" style="-fx-background-color: transparent; -fx-padding: 0; -fx-cursor: hand;" styleClass="avatar-button" stylesheets="@style.css">
                 <graphic>
                     <Circle fill="#bdc3c7" radius="22.0" stroke="#f1c40f" strokeType="INSIDE" strokeWidth="2.0" />
                 </graphic>
@@ -40,38 +40,42 @@
                 </Label>
             </HBox>
 
-            <Region stylesheets="@Style.css" HBox.hgrow="ALWAYS" />
+            <Region stylesheets="@style.css" HBox.hgrow="ALWAYS" />
 
             <HBox alignment="CENTER_LEFT" spacing="5.0">
                 <Label text="Số dư:" textFill="#f1c40f">
                     <font><Font name="System Bold" size="16.0" /></font>
                 </Label>
-                <Label fx:id="lblBalance" styleClass="price-text" stylesheets="@Style.css" text="0$" textFill="#f1c40f">
+                <Label fx:id="lblBalance" styleClass="price-text" stylesheets="@style.css" text="0$" textFill="#f1c40f">
                     <font><Font name="System Bold" size="16.0" /></font>
                 </Label>
             </HBox>
 
-            <Button fx:id="btnDeposit" mnemonicParsing="false" onAction="#toDepositScreen" style="-fx-background-color: #27ae60; -fx-text-fill: white; -fx-cursor: hand;" styleClass="btn-primary" stylesheets="@Style.css" text="Nạp tiền" />
-            <Button fx:id="btnWithdraw" mnemonicParsing="false" onAction="#toWithdrawScreen" style="-fx-background-color: #e67e22; -fx-text-fill: white; -fx-cursor: hand;" styleClass="btn-primary" stylesheets="@Style.css" text="Rút tiền" />
-            <Button fx:id="btnSettings" mnemonicParsing="false" onAction="#toSettingScreen" style="-fx-background-color: #34495e; -fx-text-fill: white; -fx-cursor: hand;" styleClass="btn-primary" stylesheets="@Style.css" text="Cài đặt" />
-            <Button fx:id="btnLogout" mnemonicParsing="false" onAction="#handleLogout" style="-fx-background-color: #c0392b; -fx-text-fill: white; -fx-cursor: hand;" styleClass="btn-primary" stylesheets="@Style.css" text="Đăng xuất" />
+            <Button fx:id="btnDeposit" mnemonicParsing="false" onAction="#toDepositScreen" style="-fx-background-color: #27ae60; -fx-text-fill: white; -fx-cursor: hand;" styleClass="btn-primary" stylesheets="@style.css" text="Nạp tiền" />
+            <Button fx:id="btnWithdraw" mnemonicParsing="false" onAction="#toWithdrawScreen" style="-fx-background-color: #e67e22; -fx-text-fill: white; -fx-cursor: hand;" styleClass="btn-primary" stylesheets="@style.css" text="Rút tiền" />
+            <Button fx:id="btnSettings" mnemonicParsing="false" onAction="#toSettingScreen" style="-fx-background-color: #34495e; -fx-text-fill: white; -fx-cursor: hand;" styleClass="btn-primary" stylesheets="@style.css" text="Cài đặt" />
+            <Button fx:id="btnLogout" mnemonicParsing="false" onAction="#handleLogout" style="-fx-background-color: #c0392b; -fx-text-fill: white; -fx-cursor: hand;" styleClass="btn-primary" stylesheets="@style.css" text="Đăng xuất" />
         </HBox>
     </top>
 
     <left>
-        <VBox prefWidth="350.0" spacing="10.0" style="-fx-background-color: #f8f9fa; -fx-border-color: #dee2e6; -fx-border-width: 0 1 0 0;" stylesheets="@Style.css" BorderPane.alignment="CENTER">
+        <VBox prefHeight="850.0" prefWidth="399.0" spacing="10.0" style="-fx-background-color: #f8f9fa; -fx-border-color: #dee2e6; -fx-border-width: 0 1 0 0;" stylesheets="@style.css" BorderPane.alignment="CENTER">
             <padding>
                 <Insets bottom="15.0" left="15.0" right="15.0" top="15.0" />
             </padding>
             <Label text="Đăng Bán Sản Phẩm">
-                <font><Font name="System Bold" size="18.0" /></font>
+                <font>
+                    <Font name="System Bold" size="18.0" />
+                </font>
             </Label>
 
             <ScrollPane fitToWidth="true" style="-fx-background-color: transparent; -fx-background: transparent; -fx-border-color: transparent;" VBox.vgrow="ALWAYS">
                 <content>
-                    <VBox spacing="10.0">
-                        <padding><Insets right="5.0" /></padding>
-                        <TextField fx:id="txtItemName" prefHeight="35.0" promptText="Tên sản phẩm" styleClass="text-input-modern" stylesheets="@Style.css" />
+                    <VBox prefHeight="692.0" prefWidth="346.0" spacing="10.0">
+                        <padding>
+                            <Insets right="5.0" />
+                        </padding>
+                        <TextField fx:id="txtItemName" prefHeight="35.0" promptText="Tên sản phẩm" styleClass="text-input-modern" stylesheets="@style.css" />
                         <HBox spacing="10.0">
                             <TextField fx:id="txtStartPrice" prefHeight="35.0" promptText="Giá khởi điểm ($)" styleClass="text-input-modern" HBox.hgrow="ALWAYS" />
                             <TextField fx:id="txtStepPrice" prefHeight="35.0" promptText="Bước giá ($)" styleClass="text-input-modern" HBox.hgrow="ALWAYS" />
@@ -80,22 +84,30 @@
 
                         <VBox spacing="8.0" style="-fx-background-color: #ffffff; -fx-padding: 10; -fx-border-color: #dee2e6; -fx-border-radius: 5; -fx-background-radius: 5;">
                             <Label text="Lịch trình đấu giá" textFill="#2c3e50">
-                                <font><Font name="System Bold" size="13.0" /></font>
+                                <font>
+                                    <Font name="System Bold" size="13.0" />
+                                </font>
                             </Label>
 
-                            <HBox spacing="10.0">
-                                <DatePicker fx:id="dpStartDate" prefHeight="47.0" prefWidth="283.0" promptText="Ngày bắt đầu" styleClass="text-input-modern" HBox.hgrow="ALWAYS" />
+                            <HBox alignment="CENTER_LEFT" spacing="10.0">
+                                <DatePicker fx:id="dpStartDate" prefHeight="35.0" promptText="Ngày bắt đầu" styleClass="text-input-modern" HBox.hgrow="ALWAYS" />
+                                <TextField fx:id="txtStartTime" prefHeight="35.0" prefWidth="110.0" promptText="Giờ (H:m:s)" styleClass="text-input-modern" />
                             </HBox>
 
-                            <HBox spacing="10.0">
-                                <DatePicker fx:id="dpEndDate" prefHeight="47.0" prefWidth="285.0" promptText="Ngày kết thúc" styleClass="text-input-modern" HBox.hgrow="ALWAYS" />
+                            <HBox alignment="CENTER_LEFT" spacing="10.0">
+                                <DatePicker fx:id="dpEndDate" prefHeight="35.0" promptText="Ngày kết thúc" styleClass="text-input-modern" HBox.hgrow="ALWAYS" />
+                                <TextField fx:id="txtEndTime" prefHeight="35.0" prefWidth="110.0" promptText="Giờ (H:m:s)" styleClass="text-input-modern" />
                             </HBox>
                         </VBox>
 
                         <ComboBox fx:id="cbItemType" prefHeight="35.0" prefWidth="310.0" promptText="-- Chọn loại sản phẩm --" style="-fx-background-color: white; -fx-border-color: #ced4da; -fx-border-radius: 3;" styleClass="text-input-modern" />
 
                         <VBox fx:id="vboxDynamicFields" spacing="10.0" style="-fx-background-color: #e9ecef; -fx-padding: 10; -fx-background-radius: 5;">
-                            <Label text="Thông tin chi tiết (Theo loại)" textFill="#6c757d"><font><Font name="System Italic" size="13.0" /></font></Label>
+                            <Label text="Thông tin chi tiết (Theo loại)" textFill="#6c757d">
+                                <font>
+                                    <Font name="System Italic" size="13.0" />
+                                </font>
+                            </Label>
                             <TextField fx:id="txtBrand" prefHeight="30.0" promptText="Thương hiệu" styleClass="text-input-modern" />
                             <TextField fx:id="txtWarranty" prefHeight="30.0" promptText="Bảo hành (Tháng)" styleClass="text-input-modern" />
                             <TextField fx:id="txtAuthor" prefHeight="30.0" promptText="Tác giả (Dành cho Nghệ thuật)" styleClass="text-input-modern" />
@@ -107,13 +119,22 @@
                 </content>
             </ScrollPane>
 
-            <Label fx:id="lblAddError" text="" textFill="#e74c3c" wrapText="true"><font><Font name="System Italic" size="13.0" /></font></Label>
-            <Button fx:id="btnAddItem" maxWidth="1.7976931348623157E308" onAction="#handleAddItem" prefHeight="45.0" style="-fx-background-color: #3498db; -fx-text-fill: white; -fx-cursor: hand; -fx-background-radius: 5;" styleClass="btn-primary" text="ĐĂNG BÁN NGAY"><font><Font name="System Bold" size="16.0" /></font></Button>
+            <Label fx:id="lblAddError" text="" textFill="#e74c3c" wrapText="true">
+                <font>
+                    <Font name="System Italic" size="13.0" />
+                </font>
+            </Label>
+
+            <Button fx:id="btnAddItem" maxWidth="1.7976931348623157E308" onAction="#handleAddItem" prefHeight="45.0" style="-fx-background-color: #3498db; -fx-text-fill: white; -fx-cursor: hand; -fx-background-radius: 5;" styleClass="btn-primary" text="ĐĂNG BÁN NGAY">
+                <font>
+                    <Font name="System Bold" size="16.0" />
+                </font>
+            </Button>
         </VBox>
     </left>
 
     <center>
-        <VBox spacing="15.0" style="-fx-background-color: white;" BorderPane.alignment="CENTER">
+        <VBox prefHeight="850.0" prefWidth="749.0" spacing="15.0" style="-fx-background-color: white;" BorderPane.alignment="CENTER">
             <padding>
                 <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
             </padding>
@@ -123,14 +144,14 @@
                 </Label>
                 <Region HBox.hgrow="ALWAYS" />
 
-                <Button fx:id="btnDeleteItem" mnemonicParsing="false" onAction="#handleDeleteItem" prefHeight="30.0" style="-fx-background-color: transparent; -fx-border-color: #c0392b; -fx-text-fill: #c0392b; -fx-cursor: hand; -fx-border-radius: 3;" styleClass="btn-primary" stylesheets="@Style.css" text=" Xóa sản phẩm">
+                <Button fx:id="btnDeleteItem" mnemonicParsing="false" onAction="#handleDeleteItem" prefHeight="30.0" style="-fx-background-color: transparent; -fx-border-color: #c0392b; -fx-text-fill: #c0392b; -fx-cursor: hand; -fx-border-radius: 3;" styleClass="btn-primary" stylesheets="@style.css" text=" Xóa sản phẩm">
                     <font><Font name="System Bold" size="13.0" /></font>
                 </Button>
 
-                <Button fx:id="btnRefresh" mnemonicParsing="false" onAction="#handleRefresh" prefHeight="30.0" style="-fx-background-color: #95a5a6; -fx-text-fill: white; -fx-cursor: hand;" styleClass="btn-primary" stylesheets="@Style.css" text="Làm mới bảng" />
+                <Button fx:id="btnRefresh" mnemonicParsing="false" onAction="#handleRefresh" prefHeight="30.0" style="-fx-background-color: #95a5a6; -fx-text-fill: white; -fx-cursor: hand;" styleClass="btn-primary" stylesheets="@style.css" text="Làm mới bảng" />
             </HBox>
 
-            <TableView fx:id="tableItems" style="-fx-selection-bar: #3498db;" styleClass="table-row-cell" stylesheets="@Style.css" VBox.vgrow="ALWAYS">
+            <TableView fx:id="tableItems" style="-fx-selection-bar: #3498db;" styleClass="table-row-cell" stylesheets="@style.css" VBox.vgrow="ALWAYS">
                 <columns>
                     <TableColumn fx:id="colId" text="Mã Sản phẩm" />
                     <TableColumn fx:id="colName" text="Tên sản phẩm" />
@@ -147,17 +168,30 @@
     </center>
 
     <bottom>
-        <StackPane style="-fx-background-color: white; -fx-border-color: #dee2e6; -fx-border-width: 1 0 0 0;" BorderPane.alignment="CENTER">
-            <padding>
-                <Insets bottom="10.0" left="20.0" right="20.0" top="10.0" />
-            </padding>
-            <children>
-                <Label fx:id="lblTime" style="-fx-text-fill: #7f8c8d;" text="Thời gian hiển thị tại đây" StackPane.alignment="CENTER">
-                    <font><Font name="System Italic" size="14.0" /></font>
+        <VBox BorderPane.alignment="CENTER">
+            <HBox alignment="CENTER" style="-fx-background-color: #f8d7da; -fx-border-color: #f5c6cb; -fx-border-width: 1 0 0 0;">
+                <padding>
+                    <Insets bottom="8.0" left="20.0" right="20.0" top="8.0" />
+                </padding>
+                <Label text="CẢNH BÁO: Nếu nhập sai thông tin sản phẩm, đề nghị quý khách xóa và đăng lại trước giờ đấu giá để đảm bảo minh bạch. KHÔNG CHO PHÉP xóa sản phẩm khi đang trong thời gian đấu giá." textFill="#721c24" wrapText="true">
+                    <font>
+                        <Font name="System Bold" size="13.0" />
+                    </font>
                 </Label>
-                <Button fx:id="btnBackFromSeller" mnemonicParsing="false" onAction="#toSignInScreen" prefHeight="35.0" prefWidth="110.0" style="-fx-background-color: transparent; -fx-border-color: #95a5a6; -fx-text-fill: #7f8c8d; -fx-border-radius: 5; -fx-font-weight: bold; -fx-cursor: hand;" styleClass="btn-primary" stylesheets="@Style.css" text="Quay lại" StackPane.alignment="CENTER_RIGHT" />
-            </children>
-        </StackPane>
+            </HBox>
+
+            <StackPane style="-fx-background-color: white; -fx-border-color: #dee2e6; -fx-border-width: 1 0 0 0;">
+                <padding>
+                    <Insets bottom="10.0" left="20.0" right="20.0" top="10.0" />
+                </padding>
+                <children>
+                    <Label fx:id="lblTime" style="-fx-text-fill: #7f8c8d;" text="Thời gian hiển thị tại đây" StackPane.alignment="CENTER">
+                        <font><Font name="System Italic" size="14.0" /></font>
+                    </Label>
+                    <Button fx:id="btnBackFromSeller" mnemonicParsing="false" onAction="#toSignInScreen" prefHeight="35.0" prefWidth="110.0" style="-fx-background-color: transparent; -fx-border-color: #95a5a6; -fx-text-fill: #7f8c8d; -fx-border-radius: 5; -fx-font-weight: bold; -fx-cursor: hand;" styleClass="btn-primary" stylesheets="@style.css" text="Quay lại" StackPane.alignment="CENTER_RIGHT" />
+                </children>
+            </StackPane>
+        </VBox>
     </bottom>
 
 </BorderPane>

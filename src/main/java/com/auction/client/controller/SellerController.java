@@ -10,6 +10,7 @@ import java.net.URL;
 import java.text.NumberFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Date;
 import java.util.List;
@@ -22,6 +23,7 @@ import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -42,6 +44,10 @@ public class SellerController implements Initializable {
     private Label lblBalance;
     @FXML
     private Label lblTime;
+
+    @FXML
+    private TextField txtStartTime;
+    @FXML TextField txtEndTime;
 
 
     @FXML
@@ -103,10 +109,15 @@ public class SellerController implements Initializable {
     @FXML
     private TextField txtEngineCapacity;
 
+
+    private final ObservableList<Item> myItemsMasterList = FXCollections.observableArrayList();
+
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
         clockInit();
         setupTableColumns();
+
+        tableItems.setItems(myItemsMasterList);
 
         tableItems.setOnMouseClicked(event -> {
             if (event.getClickCount() == 2) {
@@ -165,26 +176,21 @@ public class SellerController implements Initializable {
 
         new Thread(() -> {
             String balanceResponse = NetworkClient.getBalanceRequest(currentUser);
-
-            Platform.runLater(() -> {
-                if (balanceResponse != null && balanceResponse.startsWith("BALANCE_SUCCESS")) {
-                    String balance = balanceResponse.split("\\|")[1];
-                    lblBalance.setText(balance + " $");
-                } else {
-                    lblBalance.setText("0.0 $");
-                }
-            });
-
             List<Item> myItems = NetworkClient.getItemsBySellerIdRequest(currentUser);
 
             Platform.runLater(() -> {
-                if (myItems != null && !myItems.isEmpty()) {
-                    tableItems.setItems(FXCollections.observableArrayList(myItems));
+                if (balanceResponse != null && balanceResponse.startsWith("BALANCE_SUCCESS")) {
+                    lblBalance.setText(balanceResponse.split("\\|")[1] + " $");
                 } else {
-                    tableItems.setItems(FXCollections.observableArrayList());
+                    lblBalance.setText("0.0 $");
+                }
+
+                if (myItems != null && !myItems.isEmpty()) {
+                    myItemsMasterList.setAll(myItems);
+                } else {
+                    myItemsMasterList.clear();
                 }
             });
-
         }).start();
     }
 
@@ -327,58 +333,83 @@ public class SellerController implements Initializable {
     @FXML
     public void handleAddItem(ActionEvent event) {
         try {
-            String name = txtItemName.getText();
+            String name = txtItemName.getText().trim();
             String type = cbItemType.getValue();
-            String imgUrl = txtImageUrl.getText();
+            String imgUrl = txtImageUrl.getText().trim();
             String sellerName = lblSellerName.getText();
-
 
             if (name.isEmpty() || type == null || txtStartPrice.getText().isEmpty()) {
                 showAlert(Alert.AlertType.WARNING, "Thiếu thông tin", "Vui lòng nhập Tên, Loại và Giá khởi điểm!");
                 return;
             }
 
-            double startPrice = Double.parseDouble(txtStartPrice.getText());
-            double stepPrice = Double.parseDouble(txtStepPrice.getText());
+            double startPrice = Double.parseDouble(txtStartPrice.getText().trim());
+            double stepPrice = Double.parseDouble(txtStepPrice.getText().trim());
 
-            if (dpStartDate.getValue() == null) {
-                showAlert(Alert.AlertType.WARNING, "Thiếu thông tin", "Vui lòng chọn Ngày bắt đầu");
-                return;
-            }
             LocalDate localStartDate = dpStartDate.getValue();
-            Date startTime = Date.from(localStartDate.atStartOfDay(java.time.ZoneId.systemDefault()).toInstant());
+            String startTimeStr = txtStartTime.getText().trim();
 
-            if (dpEndDate.getValue() == null) {
-                showAlert(Alert.AlertType.WARNING, "Thiếu thông tin", "Vui lòng chọn Ngày kết thúc!");
+            if (localStartDate == null || startTimeStr.isEmpty()) {
+                showAlert(Alert.AlertType.WARNING, "Thiếu thông tin", "Vui lòng chọn Ngày và nhập Giờ bắt đầu!");
                 return;
             }
-            LocalDate localEndDate = dpEndDate.getValue();
-            Date endTime = Date.from(localEndDate.atStartOfDay(java.time.ZoneId.systemDefault()).toInstant());
 
+            LocalDate localEndDate = dpEndDate.getValue();
+            String endTimeStr = txtEndTime.getText().trim();
+
+            if (localEndDate == null || endTimeStr.isEmpty()) {
+                showAlert(Alert.AlertType.WARNING, "Thiếu thông tin", "Vui lòng chọn Ngày và nhập Giờ kết thúc!");
+                return;
+            }
+
+            DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm:ss");
+            Date startTime;
+            Date endTime;
+
+            try {
+                // Ép chuỗi thành LocalTime và ghép với LocalDate
+                LocalTime startLT = LocalTime.parse(startTimeStr, timeFormatter);
+                LocalDateTime startLDT = LocalDateTime.of(localStartDate, startLT);
+                startTime = Date.from(startLDT.atZone(java.time.ZoneId.systemDefault()).toInstant());
+
+                LocalTime endLT = LocalTime.parse(endTimeStr, timeFormatter);
+                LocalDateTime endLDT = LocalDateTime.of(localEndDate, endLT);
+                endTime = Date.from(endLDT.atZone(java.time.ZoneId.systemDefault()).toInstant());
+
+                // Kiểm tra logic thời gian hợp lệ
+                if (endTime.before(startTime)) {
+                    showAlert(Alert.AlertType.WARNING, "Lỗi thời gian", "Thời gian kết thúc không thể diễn ra trước lúc bắt đầu!");
+                    return;
+                }
+
+            } catch (java.time.format.DateTimeParseException dtpe) {
+                showAlert(Alert.AlertType.ERROR, "Lỗi định dạng giờ", "Giờ phải nhập theo đúng chuẩn HH:mm:ss (Ví dụ: 14:30:00)");
+                return;
+            }
 
             Item newItem = null;
 
             switch (type.toUpperCase()) {
                 case "ELECTRONIC":
                     Electronic el = new Electronic();
-                    el.setBrand(txtBrand.getText());
-                    el.setWarrantyPeriod(Integer.parseInt(txtWarranty.getText().isEmpty() ? "0" : txtWarranty.getText()));
+                    el.setBrand(txtBrand.getText().trim());
+                    el.setWarrantyPeriod(Integer.parseInt(txtWarranty.getText().isEmpty() ? "0" : txtWarranty.getText().trim()));
                     newItem = el;
                     break;
 
                 case "VEHICLE":
                     Vehicle v = new Vehicle();
-                    v.setBrand(txtBrand.getText());
-                    v.setWarrantyPeriod(Integer.parseInt(txtWarranty.getText().isEmpty() ? "0" : txtWarranty.getText()));
-                    v.setEngineCapacity(txtEngineCapacity.getText());
-                    v.setFuelType(txtFuelType.getText());
+                    v.setBrand(txtBrand.getText().trim());
+                    v.setWarrantyPeriod(Integer.parseInt(txtWarranty.getText().isEmpty() ? "0" : txtWarranty.getText().trim()));
+                    v.setEngineCapacity(txtEngineCapacity.getText().trim());
+                    v.setFuelType(txtFuelType.getText().trim());
                     newItem = v;
                     break;
 
                 case "ART":
                     Art a = new Art();
-                    a.setAuthor(txtAuthor.getText());
-                    a.setCreationYear(Integer.parseInt(txtCreationYear.getText().isEmpty() ? "0" : txtCreationYear.getText()));
+                    a.setAuthor(txtAuthor.getText().trim());
+                    a.setCreationYear(Integer.parseInt(txtCreationYear.getText().isEmpty() ? "0" : txtCreationYear.getText().trim()));
                     newItem = a;
                     break;
 
@@ -386,7 +417,6 @@ public class SellerController implements Initializable {
                     showAlert(Alert.AlertType.ERROR, "Lỗi phân loại", "Loại sản phẩm không hợp lệ!");
                     return;
             }
-
 
             newItem.setName(name);
             newItem.setType(type.toUpperCase());
@@ -401,11 +431,9 @@ public class SellerController implements Initializable {
 
             boolean isSuccess = NetworkClient.createItemRequest(newItem);
 
-
             if (isSuccess) {
-                showAlert(Alert.AlertType.INFORMATION, "Thành công", "Đã đăng sản phẩm lên sàn đấu giá thành công!");
+                showAlert(Alert.AlertType.INFORMATION, "Thành công", "Đã đăng sản phẩm chờ duyệt thành công!");
                 clearForm();
-                setDisplayName(sellerName);
                 handleRefresh();
             } else {
                 showAlert(Alert.AlertType.ERROR, "Thất bại", "Lỗi Server! Không thể tạo sản phẩm lúc này.");
@@ -413,12 +441,10 @@ public class SellerController implements Initializable {
 
         } catch (NumberFormatException e) {
             showAlert(Alert.AlertType.ERROR, "Lỗi nhập liệu", "Giá tiền, Năm sáng tác hoặc Thời gian bảo hành phải là SỐ!");
-        } catch (Exception e) {
-            showAlert(Alert.AlertType.ERROR, "Lỗi không xác định", e.getMessage());
+        } catch (Exception e) {showAlert(Alert.AlertType.ERROR, "Lỗi không xác định", "Đã xảy ra lỗi: " + e.getMessage());
             e.printStackTrace();
         }
     }
-
     @FXML
     public void handleRefresh() {
         String currentUser = lblSellerName.getText();
@@ -478,12 +504,11 @@ public class SellerController implements Initializable {
     @FXML
     public void handleDeleteItem() {
         Item selectedItem = tableItems.getSelectionModel().getSelectedItem();
-        String itemID = selectedItem.getItemID();
-
         if (selectedItem == null) {
             showAlert(Alert.AlertType.ERROR, "Lỗi không xác định", "Không tìm thấy sản phẩm");
             return;
         }
+        String itemID = selectedItem.getItemID();
         String status = selectedItem.getStatus();
         if (!"WAITING".equalsIgnoreCase(status) && !"PREPARED".equalsIgnoreCase(status)) {
             showAlert(Alert.AlertType.ERROR, "Lỗi thực thi", "Sản phẩm đang trong thời kì đấu giá, không được phép xóa.");

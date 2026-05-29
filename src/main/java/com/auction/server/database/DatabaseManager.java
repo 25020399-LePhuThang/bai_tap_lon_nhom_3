@@ -5,7 +5,8 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 
 public class DatabaseManager {
-    private static final String URL = "jdbc:sqlite:auction_system.db";
+    // Sửa chuỗi URL để bật chế độ ghi đợi (WAL) và đặt thời gian chờ nếu file bị bận
+    private static final String URL = "jdbc:sqlite:auction_system.db?journal_mode=WAL&busy_timeout=5000";
 
     public static Connection getConnection() {
         Connection conn = null;
