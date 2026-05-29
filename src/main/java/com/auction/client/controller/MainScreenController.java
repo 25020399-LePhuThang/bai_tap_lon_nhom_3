@@ -81,8 +81,6 @@ public class MainScreenController implements Initializable {
     public void initialize(URL url, ResourceBundle resourceBundle) {
         clockInit();
         setupTableColumns();
-        Search();
-        setupSocketListener();
 
         // Cắt avatar thành hình tròn
         if (imgUserAvatar != null) {
