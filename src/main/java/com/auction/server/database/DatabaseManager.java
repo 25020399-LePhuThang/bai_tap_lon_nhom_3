@@ -6,7 +6,7 @@ import java.sql.SQLException;
 
 public class DatabaseManager {
     // Sửa chuỗi URL để bật chế độ ghi đợi (WAL) và đặt thời gian chờ nếu file bị bận
-    private static final String URL = "jdbc:sqlite:/app/data/auction.db";
+    private static final String URL = "jdbc:sqlite:/app/data/auction_system.db";
     public static Connection getConnection() {
         Connection conn = null;
         try {
