@@ -17,11 +17,9 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-
 import com.google.gson.*;
-import java.lang.reflect.Type;
-import com.auction.shared.model.item.*;
 
+import java.lang.reflect.Type;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -29,6 +27,7 @@ import java.io.PrintWriter;
 import java.net.Socket;
 import java.util.Date;
 import java.util.List;
+import com.auction.server.controller.AntiSnipingPolicy;
 
 public class ClientHandler implements Runnable {
     private Socket socket;
@@ -50,7 +49,6 @@ public class ClientHandler implements Runnable {
             e.printStackTrace();
         }
     }
-
 
     /**
      * Gửi một tin nhắn xuống client này.
@@ -83,7 +81,7 @@ public class ClientHandler implements Runnable {
                     }
 
                     // ==============================================================
-                    // XỬ LÝ YÊU CẦU ĐĂNG NHẬP (Nhận 3 tham số: user, pass, role)
+                    // XỬ LÝ YÊU CẦU ĐĂNG NHẬP
                     // ==============================================================
                     case "LOGIN" -> {
                         try {
@@ -108,7 +106,7 @@ public class ClientHandler implements Runnable {
                         }
                     }
 
-                    //3a. BID:
+                    // 3a. BID:
                     case "BID" -> {
                         String user = parts[1];
                         double price = Double.parseDouble(parts[2]);
@@ -116,10 +114,20 @@ public class ClientHandler implements Runnable {
                         System.out.println("===> CHECK SERVER NHẬN ĐƯỢC:");
                         System.out.println("User: " + parts[1] + " | Price: " + parts[2] + " | ItemID: '" + itemId + "'");
 
-                        Item targetItem = AuctionServer.itemCache.computeIfAbsent(
-                                itemId,
-                                id -> itemDAO.getItemById(id)
-                        );
+                        Item targetItem = AuctionServer.itemCache.get(itemId);
+                        if (targetItem == null) {
+                            targetItem = itemDAO.getItemById(itemId);
+                            if (targetItem != null) {
+                                AuctionServer.itemCache.put(itemId, targetItem);
+                            }
+                        }else {
+                            // [FIX LỖI BÓNG MA CACHE]
+                            Item freshData = itemDAO.getItemById(itemId);
+                            if (freshData != null) {
+                                targetItem.setStartTime(freshData.getStartTime());
+                                targetItem.setEndTime(freshData.getEndTime());
+                            }
+                        }
 
                         if (targetItem != null) {
                             String result = biddingService.placeBid(targetItem, price, user);
@@ -141,7 +149,7 @@ public class ClientHandler implements Runnable {
                         }
                     }
 
-                    // 3b. AUTO-BID: AUTO_BID|bidderId|maxBid|increment|itemId
+                    // 3b. AUTO-BID
                     case "AUTO_BID" -> {
                         String bidderId  = parts[1];
                         double maxBid    = Double.parseDouble(parts[2]);
@@ -158,7 +166,12 @@ public class ClientHandler implements Runnable {
                                     targetItem, bidderId, maxBid, increment);
                             sendMessage(result);
 
-                            if (result.startsWith("AutoBid")) {
+                            if (result.startsWith("AutoBid") || result.startsWith("THÀNH CÔNG")) {
+                                // Nếu nhóm có hàm saveAutoBid trong DB thì dùng, nếu không có thể bỏ qua dòng saveAutoBid
+                                try {
+                                    bidDAO.saveAutoBid(bidderId, itemId, maxBid, increment);
+                                } catch (Exception ignored) {}
+
                                 double finalPrice = targetItem.getCurrentPrice();
                                 String finalWinner = targetItem.getLastBidderId();
                                 itemDAO.updatePrice(targetItem);
@@ -170,6 +183,22 @@ public class ClientHandler implements Runnable {
                             }
                         } else {
                             sendMessage("AUTO_BID_FAIL|Sản phẩm không tồn tại!");
+                        }
+                    }
+
+                    // [Gộp từ bản cũ] Xử lý việc UI muốn kiểm tra xem có lưu AutoBid dưới DB không
+                    case "CHECK_MY_AUTOBID" -> {
+                        try {
+                            String username = parts[1];
+                            String itemId = parts[2];
+                            double maxBid = bidDAO.getAutoBidValue(username, itemId);
+                            if (maxBid > 0) {
+                                sendMessage("YES|" + maxBid);
+                            } else {
+                                sendMessage("NO");
+                            }
+                        } catch (Exception e) {
+                            sendMessage("NO");
                         }
                     }
 
@@ -230,14 +259,12 @@ public class ClientHandler implements Runnable {
                     case "DEPOSIT" -> {
                         String username = parts[1];
                         double amount = Double.parseDouble(parts[2]);
-
                         double currentBalance = userDAO.getBalance(username);
 
                         if (currentBalance + amount > 1000000.0) {
                             sendMessage("DEPOSIT_FAIL|Nạp thất bại! Hạn mức ví tối đa chỉ là 1,000,000$.");
                         } else {
                             boolean isSuccess = userDAO.deposit(username, amount);
-
                             if (isSuccess) {
                                 double newBalance = userDAO.getBalance(username);
                                 sendMessage("DEPOSIT_SUCCESS|" + newBalance);
@@ -246,13 +273,13 @@ public class ClientHandler implements Runnable {
                             }
                         }
                     }
+
                     // 9. XỬ LÝ RÚT TIỀN
                     case "WITHDRAW" -> {
                         String username = parts[1];
                         double amount = Double.parseDouble(parts[2]);
 
                         String result = userDAO.withdraw(username, amount);
-
                         if (result.equals("SUCCESS")) {
                             double newBalance = userDAO.getBalance(username);
                             sendMessage("WITHDRAW_SUCCESS|" + newBalance);
@@ -327,7 +354,6 @@ public class ClientHandler implements Runnable {
                                         .create();
 
                                 Item newItem = gson.fromJson(jsonString, Item.class);
-
                                 ItemDAO itemDAO = new ItemDAO();
                                 boolean isInserted = itemDAO.createItem(newItem);
 
@@ -344,14 +370,30 @@ public class ClientHandler implements Runnable {
                         }
                     }
 
+                    // ==============================================================
+                    // [ĐÃ GỘP] LISTEN_ONLY - Xử lý ngầm bắt giá Realtime của Nhung
+                    // ==============================================================
                     case "LISTEN_ONLY" -> {
-                        System.out.println("Client đăng ký listen-only");
+                        System.out.println("[SERVER] Một Client vừa đăng ký kênh nhận giá Realtime (LISTEN_ONLY)");
+                        AuctionServer.activeListeners.add(this.out);
+                        try {
+                            String ping;
+                            while ((ping = in.readLine()) != null) {
+                                // Vòng lặp này giúp luồng không bị ngắt, giữ kết nối Socket sống
+                            }
+                        } catch (IOException e) {
+                            System.out.println("[SERVER] Client ngắt kết nối kênh Realtime.");
+                        } finally {
+                            AuctionServer.activeListeners.remove(this.out); // Rút ống thở an toàn
+                        }
                     }
+
                     case "LOGOUT" -> {
                         System.out.println("Một Client đã yêu cầu đăng xuất và ngắt kết nối.");
                         sendMessage("LOGOUT_SUCCESS");
                         return;
                     }
+
                     case "GET_USER_INFO" -> {
                         try {
                             String targetUsername = parts[1];
@@ -369,8 +411,9 @@ public class ClientHandler implements Runnable {
                             e.printStackTrace();
                         }
                     }
+
                     // ==============================================================
-                    // TÍNH NĂNG ADMIN: QUẢN LÝ SẢN PHẨM
+                    // TÍNH NĂNG ADMIN: QUẢN LÝ SẢN PHẨM & NGƯỜI DÙNG
                     // ==============================================================
                     case "GET_WAITING_ITEMS" -> {
                         try {
@@ -388,7 +431,6 @@ public class ClientHandler implements Runnable {
                         try {
                             String itemId = parts[1];
                             boolean success = ItemDAO.approveItemWithTimeCheck(itemId);
-
                             if (success) {
                                 sendMessage("APPROVE_SUCCESS");
                             } else {
@@ -415,9 +457,6 @@ public class ClientHandler implements Runnable {
                         }
                     }
 
-                    // ==============================================================
-                    // TÍNH NĂNG ADMIN: QUẢN LÝ NGƯỜI DÙNG
-                    // ==============================================================
                     case "GET_ALL_USERS" -> {
                         try {
                             UserDAO userDAO = new UserDAO();
@@ -449,23 +488,21 @@ public class ClientHandler implements Runnable {
                             sendMessage("ERROR|Lỗi server khi mở khóa user");
                         }
                     }
+
                     case "DELETE_ITEM" -> {
                         String itemIdToDelete = parts[1];
                         System.out.println("Server: Đang xử lý yêu cầu xóa Item [" + itemIdToDelete + "]");
-
                         Item targetItem = itemDAO.getItemById(itemIdToDelete);
 
                         if (targetItem == null) {
                             sendMessage("DELETE_FAIL|Sản phẩm không tồn tại hoặc đã bị xóa trước đó.");
                         } else {
                             Date currentTime = new Date();
-
                             if (targetItem.getStartTime() != null && targetItem.getStartTime().before(currentTime)) {
                                 sendMessage("DELETE_FAIL|Thất bại! Sản phẩm này đã bắt đầu lên sàn đấu giá.");
                                 System.out.println("Server: Từ chối xóa vì item " + itemIdToDelete + " đã diễn ra.");
                             } else {
                                 boolean isItemDeleted = itemDAO.deleteItem(itemIdToDelete);
-
                                 if (isItemDeleted) {
                                     sendMessage("DELETE_SUCCESS|Đã rút sản phẩm thành công.");
                                     System.out.println("Server: Xóa thành công sản phẩm ID: " + itemIdToDelete);
@@ -475,11 +512,11 @@ public class ClientHandler implements Runnable {
                             }
                         }
                     }
+
                     case "DELETE_USER" -> {
                         try {
                             String targetUsername = parts[1];
                             System.out.println("Server: Đang xử lý yêu cầu xóa User [" + targetUsername + "]");
-
                             boolean isDeleted = userDAO.deleteUser(targetUsername);
 
                             if (isDeleted) {
