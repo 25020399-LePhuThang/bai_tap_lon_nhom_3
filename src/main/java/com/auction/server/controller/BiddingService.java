@@ -13,14 +13,9 @@ public class BiddingService {
 
     // Mỗi phiên (itemId) có một AuctionAutoBid riêng — thread-safe map
     private final Map<String, AuctionAutoBid> autoBidMap = new ConcurrentHashMap<>();
-
-    // Dùng AntiSnipingPolicy thay vì viết logic trực tiếp
     private final AntiSnipingPolicy antiSnipingPolicy;
+    private ItemDAO itemDao;
 
-    // Trong BiddingService, đổi field:
-    private ItemDAO itemDao; // bỏ final
-
-    // Tạo hàm getItemDao():
     private ItemDAO getItemDao() {
         if (itemDao == null) {
             itemDao = new ItemDAO();
@@ -28,26 +23,19 @@ public class BiddingService {
         return itemDao;
     }
 
-
-    // Constructor mặc định — dùng AntiSnipingPolicy với 30s / 60s
     public BiddingService() {
         this.antiSnipingPolicy = new AntiSnipingPolicy();
     }
 
-    // Constructor cho phép tùy chỉnh policy
     public BiddingService(AntiSnipingPolicy policy) {
         this.antiSnipingPolicy = policy;
     }
-
-    //   private AuctionTimer auctionTimer;
-    //   public BiddingService(AuctionTimer timer) { this.auctionTimer = timer; }
 
     /**
      * Đặt giá thủ công. Sau khi bid thành công, kích hoạt auto-bid
      * để những người đã đăng ký auto-bid có thể phản ứng lại.
      */
     public String placeBid(Item item, double amount, String userId) {
-        // Lock trên item được share giữa các thread
         synchronized (item) {
             Date now = new Date();
 
@@ -62,18 +50,19 @@ public class BiddingService {
             }
 
             // 3. Kiểm tra Trạng thái: Đã hết giờ chưa?
-            if (now.after(item.getEndTime())) {
+            // [Tâm] Cho phép trễ 1 giây để bù trừ độ trễ mạng
+            long timeLeft = item.getEndTime().getTime() - now.getTime();
+            if (timeLeft < -1000) {
                 return "Phiên đấu giá đã kết thúc!";
             }
 
             // 4. Kiểm tra Tiền: Có đủ bước giá không?
-            double minRequired = item.getCurrentPrice() + item.getMinIncrement();
-            // Kiểm tra số dư
             com.auction.server.dao.UserDAO userDAO = new com.auction.server.dao.UserDAO();
             double balance = userDAO.getBalance(userId);
             if (balance < amount) {
                 return "Số dư không đủ! Số dư hiện tại: " + balance + " $";
             }
+            double minRequired = item.getCurrentPrice() + item.getMinIncrement();
             if (amount < minRequired) {
                 return "Giá đặt không hợp lệ. Bạn cần đặt tối thiểu " + minRequired + "đ";
             }
@@ -91,20 +80,53 @@ public class BiddingService {
                     AuctionServer.broadcast(
                             "TIME_UPDATE|" + item.getId() + "|" + item.getEndTime().getTime()
                     );
-                }
+
+                    // [Tâm] Reschedule timer với endTime mới cho Server
+                    // Kiểm tra gia hạn tự động ở giây cuối (Anti-Sniping)
+                    if (antiSnipingPolicy.apply(item)) {
+                        getItemDao().updateEndTime(item);
+                        AuctionServer.broadcast(
+                                "TIME_UPDATE|" + item.getId() + "|" + item.getEndTime().getTime()
+                        );
+
+                         //Tạm thời đóng phần Reschedule Timer vì dự án chưa có class AuctionTimer
+                         AuctionTimer timer = AuctionServer.auctionTimers.get(item.getId());
+                         if (timer != null) {
+                             timer.reschedule();
+                             System.out.println(">>> Timer đã được gia hạn thêm 60s cho: " + item.getId());
+                         }
+                    }}
 
                 // 6. Kích hoạt auto-bid phản ứng (nếu có người đã đăng ký)
                 AuctionAutoBid autoBid = autoBidMap.get(item.getId());
+
+                // [Bản 2] Kích hoạt đầy đủ bộ xử lý AutoBid và thông báo Socket
                 if (autoBid != null) {
+                    // ─── ĐỒNG BỘ RAM THEO DATABASE TRƯỚC KHI CHẠY ───
+                    com.auction.server.dao.BidDAO bidDAO = new com.auction.server.dao.BidDAO();
+                    autoBid.getAutoBids().removeIf(bid -> {
+                        double dbMaxBid = bidDAO.getAutoBidValue(bid.getBidderId(), item.getId());
+                        return dbMaxBid <= 0;
+                    });
+
+                    // 🛠️ SỬA TRỰC TIẾP: Lưu lại người đang giữ Winner trước khi AutoBid chạy đè lên
+                    String oldWinnerId = item.getLastBidderId();
+                    String manualBidderId = userId;
+
                     AuctionAutoBid.AutoBidResult result = autoBid.onManualBidPlaced(amount, userId);
                     if (result.priceChanged) {
                         item.setCurrentPrice(result.finalPrice);
                         item.setLastBidderId(result.finalWinnerId);
                         getItemDao().updatePrice(item);
-                        // Auto-bid đã phản ứng — trả về kết quả cuối cùng
-                        return "THÀNH CÔNG: Giá hiện tại " + result.finalPrice
-                                + "đ — dẫn đầu bởi " + result.finalWinnerId
-                                + " (auto-bid)";
+
+                        // 🛠️ SỬA TRỰC TIẾP: Gửi kèm oldWinnerId ở vị trí tham số thứ 7 để UI đọc Alert
+                        AuctionServer.broadcast(
+                                "BID_UPDATE|" + item.getId() + "|" + result.finalPrice + "|" + result.finalWinnerId +
+                                        "|AUTOBID_TRIGGERED|" + manualBidderId + "|" + oldWinnerId + "\n"
+                        );
+
+                        // Gửi kèm winnerId và giá mới để client hiển thị thông báo chi tiết
+                        return "SERVER_PROCESSED_AUTOBID|" + result.finalWinnerId + "|" + result.finalPrice;
                     }
                 }
 
@@ -115,21 +137,10 @@ public class BiddingService {
         }
     }
 
-    /**
-     * Bidder đăng ký auto-bid cho một phiên đấu giá.
-     * Ngay lập tức kích hoạt để xem có thể vượt giá hiện tại không.
-     *
-     * @param item      sản phẩm đang đấu giá
-     * @param bidderId  người đăng ký
-     * @param maxBid    giá tối đa sẵn sàng trả
-     * @param increment bước tăng giá mỗi lần
-     * @return thông báo kết quả
-     */
     public String registerAutoBid(Item item, String bidderId, double maxBid, double increment) {
         synchronized (item) {
             Date now = new Date();
 
-            // Kiểm tra phiên còn hoạt động không
             if (item.getStartTime() == null || item.getEndTime() == null) {
                 return "Sản phẩm này chưa được đăng kí thời gian đấu giá chính thức.";
             }
@@ -140,16 +151,21 @@ public class BiddingService {
                 return "Phiên đấu giá đã kết thúc!";
             }
 
-            // Lấy hoặc tạo AuctionAutoBid cho phiên này
             AuctionAutoBid autoBid = autoBidMap.computeIfAbsent(
                     item.getId(),
                     id -> new AuctionAutoBid(item.getCurrentPrice(), item.getLastBidderId())
             );
 
+            // [Bản 2] Đồng bộ loại bỏ các cài đặt AutoBid đã hủy dưới DB
+            com.auction.server.dao.BidDAO bidDAO = new com.auction.server.dao.BidDAO();
+            autoBid.getAutoBids().removeIf(b -> {
+                double dbMaxBid = bidDAO.getAutoBidValue(b.getBidderId(), item.getId());
+                return dbMaxBid <= 0;
+            });
+
             AutoBid bid = new AutoBid(bidderId, maxBid, increment);
             AuctionAutoBid.AutoBidResult result = autoBid.registerAutoBid(bid);
 
-            // Cập nhật lại giá và winner trên Item nếu auto-bid thay đổi
             if (result.priceChanged) {
                 item.setCurrentPrice(result.finalPrice);
                 item.setLastBidderId(result.finalWinnerId);

@@ -23,6 +23,9 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ResourceBundle;
 
+import static com.auction.client.controller.ClockUtil.clockInit;
+import static com.auction.client.controller.SceneSwitchUtil.switchScene;
+
 
 public class LoginController implements Initializable {
     @FXML
@@ -45,29 +48,12 @@ public class LoginController implements Initializable {
 
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
-        clockInit();
+        clockInit(lbltime1);
         cbxRole.setItems(FXCollections.observableArrayList("Người mua (Bidder)", "Người bán (Seller)", "Quản trị (Admin)"));
 
 
         cbxRole.getSelectionModel().selectFirst();
     }
-
-    public void clockInit() {
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm:ss  dd/MM/yyyy");
-        Timeline clock = new Timeline(new KeyFrame(Duration.ZERO, e -> {
-            lbltime1.setText(LocalDateTime.now().format(formatter));
-        }), new KeyFrame(Duration.seconds(1)));
-
-        clock.setCycleCount(Timeline.INDEFINITE);
-        clock.play();
-    }
-
-    private void switchScence(ActionEvent event, String fxmlFile) throws IOException {
-        Parent root = FXMLLoader.load(getClass().getResource(fxmlFile));
-        Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
-        stage.getScene().setRoot(root);
-    }
-
     @FXML
     public void LoginLogic(ActionEvent event) throws IOException {
         // Lấy dữ liệu từ các ô nhập liệu
@@ -121,11 +107,11 @@ public class LoginController implements Initializable {
         }
     }
     public void toRegisterScreen(ActionEvent event) throws IOException {
-        switchScence(event, "/RegisterScreen.fxml");
+        switchScene(event, "/RegisterScreen.fxml");
     }
 
     public void toWelcome(ActionEvent event) throws IOException {
-        switchScence(event, "/hello-view.fxml");
+        switchScene(event, "/hello-view.fxml");
     }
 
     public void UsernamePass(String currentUser) {

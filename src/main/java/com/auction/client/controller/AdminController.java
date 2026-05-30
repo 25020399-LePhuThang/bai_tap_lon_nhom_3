@@ -38,6 +38,9 @@ import java.util.Date;
 import java.util.List;
 import java.util.ResourceBundle;
 
+import static com.auction.client.controller.ClockUtil.clockInit;
+import static com.auction.client.controller.SceneSwitchUtil.switchScene;
+
 public class AdminController implements Initializable {
     // ==========================================
     // 1. CÁC THÀNH PHẦN HEADER (THÔNG TIN ADMIN & ĐIỀU HƯỚNG)
@@ -115,27 +118,11 @@ public class AdminController implements Initializable {
 
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
-        clockInit();
+        clockInit(lblTimeAdmin);
         setupTableColumns();
     }
-
-    private void switchScence(ActionEvent event, String fxmlFile) throws IOException {
-        Parent root = FXMLLoader.load(getClass().getResource(fxmlFile));
-        Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
-        stage.getScene().setRoot(root);
-    }
-
-    public void clockInit() {
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm:ss  dd/MM/yyyy");
-        Timeline clock = new Timeline(new KeyFrame(Duration.ZERO, e ->
-                lblTimeAdmin.setText(LocalDateTime.now().format(formatter))
-        ), new KeyFrame(Duration.seconds(1)));
-        clock.setCycleCount(Timeline.INDEFINITE);
-        clock.play();
-    }
-
     public void toSignInScreen(ActionEvent event) throws IOException{
-        switchScence(event,"/SignInScreen.fxml");
+        switchScene(event,"/SignInScreen.fxml");
     }
 
     public void toInfoScreen(){
@@ -172,7 +159,7 @@ public class AdminController implements Initializable {
     @FXML
     public void handleLogout(ActionEvent event) throws IOException {
         NetworkClient.disconnect(lblAdminName.getText());
-        switchScence(event,"/SignInScreen.fxml");
+        switchScene(event,"/SignInScreen.fxml");
     }
 
 
@@ -390,7 +377,7 @@ public class AdminController implements Initializable {
             alert.setContentText(message);
             alert.showAndWait();
 
-            switchScence(event,"/SignInScreen.fxml");
+            switchScene(event,"/SignInScreen.fxml");
         } else {
             Alert alert = new Alert(Alert.AlertType.ERROR);
             alert.setTitle("Lỗi xóa tài khoản");

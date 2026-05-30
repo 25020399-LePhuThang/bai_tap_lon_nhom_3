@@ -16,14 +16,14 @@ public class AuctionTimer {
     }
     public AuctionTimer(){this.timer = new Timer();}
 
-    
+
     public void start() {
         if (item.getEndTime() == null) return;
 
         long delay = item.getEndTime().getTime() - System.currentTimeMillis();
-        
+
         if (delay > 0) {
-            
+
             timer.schedule(new TimerTask() {
                 @Override
                 public void run() {
@@ -36,14 +36,14 @@ public class AuctionTimer {
         }
     }
 
-    
+
     public void cancel() {
         if (timer != null) {
             timer.cancel();
-            timer = new Timer(); 
+            timer = new Timer();
         }
     }
- 
+
     public void reschedule() {
         cancel();    // Hủy lịch cũ, tạo Timer mới 
         start();     // Lên lịch lại với endTime đã được cập nhập

@@ -22,6 +22,9 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ResourceBundle;
 
+import static com.auction.client.controller.ClockUtil.clockInit;
+import static com.auction.client.controller.SceneSwitchUtil.switchScene;
+
 public class RegisterController implements Initializable {
 
     @FXML
@@ -48,29 +51,13 @@ public class RegisterController implements Initializable {
     private ComboBox<String> cbRole;
 
     public void initialize(URL url, ResourceBundle resourceBundle) {
-        clockInit();
+        clockInit(lblTime4);
         cbRole.setItems(FXCollections.observableArrayList("Người mua (Bidder)", "Người bán (Seller)"));
         cbRole.getSelectionModel().selectFirst();
     }
 
-    public void clockInit() {
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm:ss  dd/MM/yyyy");
-        Timeline clock = new Timeline(new KeyFrame(Duration.ZERO, e -> {
-            lblTime4.setText(LocalDateTime.now().format(formatter));
-        }), new KeyFrame(Duration.seconds(1)));
-
-        clock.setCycleCount(Timeline.INDEFINITE);
-        clock.play();
-    }
-
-    private void switchScence(ActionEvent event, String fxmlFile) throws IOException {
-        Parent root = FXMLLoader.load(getClass().getResource(fxmlFile));
-        Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
-        stage.getScene().setRoot(root);
-    }
-
     public void toWelcomeScreen(ActionEvent event) throws IOException {
-        switchScence(event, "/hello-view.fxml");
+      switchScene(event, "/hello-view.fxml");
     }
 
     public void RegisterLogic(ActionEvent event) {
@@ -116,11 +103,8 @@ public class RegisterController implements Initializable {
             // đợi liên kết với server
             boolean isSuccess = NetworkClient.sendRegisterRequest(username, password1, email, phone,finalRole);
             if (isSuccess) {
-                try {
-                    switchScence(event, "/SignInScreen.fxml");
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
+                   switchScene(event, "/SignInScreen.fxml");
+
             } else {
                 lblERROR.setText("         Tên đăng nhập hoặc Email đã tồn tại! Vui lòng thử lại.");
             }
@@ -128,7 +112,7 @@ public class RegisterController implements Initializable {
     }
 
     public void toSignInScreen(ActionEvent event) throws IOException {
-        switchScence(event, "/SignInScreen.fxml");
+        switchScene(event, "/SignInScreen.fxml");
     }
 }
 

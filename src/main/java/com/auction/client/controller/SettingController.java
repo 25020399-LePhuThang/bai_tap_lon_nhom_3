@@ -27,6 +27,8 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ResourceBundle;
 
+import static com.auction.client.controller.ClockUtil.clockInit;
+
 
 public class SettingController implements Initializable {
     String role;
@@ -61,17 +63,7 @@ public class SettingController implements Initializable {
 
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
-        clockInit();
-    }
-
-    public void clockInit() {
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm:ss  dd/MM/yyyy");
-        Timeline clock = new Timeline(new KeyFrame(Duration.ZERO, e -> {
-            lblTime6.setText(LocalDateTime.now().format(formatter));
-        }), new KeyFrame(Duration.seconds(1)));
-
-        clock.setCycleCount(Timeline.INDEFINITE);
-        clock.play();
+        clockInit(lblTime6);
     }
 
     @FXML
@@ -270,7 +262,7 @@ public class SettingController implements Initializable {
             alert.setContentText(message);
             alert.showAndWait();
 
-            switchScence(event,"/SignInScreen.fxml");
+            SceneSwitchUtil.switchScene(event,"/SignInScreen.fxml");
         } else {
             Alert alert = new Alert(Alert.AlertType.ERROR);
             alert.setTitle("Lỗi xóa tài khoản");
@@ -279,10 +271,4 @@ public class SettingController implements Initializable {
             alert.showAndWait();
         }
         }
-
-    private void switchScence(ActionEvent event, String fxmlFile) throws IOException {
-        Parent root = FXMLLoader.load(getClass().getResource(fxmlFile));
-        Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
-        stage.getScene().setRoot(root);
-    }
     }

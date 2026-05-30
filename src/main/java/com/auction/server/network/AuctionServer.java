@@ -13,23 +13,25 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 
+
 public class AuctionServer {
     // 1. Khai báo danh sách
     public static ArrayList<ClientHandler> clients = new ArrayList<>();
     public static Map<String, Item> itemCache = new ConcurrentHashMap<>();
     public static Map<String, com.auction.server.controller.AuctionAutoBid> autoBidManagers = new ConcurrentHashMap<>();
-
+    public static Map<String, AuctionTimer> auctionTimers = new ConcurrentHashMap<>();
+    public static ArrayList<java.io.PrintWriter> activeListeners = new ArrayList<>();
 
     public static void main(String[] args) {
         DatabaseManager.initDB();
         try {
             // 2. Mở cổng - đọc PORT từ Railway
             int port = System.getenv("PORT") != null
-                     ? Integer.parseInt(System.getenv("PORT"))
-                     : 5000;
+                    ? Integer.parseInt(System.getenv("PORT"))
+                    : 5000;
             ServerSocket serverSocket = new ServerSocket(port);
             System.out.println("Server đang chạy trên cổng: " + port);
-            
+
 
             BiddingService sharedBiddingService = new BiddingService();
             // Khởi động timer cho tất cả item ACTIVE
@@ -39,6 +41,7 @@ public class AuctionServer {
                 itemCache.put(item.getId(), item);
                 AuctionTimer timer = new AuctionTimer(item);
                 timer.start();
+                auctionTimers.put(item.getId(), timer);
                 System.out.println("Timer started for: " + item.getName());
             }
 

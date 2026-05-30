@@ -4,6 +4,7 @@ import com.auction.client.network.NetworkClient;
 import com.auction.shared.model.item.Art;
 import com.auction.shared.model.item.Electronic;
 import com.auction.shared.model.item.Item;
+import com.auction.shared.model.item.Vehicle;
 
 import java.io.IOException;
 import java.net.URL;
@@ -16,7 +17,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.ResourceBundle;
 
-import com.auction.shared.model.item.Vehicle;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.application.Platform;
@@ -37,6 +37,8 @@ import javafx.scene.image.ImageView;
 import javafx.scene.shape.Circle;
 import javafx.stage.Stage;
 import javafx.util.Duration;
+
+import static com.auction.client.controller.SceneSwitchUtil.switchScene;
 
 public class MainScreenController implements Initializable {
 
@@ -70,59 +72,53 @@ public class MainScreenController implements Initializable {
     @FXML private TableColumn<Item, Date> EndTimeColumn2;
     @FXML private Button btnRefresh;
 
-
-    private final  ObservableList<Item> activeMasterList = FXCollections.observableArrayList();
-    private final  ObservableList<Item> preparedMasterList = FXCollections.observableArrayList();
-
-    private static boolean isSocketListenerStarted = false;
-    private static MainScreenController currentActiveController;
+    private final ObservableList<Item> activeMasterList = FXCollections.observableArrayList();
+    private final ObservableList<Item> preparedMasterList = FXCollections.observableArrayList();
 
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
         clockInit();
         setupTableColumns();
 
-        // Cắt avatar thành hình tròn
         if (imgUserAvatar != null) {
             double radius = imgUserAvatar.getFitWidth() / 2;
             Circle clip = new Circle(radius, radius, radius);
             imgUserAvatar.setClip(clip);
         }
 
-        // Sự kiện click đúp bảng 1
+        // Sự kiện click đúp bảng 1 (ĐANG DIỄN RA) -> Chuyển sang màn hình Đấu giá
         tbvIsPresenting.setOnMouseClicked(event -> {
             if (event.getClickCount() == 2) {
                 Item selectedItem = tbvIsPresenting.getSelectionModel().getSelectedItem();
-                if (selectedItem != null){
+                if (selectedItem != null) {
                     try {
+                        // NGẮT luồng nhận giá của MainScreen trước khi sang phòng chi tiết
+                        NetworkClient.getInstance().detachListener();
+
                         FXMLLoader loader = new FXMLLoader(getClass().getResource("/AuctionDetail.fxml"));
                         Parent root = loader.load();
                         AuctionDetailController auctionDetailController = loader.getController();
-                        auctionDetailController.setItemData(selectedItem);
+
                         auctionDetailController.setDisplayName(lblName.getText());
+                        auctionDetailController.setItemData(selectedItem);
 
                         Parent mainRoot = tbvIsPresenting.getScene().getRoot();
-
                         auctionDetailController.setPreviousScreen(mainRoot, this);
 
-                        // Lấy cửa sổ (Stage) hiện tại thông qua cái bảng tbvItems của màn hình chính
                         Stage stage = (Stage) tbvIsPresenting.getScene().getWindow();
                         stage.setTitle("Chi tiết: " + selectedItem.getName());
                         stage.getScene().setRoot(root);
                         stage.show();
                     } catch (IOException e) { e.printStackTrace(); }
-                };
+                }
             }
         });
 
-        // Sự kiện click đúp bảng 2
+        // Sự kiện click đúp bảng 2 (SẮP DIỄN RA) -> Mở hộp thoại thông tin tĩnh
         tbvWillPresent.setOnMouseClicked(event -> {
             if (event.getClickCount() == 2) {
                 Item selectedItem = tbvWillPresent.getSelectionModel().getSelectedItem();
                 if (selectedItem != null) {
-                    //Chi tiết sản phẩm
-                    if (selectedItem == null) return;
-
                     Alert alert = new Alert(Alert.AlertType.INFORMATION);
                     alert.setTitle("Chi tiết sản phẩm");
                     alert.setHeaderText("Tên sản phẩm: " + selectedItem.getName());
@@ -145,27 +141,22 @@ public class MainScreenController implements Initializable {
                             + "ID Người thắng: " + winnerId + "\n"
                             + "Trạng thái: " + selectedItem.getStatus() + "\n";
 
-                    //Thuộc tính phụ
                     String extraDetails = "\n Thông tin chi tiết \n";
 
                     if (selectedItem instanceof Electronic) {
                         Electronic electronic = (Electronic) selectedItem;
                         extraDetails += "Thương hiệu: " + electronic.getBrand() + "\n"
                                 + "Bảo hành: " + electronic.getWarrantyPeriod() + " tháng\n";
-
                     } else if (selectedItem instanceof Art) {
                         Art art = (Art) selectedItem;
                         extraDetails += "Tác giả: " + art.getAuthor() + "\n"
                                 + "Năm sáng tác: " + art.getCreationYear() + "\n";
-
                     } else if (selectedItem instanceof Vehicle) {
                         Vehicle vehicle = (Vehicle) selectedItem;
                         extraDetails += "Thương hiệu: " + vehicle.getBrand() + "\n"
-                                + "Bảo hành: " + vehicle.getWarrantyPeriod() + "tháng\n"
+                                + "Bảo hành: " + vehicle.getWarrantyPeriod() + " tháng\n"
                                 + "Nhiên liệu: " + vehicle.getFuelType() + "\n"
-                                + "Dung tích động cơ: " + vehicle.getEngineCapacity() + "\n"
-                        ;
-
+                                + "Dung tích động cơ: " + vehicle.getEngineCapacity() + "\n";
                     } else {
                         extraDetails = "";
                     }
@@ -183,22 +174,18 @@ public class MainScreenController implements Initializable {
                     } catch (Exception e) {
                         System.err.println("Không thể load ảnh lên hộp thoại: " + e.getMessage());
                     }
-
                     alert.showAndWait();
                 }
             }
         });
 
+        Search();
+        // setupSocketListener() sẽ được gọi bên trong hàm setDisplayName sau khi tải xong Data
     }
-
-
-
-
 
     private void setupTableColumns() {
         NumberFormat usdFormat = NumberFormat.getCurrencyInstance(Locale.US);
 
-        // Bảng 1
         NameColumn1.setCellValueFactory(new PropertyValueFactory<>("name"));
         IDcolumn1.setCellValueFactory(new PropertyValueFactory<>("itemID"));
         typeColumn1.setCellValueFactory(new PropertyValueFactory<>("type"));
@@ -212,7 +199,6 @@ public class MainScreenController implements Initializable {
         });
         EndTimeColumn1.setCellValueFactory(new PropertyValueFactory<>("endTime"));
 
-        // Bảng 2
         NameColumn2.setCellValueFactory(new PropertyValueFactory<>("name"));
         IDcolumn2.setCellValueFactory(new PropertyValueFactory<>("itemID"));
         typeColumn2.setCellValueFactory(new PropertyValueFactory<>("type"));
@@ -229,55 +215,93 @@ public class MainScreenController implements Initializable {
     }
 
     public void clockInit() {
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm:ss  dd/MM/yyyy");
-        Timeline clock = new Timeline(new KeyFrame(Duration.ZERO, e ->
-                lblTime5.setText(LocalDateTime.now().format(formatter))
-        ), new KeyFrame(Duration.seconds(1)));
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm:ss  dd/MM");
+        Timeline clock = new Timeline(new KeyFrame(Duration.ZERO, e -> {
+            lblTime5.setText(LocalDateTime.now().format(formatter));
+
+            // TỰ ĐỘNG LỌC BỎ SẢN PHẨM HẾT HẠN KHỎI TRANG CHỦ THEO GIÂY REALTIME
+            if (activeMasterList != null && !activeMasterList.isEmpty()) {
+                Date now = new Date();
+                boolean dynamicRemoved = activeMasterList.removeIf(item ->
+                        item.getEndTime() != null && !now.before(item.getEndTime())
+                );
+                if (dynamicRemoved && tbvIsPresenting != null) {
+                    tbvIsPresenting.refresh();
+                }
+            }
+        }), new KeyFrame(Duration.seconds(1)));
         clock.setCycleCount(Timeline.INDEFINITE);
         clock.play();
     }
 
-
-
-
-
-
-
     public void setDisplayName(String currentUser) {
-        lblName.setText(currentUser);
+        if (btnRefresh != null) btnRefresh.setDisable(true);
+        NetworkClient.getInstance().detachListener();
 
         new Thread(() -> {
-            // Bước 1: Xin số dư ví
-            String balanceResponse = NetworkClient.getBalanceRequest(currentUser);
-
-            // Bước 2: Xin danh sách bảng 1
-            List<Item> activeItems;
             try {
-                activeItems = NetworkClient.takeActiveItems();
-            } catch (Exception e) { activeItems = new ArrayList<>(); }
+                Thread.sleep(200); // Đợi ngắt luồng cũ an toàn
 
-            // Bước 3: Xin danh sách bảng 2
-            List<Item> preparedItems;
+                String balanceResponse = NetworkClient.getBalanceRequest(currentUser);
+                List<Item> activeItems = NetworkClient.takeActiveItems();
+                List<Item> preparedItems = NetworkClient.takePreparedItems();
+
+                Platform.runLater(() -> {
+                    lblName.setText(currentUser);
+
+                    if (balanceResponse != null && balanceResponse.startsWith("BALANCE_SUCCESS")) {
+                        lblBalance.setText(balanceResponse.split("\\|")[1] + " $");
+                    } else {
+                        lblBalance.setText("0.0 $");
+                    }
+
+                    activeMasterList.setAll(activeItems != null ? activeItems : new ArrayList<>());
+                    preparedMasterList.setAll(preparedItems != null ? preparedItems : new ArrayList<>());
+
+                    if (btnRefresh != null) btnRefresh.setDisable(false);
+                    setupSocketListener(); // Bật lại luồng lắng nghe cho màn Main
+                });
+            } catch (Exception e) {
+                e.printStackTrace();
+                Platform.runLater(() -> {
+                    if (btnRefresh != null) btnRefresh.setDisable(false);
+                    setupSocketListener();
+                });
+            }
+        }).start();
+    }
+
+    // Hàm cực kỳ quan trọng để reload data và nối lại luồng mạng khi quay lại từ AuctionDetail
+    public void loadActiveAndPreparedItems() {
+        if (btnRefresh != null) btnRefresh.setDisable(true);
+
+        new Thread(() -> {
             try {
-                preparedItems = NetworkClient.takePreparedItems();
-            } catch (Exception e) { preparedItems = new ArrayList<>(); }
+                List<Item> activeItems = NetworkClient.takeActiveItems();
+                List<Item> preparedItems = NetworkClient.takePreparedItems();
 
-            final List<Item> finalActive = activeItems;
-            final List<Item> finalPrepared = preparedItems;
-
-            Platform.runLater(() -> {
-                // Cập nhật tiền
-                if (balanceResponse != null && balanceResponse.startsWith("BALANCE_SUCCESS")) {
-                    lblBalance.setText(balanceResponse.split("\\|")[1] + " $");
-                } else {
-                    lblBalance.setText("0.0 $");
+                String currentUser = lblName.getText();
+                String balanceResponse = null;
+                if (currentUser != null && !currentUser.isEmpty() && !currentUser.equals("Khách")) {
+                    balanceResponse = NetworkClient.getBalanceRequest(currentUser);
                 }
 
-                // KHÔNG gọi hàm bindDataAndSearch nữa.
-                // Chỉ đổ dữ liệu đè lên danh sách cũ thông qua hàm .setAll() cực kỳ an toàn!
-                activeMasterList.setAll(finalActive);
-                preparedMasterList.setAll(finalPrepared);
-            });
+                final String finalBalance = balanceResponse;
+                Platform.runLater(() -> {
+                    activeMasterList.setAll(activeItems != null ? activeItems : new ArrayList<>());
+                    preparedMasterList.setAll(preparedItems != null ? preparedItems : new ArrayList<>());
+
+                    if (finalBalance != null && finalBalance.startsWith("BALANCE_SUCCESS")) {
+                        lblBalance.setText(finalBalance.split("\\|")[1] + " $");
+                    }
+                    if (btnRefresh != null) btnRefresh.setDisable(false);
+                });
+            } catch (Exception e) {
+                System.err.println("Lỗi đồng bộ nạp lại bảng: " + e.getMessage());
+                Platform.runLater(() -> {
+                    if (btnRefresh != null) btnRefresh.setDisable(false);
+                });
+            }
         }).start();
     }
 
@@ -285,21 +309,15 @@ public class MainScreenController implements Initializable {
         Platform.runLater(() -> lblBalance.setText(newBalance + " $"));
     }
 
-    private void switchScence(ActionEvent event, String fxmlFile) throws IOException {
-        Parent root = FXMLLoader.load(getClass().getResource(fxmlFile));
-        Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
-        stage.getScene().setRoot(root);
-    }
 
     @FXML
-    public void toInfoScreen()  {
+    public void toInfoScreen() {
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/InfoScreen.fxml"));
             Parent root = loader.load();
 
             InfoController infoController = loader.getController();
             infoController.initData(lblName.getText(), this);
-
 
             Stage popUpStage = new Stage();
             popUpStage.setScene(new Scene(root));
@@ -310,7 +328,7 @@ public class MainScreenController implements Initializable {
     }
 
     public void toLoginScreen(ActionEvent event) throws IOException {
-        switchScence(event, "/SignInScreen.fxml");
+        switchScene(event, "/SignInScreen.fxml");
     }
 
     @FXML
@@ -335,7 +353,6 @@ public class MainScreenController implements Initializable {
             Parent root = loader.load();
 
             TransactionController transactionController = loader.getController();
-            // Truyền "this" để Pop-up biết đường trả kết quả về màn hình Main
             transactionController.initData("NAP_TIEN", lblName.getText(), this);
 
             Stage popUpStage = new Stage();
@@ -366,23 +383,22 @@ public class MainScreenController implements Initializable {
 
     @FXML
     public void handleLogout(ActionEvent event) throws IOException {
+        NetworkClient.getInstance().detachListener();
         NetworkClient.disconnect(lblName.getText());
-        switchScence(event,"/SignInScreen.fxml");
+        switchScene(event, "/SignInScreen.fxml");
     }
 
-    public void handleRefresh(ActionEvent event){
-        String currentUser=lblName.getText();
+    public void handleRefresh(ActionEvent event) {
+        String currentUser = lblName.getText();
         if (currentUser != null && !currentUser.isEmpty()) {
             setDisplayName(currentUser);
         }
     }
 
-
     private void Search() {
         FilteredList<Item> filteredActive = new FilteredList<>(activeMasterList, b -> true);
         FilteredList<Item> filteredPrepared = new FilteredList<>(preparedMasterList, b -> true);
 
-        // Lắng nghe ô tìm kiếm chung txtSearch1 để lọc song song cả 2 bảng
         txtSearch1.textProperty().addListener((observable, oldValue, newValue) -> {
             String lowerCaseFilter = (newValue == null) ? "" : newValue.toLowerCase().trim();
 
@@ -398,7 +414,6 @@ public class MainScreenController implements Initializable {
             filteredPrepared.setPredicate(filterPredicate);
         });
 
-        // Bọc vào SortedList để giữ chức năng nhấn vào tiêu đề cột để sắp xếp (Sort)
         SortedList<Item> sortedActive = new SortedList<>(filteredActive);
         sortedActive.comparatorProperty().bind(tbvIsPresenting.comparatorProperty());
         tbvIsPresenting.setItems(sortedActive);
@@ -408,35 +423,38 @@ public class MainScreenController implements Initializable {
         tbvWillPresent.setItems(sortedPrepared);
     }
 
-
-
     private void setupSocketListener() {
-        // xóa sạch listener cũ của màn hình chính trước khi đăng ký listener mới
-        NetworkClient.getInstance().stopListening();
-
         NetworkClient.getInstance().startListening(response -> {
-            if (!response.startsWith("BID_UPDATE|")) return;
+            if (response == null || !response.startsWith("BID_UPDATE|")) return;
+
+            // Xử lý cả trường hợp bản tin trả về có 3 hoặc 4 tham số (có hay không có winner)
             String[] p = response.split("\\|");
             if (p.length < 3) return;
 
-            String itemId = p[1];
+            String msgItemId = p[1];
             double newPrice = Double.parseDouble(p[2]);
+            String winner = (p.length >= 4) ? p[3] : "Chưa có";
 
             Platform.runLater(() -> {
-                // Duyệt trực tiếp trên activeMasterList toàn cục, UI tự động cập nhật theo
-                activeMasterList.forEach(item -> {
-                    if (String.valueOf(item.getItemID()).equals(itemId)) {
+                boolean isUpdated = false;
+                for (Item item : activeMasterList) {
+                    if (String.valueOf(item.getItemID()).equals(msgItemId) || String.valueOf(item.getId()).equals(msgItemId)) {
                         item.setCurrentPrice(newPrice);
+                        item.setLastBidderId(winner);
+                        isUpdated = true;
+                        break;
                     }
-                });
-                tbvIsPresenting.refresh();
+                }
+
+                if (isUpdated) {
+                    tbvIsPresenting.refresh();
+                    System.out.println("MainScreen: Cập nhật giá Live SP " + msgItemId + " -> " + newPrice + "$ (Winner: " + winner + ")");
+                }
             });
         });
     }
 
-    // Thêm hàm này vào MainScreenController
     public void resumeSocketListener() {
-        // Đăng ký lại để NetworkClient gửi dữ liệu cập nhật giá về lại bảng của Main
         setupSocketListener();
     }
 }

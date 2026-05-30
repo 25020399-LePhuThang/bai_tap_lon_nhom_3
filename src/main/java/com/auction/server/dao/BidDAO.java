@@ -11,7 +11,7 @@ public class BidDAO {
 
     /**
      * Lưu một lần đặt giá vào database.
-     * Dùng field getBidAmount() khớp với BidTransaction hiện có.
+     * Dùng field getBidAmount() khớp with BidTransaction hiện có.
      */
     public boolean save(BidTransaction bid) {
         String sql = "INSERT INTO BidTransactions (itemId, bidderId, amount, timestamp) " +
@@ -131,5 +131,75 @@ public class BidDAO {
             System.err.println("BidDAO.countByItemId() lỗi: " + e.getMessage());
         }
         return 0;
+    }
+
+    // Nằm trong file BidDAO.java phía Server
+    public double getAutoBidValue(String username, String itemId) {
+        // Thay đổi tên bảng và tên cột cho khớp với thiết kế CSDL của Vương
+        String sql = "SELECT max_bid FROM autobids WHERE username = ? AND item_id = ?";
+
+        try (Connection conn = DatabaseManager.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setString(1, username != null ? username.trim() : "");
+
+            // Ép kiểu thông minh: Thử chuyển đổi itemId sang số nguyên nếu DB định nghĩa là số
+            try {
+                int idInt = Integer.parseInt(itemId.trim());
+                pstmt.setInt(2, idInt);
+            } catch (NumberFormatException nfe) {
+                pstmt.setString(2, itemId != null ? itemId.trim() : "");
+            }
+
+            ResultSet rs = pstmt.executeQuery();
+
+            if (rs.next()) {
+                return rs.getDouble("max_bid"); // Lấy giá trần đã cài
+            }
+        } catch (Exception e) {
+            System.err.println("Lỗi check AutoBid trong DB: " + e.getMessage());
+            e.printStackTrace();
+        }
+        return 0.0; // Trả về 0 nghĩa là chưa cài đặt
+    }
+
+    /**
+     * Lưu hoặc cập nhật cấu hình AutoBid của người dùng xuống Database.
+     */
+    public boolean saveAutoBid(String username, String itemId, double maxBid, double increment) {
+        String deleteSql = "DELETE FROM autobids WHERE username = ? AND item_id = ?";
+        String insertSql = "INSERT INTO autobids (username, item_id, max_bid, increment) VALUES (?, ?, ?, ?)";
+
+        try (Connection conn = DatabaseManager.getConnection()) {
+            // Tách biệt hoàn toàn luồng DELETE, bảo đảm không làm kẹt luồng chèn dữ liệu phía sau
+            try (PreparedStatement delStmt = conn.prepareStatement(deleteSql)) {
+                delStmt.setString(1, username != null ? username.trim() : "");
+                try {
+                    delStmt.setInt(2, Integer.parseInt(itemId.trim()));
+                } catch (NumberFormatException nfe) {
+                    delStmt.setString(2, itemId != null ? itemId.trim() : "");
+                }
+                delStmt.executeUpdate();
+            } catch (SQLException e) {
+                System.err.println("[Mẹo chặn] Bản ghi cũ chưa tồn tại hoặc lỗi xóa: " + e.getMessage());
+            }
+
+            // Tiến hành luồng chèn mới độc lập hoàn toàn
+            try (PreparedStatement insStmt = conn.prepareStatement(insertSql)) {
+                insStmt.setString(1, username != null ? username.trim() : "");
+                try {
+                    insStmt.setInt(2, Integer.parseInt(itemId.trim()));
+                } catch (NumberFormatException nfe) {
+                    insStmt.setString(2, itemId != null ? itemId.trim() : "");
+                }
+                insStmt.setDouble(3, maxBid);
+                insStmt.setDouble(4, increment);
+                return insStmt.executeUpdate() > 0;
+            }
+        } catch (Exception e) {
+            System.err.println("Lỗi nghiêm trọng tại hàm saveAutoBid: " + e.getMessage());
+            e.printStackTrace();
+            return false;
+        }
     }
 }

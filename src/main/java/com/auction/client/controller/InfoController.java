@@ -37,22 +37,20 @@ public class InfoController {
         stage.close();
     }
 
-    // Biến lưu tham chiếu controller hoặc stage cha nếu cần dùng sau này
+
     private Object parentController;
 
     public void initData(String username, Object parent) {
-        this.parentController = parent; // Lưu lại reference trang cha
+        this.parentController = parent;
 
-        // 1. Gọi NetworkClient (đã tích hợp Gson đa hình) để lấy dữ liệu từ Server
         User user = NetworkClient.getUserInfo(username);
 
         if (user == null) {
             System.err.println("Lỗi: Không thể lấy dữ liệu cho tài khoản " + username);
-            return; // Tránh văng app NullPointerException
+            return;
         }
 
-        // 2. Nạp các thông số chung có sẵn ở lớp cha Abstract User
-        lblUserId.setText(user.getId()); // Giữ nguyên kiểu String theo cách fix chữa cháy ở DAO
+        lblUserId.setText(user.getId());
         lblUsername.setText(user.getName());
         lblEmail.setText(user.getEmail());
         lblPhone.setText(user.getPhoneNumber());

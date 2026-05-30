@@ -78,21 +78,33 @@ public class NetworkClient {
         if (!isConnected()) {
             System.out.println("Client: Mất kết nối, đang thử nối lại...");
             if (!connect(SERVER_IP, SERVER_PORT)) {
-                return "ERROR|Không thể kết nối đến Server. Vui lòng bật Server!";
+                return "ERROR|Không thể kết nối đến Server.";
             }
         }
         if (out == null) return "ERROR|Lỗi cấu hình Socket nội bộ";
         try {
             out.println(message);
-            return in.readLine();
+
+            String response;
+            while ((response = in.readLine()) != null) {
+                // BỘ LỌC RÁC: Nếu Server ném nhầm BID_UPDATE vào ống chính, vứt nó đi!
+                // Vì luồng Listener (ống số 2) đã lo việc bắt giá live rồi.
+                if (response.startsWith("BID_UPDATE|")) {
+                    continue;
+                }
+                return response; // Trả về đúng dữ liệu mình cần
+            }
+            return "ERROR|Kết nối bị đóng bởi Server";
+
         } catch (SocketTimeoutException timeout) {
-            return "ERROR|Server phản hồi quá chậm (Timeout)!";
+            // ✅ ĐÃ FIX: Bắt buộc phải đóng ống nước để chống kẹt dữ liệu!
+            closeAll();
+            return "ERROR|Server phản hồi quá chậm! Đã reset luồng mạng.";
         } catch (IOException e) {
             closeAll();
             return "ERROR|Đứt cáp mạng giữa chừng!";
         }
     }
-
     private static String safe(String s) {
         return s == null ? "" : s.replace("\n", "").replace("\r", "").replace("|", "");
     }
@@ -133,8 +145,9 @@ public class NetworkClient {
 
     public static User getUserInfo(String username) {
         try {
-            out.println("GET_USER_INFO|" + username);
-            String response = in.readLine();
+            // ĐÃ ĐƯỢC ĐƯA VÀO LUỒNG AN TOÀN SYNCHRONIZED
+            String response = sendAndReceive("GET_USER_INFO|" + username);
+
             if (response != null && response.startsWith("USER_INFO_SUCCESS|")) {
                 String jsonString = response.split("\\|", 2)[1];
 
@@ -177,7 +190,6 @@ public class NetworkClient {
         }
         return null;
     }
-
     public static String getBalanceRequest(String username) {
         return sendAndReceive("GET_BALANCE|" + safe(username));
     }
@@ -309,14 +321,8 @@ public class NetworkClient {
 
 
     public static boolean approveItem(String itemId) {
-        try {
-            out.println("APPROVE_ITEM|" + itemId);
-            String response = in.readLine();
-            return response != null && response.equals("APPROVE_SUCCESS");
-        } catch (Exception e) {
-            System.err.println("Lỗi kết nối khi duyệt SP: " + e.getMessage());
-            return false;
-        }
+        String response = sendAndReceive("APPROVE_ITEM|" + itemId);
+        return response != null && response.equals("APPROVE_SUCCESS");
     }
 
     public static boolean rejectItem(String itemId) {
@@ -394,50 +400,46 @@ public class NetworkClient {
         return gson.fromJson(response, listType);
     }
 
+    // Trong file NetworkClient.java
+
+    // Bỏ hàm stopListening cũ đi, sửa lại cấu trúc như sau:
     public void startListening(Consumer<String> listener) {
-        this.bidUpdateListener = listener;
+        this.bidUpdateListener = listener; // Chỉ thay đổi hàm xử lý giao diện
 
-        if (listenerThread != null && listenerThread.isAlive()) return;
+        // Nếu Thread lắng nghe đã chạy rồi thì KHÔNG tạo mới Socket nữa, cứ để nó chạy ngầm
+        if (listenerThread != null && listenerThread.isAlive()) {
+            System.out.println("Client: Sử dụng lại ống nước Realtime đang có.");
+            return;
+        }
 
+        // Chỉ kết nối lần đầu tiên duy nhất
         listenerThread = new Thread(() -> {
             try {
+                System.out.println("Client: Đang thiết lập ống Realtime vĩnh viễn lên Cloud...");
                 listenerSocket = new Socket(SERVER_IP, SERVER_PORT);
-                listenerSocket.setSoTimeout(0); // Không timeout
-                listenerIn = new BufferedReader(
-                        new InputStreamReader(listenerSocket.getInputStream()));
-                PrintWriter listenerOut = new PrintWriter(
-                        listenerSocket.getOutputStream(), true);
+                listenerIn = new BufferedReader(new InputStreamReader(listenerSocket.getInputStream()));
+                PrintWriter listenerOut = new PrintWriter(listenerSocket.getOutputStream(), true);
 
-                // Báo server đây là kết nối listener
                 listenerOut.println("LISTEN_ONLY");
 
                 String line;
                 while ((line = listenerIn.readLine()) != null) {
                     if (bidUpdateListener != null) {
-                        bidUpdateListener.accept(line);
+                        bidUpdateListener.accept(line); // Đẩy data về màn hình đang active
                     }
                 }
             } catch (IOException e) {
-                System.err.println("Listener đứt: " + e.getMessage());
+                System.err.println("Listener bị ngắt kết nối: " + e.getMessage());
             }
         }, "bid-listener-thread");
 
         listenerThread.setDaemon(true);
         listenerThread.start();
     }
-    public void stopListening() {
-        bidUpdateListener = null;
-        // Đóng socket để thread listenerThread thoát khỏi readLine() và kết thúc
-        try {
-            if (listenerSocket != null && !listenerSocket.isClosed()) {
-                listenerSocket.close();
-            }
-        } catch (IOException e) {
-            System.err.println("Lỗi khi đóng listenerSocket: " + e.getMessage());
-        }
-        listenerSocket = null;
-        listenerIn = null;
-        listenerThread = null;
+
+    // Hàm này bây giờ chỉ làm nhiệm vụ ngắt gắn kết giao diện, giữ nguyên kết nối mạng
+    public void detachListener() {
+        this.bidUpdateListener = null;
     }
     /**
      * Gửi yêu cầu xóa tài khoản lên Server
@@ -466,23 +468,18 @@ public class NetworkClient {
      * Trả về nguyên chuỗi phản hồi từ Server (vd: "DELETE_SUCCESS|..." hoặc "DELETE_FAIL|...")
      */
     public static String deleteItem(String itemId) {
-        try {
-            // Gửi lệnh xóa kèm ID sản phẩm xuống ống nước
-            out.println("DELETE_ITEM|" + itemId);
-
-            // Chờ Server (chỗ code của Vương) phản hồi
-            String responseStr = in.readLine();
-            System.out.println("Client nhận phản hồi xóa Item: " + responseStr);
-
-            if (responseStr != null) {
-                return responseStr;
-            } else {
-                return "DELETE_FAIL|Lỗi: Không nhận được phản hồi từ Server.";
-            }
-        } catch (Exception e) {
-            System.out.println("Lỗi mất kết nối khi xóa Item: " + e.getMessage());
-            e.printStackTrace();
-            return "DELETE_FAIL|Lỗi mạng: Đứt cáp hoặc mất kết nối tới Server.";
+        String responseStr = sendAndReceive("DELETE_ITEM|" + itemId);
+        if (responseStr != null && !responseStr.startsWith("ERROR")) {
+            return responseStr;
+        } else {
+            return "DELETE_FAIL|Lỗi: Không nhận được phản hồi từ Server.";
         }
     }
+
+    // Nằm trong file NetworkClient.java
+
+    /**
+     * Gỡ bỏ hoàn toàn bộ lắng nghe của giao diện hiện tại,
+     * nhưng giữ nguyên kết nối Socket ngầm lên Cloud.
+     */
 }

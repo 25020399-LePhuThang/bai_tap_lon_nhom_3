@@ -58,7 +58,12 @@ public class ItemDAO {
     // HÀM DÙNG CHUNG ĐỂ LẤY DỮ LIỆU (Tối ưu code, tránh lặp lại)
     private List<Item> getItemsByStatus(String status) {
         List<Item> itemList = new ArrayList<>();
+
+        //Thêm điều kiện lọc end_time > NOW() cho những phiên đang ACTIVE để chặn nạp các sản phẩm đã hết hạn
         String sql = "SELECT * FROM items WHERE status = ?";
+        if ("ACTIVE".equalsIgnoreCase(status)) {
+            sql = "SELECT * FROM items WHERE status = ? AND EndTime > NOW()";
+        }
 
         try (Connection conn = DatabaseManager.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -190,27 +195,8 @@ public class ItemDAO {
         }
     }
 
-
-
-    // 7. CẬP NHẬT TRẠNG THÁI SANG SOLD
-    public void updateToSold() {
-        String sql = "UPDATE items SET status = 'SOLD' WHERE status = 'ACTIVE' AND ? >= EndTime";
-        Timestamp now = new Timestamp(System.currentTimeMillis());
-
-        try (Connection conn = DatabaseManager.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
-
-            pstmt.setTimestamp(1, now);
-            pstmt.executeUpdate();
-
-        } catch (SQLException e) {
-            System.err.println("Lỗi khi updateToSold: " + e.getMessage());
-        }
-    }
-
     public List<Item> getItemsBySellerID(Integer sellerId) {
         List<Item> itemList = new ArrayList<>();
-
         String sql = "SELECT * FROM items WHERE seller_id = ?";
 
         try (Connection conn = DatabaseManager.getConnection();
@@ -220,6 +206,9 @@ public class ItemDAO {
             pstmt.setInt(1, sellerId);
 
             try (ResultSet rs = pstmt.executeQuery()) {
+                // [Tâm] Khai báo bộ định dạng thời gian ở ngoài vòng lặp để tối ưu hiệu năng
+                java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+
                 while (rs.next()) {
                     String type = rs.getString("type");
                     Item foundItem = null;
@@ -258,15 +247,25 @@ public class ItemDAO {
                         foundItem.setCurrentPrice(rs.getDouble("current_price"));
                         foundItem.setMinIncrement(rs.getDouble("step_price"));
                         foundItem.setLastBidderId(rs.getString("last_bidder_id"));
-
                         foundItem.setType(type);
-
                         foundItem.setStatus(rs.getString("status"));
                         foundItem.setProductImageURL(rs.getString("productImageURL"));
-
-                        foundItem.setStartTime(rs.getTimestamp("StartTime"));
-                        foundItem.setEndTime(rs.getTimestamp("EndTime"));
                         foundItem.setSeller_ID(rs.getString("seller_id"));
+
+                        // [Tâm] Xử lý an toàn thời gian bằng String để chống lỗi parse trên DB
+                        try {
+                            String startStr = rs.getString("StartTime");
+                            String endStr = rs.getString("EndTime");
+
+                            if (startStr != null && !startStr.isEmpty()) {
+                                foundItem.setStartTime(new java.sql.Timestamp(sdf.parse(startStr).getTime()));
+                            }
+                            if (endStr != null && !endStr.isEmpty()) {
+                                foundItem.setEndTime(new java.sql.Timestamp(sdf.parse(endStr).getTime()));
+                            }
+                        } catch (java.text.ParseException pe) {
+                            System.err.println("Lỗi parse time cho sản phẩm " + foundItem.getId() + ": " + pe.getMessage());
+                        }
 
                         itemList.add(foundItem);
                     }
@@ -276,6 +275,7 @@ public class ItemDAO {
             // 3. ĐỔI LỜI BÁO LỖI cho dễ debug
             System.err.println("Lỗi khi lấy danh sách tài sản của Seller (" + sellerId + "): " + e.getMessage());
         }
+
         return itemList;
     }
 
