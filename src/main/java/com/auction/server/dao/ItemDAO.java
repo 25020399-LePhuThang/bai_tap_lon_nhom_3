@@ -59,10 +59,9 @@ public class ItemDAO {
     private List<Item> getItemsByStatus(String status) {
         List<Item> itemList = new ArrayList<>();
 
-        //Thêm điều kiện lọc end_time > NOW() cho những phiên đang ACTIVE để chặn nạp các sản phẩm đã hết hạn
         String sql = "SELECT * FROM items WHERE status = ?";
         if ("ACTIVE".equalsIgnoreCase(status)) {
-            sql = "SELECT * FROM items WHERE status = ? AND EndTime > NOW()";
+            sql = "SELECT * FROM items WHERE status = ? AND EndTime > CURRENT_TIMESTAMP";
         }
 
         try (Connection conn = DatabaseManager.getConnection();
