@@ -18,19 +18,19 @@ import static org.junit.jupiter.api.Assertions.*;
 /**
  * Unit Test cho AuctionAutoBid.
  * Kiểm tra logic Proxy Bidding (auto-bid) — bao gồm:
- *   - Đăng ký auto-bid cơ bản
- *   - Ưu tiên maxBid cao hơn
- *   - Ưu tiên đăng ký sớm hơn khi maxBid bằng nhau
- *   - Ngăn tự đấu giá với chính mình
- *   - Concurrent bidding an toàn (không race condition)
+ * - Đăng ký auto-bid cơ bản
+ * - Ưu tiên maxBid cao hơn
+ * - Ưu tiên đăng ký sớm hơn khi maxBid bằng nhau
+ * - Ngăn tự đấu giá với chính mình
+ * - Concurrent bidding an toàn (không race condition)
  */
 @DisplayName("AuctionAutoBid - Kiểm tra logic Auto-Bid")
 class AuctionAutoBidTest {
 
     private AuctionAutoBid autoBid;
 
-    private static final double START_PRICE    = 10_000;
-    private static final double INCREMENT      = 1_000;
+    private static final double START_PRICE = 10_000;
+    private static final double INCREMENT = 1_000;
 
     @BeforeEach
     void setUp() {
@@ -48,10 +48,10 @@ class AuctionAutoBidTest {
         AutoBid bid = new AutoBid("bidderA", 15_000, INCREMENT);
         AutoBidResult result = autoBid.registerAutoBid(bid);
 
-        assertTrue(result.priceChanged, "Giá phải thay đổi sau khi có auto-bid");
-        assertEquals("bidderA", result.finalWinnerId);
+        assertTrue(result.priceChanged(), "Giá phải thay đổi sau khi có auto-bid");
+        assertEquals("bidderA", result.finalWinnerId());
         // Giá mới phải là START_PRICE + INCREMENT = 11_000
-        assertEquals(START_PRICE + INCREMENT, result.finalPrice, 0.001);
+        assertEquals(START_PRICE + INCREMENT, result.finalPrice(), 0.001);
     }
 
     @Test
@@ -60,8 +60,8 @@ class AuctionAutoBidTest {
         AutoBid bid = new AutoBid("bidderA", START_PRICE, INCREMENT); // maxBid = currentPrice
         AutoBidResult result = autoBid.registerAutoBid(bid);
 
-        assertFalse(result.priceChanged, "Không nên thay đổi giá nếu maxBid <= currentPrice");
-        assertNotNull(result.message);
+        assertFalse(result.priceChanged(), "Không nên thay đổi giá nếu maxBid <= currentPrice");
+        assertNotNull(result.message());
     }
 
     // -----------------------------------------------------------------------
@@ -81,7 +81,7 @@ class AuctionAutoBidTest {
         AutoBid bidB = new AutoBid("bidderB", 20_000, INCREMENT);
         AutoBidResult result = autoBid.registerAutoBid(bidB);
 
-        assertEquals("bidderB", result.finalWinnerId,
+        assertEquals("bidderB", result.finalWinnerId(),
                 "bidderB phải thắng vì có maxBid cao hơn");
     }
 
@@ -120,9 +120,9 @@ class AuctionAutoBidTest {
         AutoBid selfBid = new AutoBid("bidderA", 50_000, INCREMENT);
         AutoBidResult result = autoBid.registerAutoBid(selfBid);
 
-        assertFalse(result.priceChanged,
+        assertFalse(result.priceChanged(),
                 "Winner hiện tại không thể tự đấu giá với chính mình");
-        assertNotNull(result.message, "Phải có thông báo giải thích lý do từ chối");
+        assertNotNull(result.message(), "Phải có thông báo giải thích lý do từ chối");
     }
 
     // -----------------------------------------------------------------------
@@ -140,8 +140,8 @@ class AuctionAutoBidTest {
         AutoBidResult result = autoBid.onManualBidPlaced(15_000, "bidderB");
 
         // bidderA có maxBid 30_000 > 15_000 → phải phản ứng và giành lại
-        assertTrue(result.priceChanged, "Auto-bid phải phản ứng sau manual bid");
-        assertEquals("bidderA", result.finalWinnerId,
+        assertTrue(result.priceChanged(), "Auto-bid phải phản ứng sau manual bid");
+        assertEquals("bidderA", result.finalWinnerId(),
                 "bidderA phải giành lại vì maxBid đủ cao");
     }
 
@@ -149,7 +149,7 @@ class AuctionAutoBidTest {
     @DisplayName("Auto-bid không phản ứng khi danh sách trống")
     void testOnManualBidPlaced_EmptyAutoBids_NoChange() {
         AutoBidResult result = autoBid.onManualBidPlaced(15_000, "bidderB");
-        assertFalse(result.priceChanged, "Không có auto-bid nào nên không thay đổi");
+        assertFalse(result.priceChanged(), "Không có auto-bid nào nên không thay đổi");
     }
 
     // -----------------------------------------------------------------------
@@ -166,7 +166,7 @@ class AuctionAutoBidTest {
 
         // Sau khi hủy, manual bid từ bidderB không bị phản ứng
         AutoBidResult result = autoBid.onManualBidPlaced(12_000, "bidderB");
-        assertFalse(result.priceChanged,
+        assertFalse(result.priceChanged(),
                 "bidderA đã hủy, không còn ai auto-bid phản ứng");
     }
 
@@ -191,7 +191,9 @@ class AuctionAutoBidTest {
                             INCREMENT);
                     autoBid.registerAutoBid(bid);
                 } catch (Exception e) {
-                    synchronized (errors) { errors.add(e.getMessage()); }
+                    synchronized (errors) {
+                        errors.add(e.getMessage());
+                    }
                 } finally {
                     latch.countDown();
                 }

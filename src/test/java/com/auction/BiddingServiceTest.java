@@ -1,10 +1,8 @@
 package com.auction;
 
-import com.auction.server.controller.AntiSnipingPolicy;
 import com.auction.server.controller.BiddingService;
 import com.auction.shared.model.item.Electronic;
 import com.auction.shared.model.item.Item;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,15 +12,15 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Unit Test cho BiddingService.
- *
+ * <p>
  * Lưu ý: BiddingService.placeBid() gọi ItemDAO.updatePrice() khi thành công,
  * nên khi test không có DB thật, ta dùng một item giả và kiểm tra giá trị
  * trả về của hàm (String message) cùng trạng thái của item trong bộ nhớ.
- *
+ * <p>
  * Chiến lược: inject AntiSnipingPolicy giả (threshold = 0) để không gia hạn,
  * và mock item không cần DB — kiểm tra kết quả qua message + item state.
  */
