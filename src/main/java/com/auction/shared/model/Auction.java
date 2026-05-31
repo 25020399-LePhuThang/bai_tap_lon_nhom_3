@@ -53,35 +53,85 @@ public class Auction implements Serializable {
     }
 
 
-    public String getAuctionId() { return auctionId; }
-    public void setAuctionId(String auctionId) { this.auctionId = auctionId; }
+    public String getAuctionId() {
+        return auctionId;
+    }
 
-    public String getItemId() { return itemId; }
-    public void setItemId(String itemId) { this.itemId = itemId; }
+    public void setAuctionId(String auctionId) {
+        this.auctionId = auctionId;
+    }
 
-    public String getSellerId() { return sellerId; }
-    public void setSellerId(String sellerId) { this.sellerId = sellerId; }
+    public String getItemId() {
+        return itemId;
+    }
 
-    public double getStartPrice() { return startPrice; }
-    public void setStartPrice(double startPrice) { this.startPrice = startPrice; }
+    public void setItemId(String itemId) {
+        this.itemId = itemId;
+    }
 
-    public double getCurrentHighestPrice() { return currentHighestPrice; }
-    public void setCurrentHighestPrice(double currentHighestPrice) { this.currentHighestPrice = currentHighestPrice; }
+    public String getSellerId() {
+        return sellerId;
+    }
 
-    public double getMinIncrement() { return minIncrement; }
-    public void setMinIncrement(double minIncrement) { this.minIncrement = minIncrement; }
+    public void setSellerId(String sellerId) {
+        this.sellerId = sellerId;
+    }
 
-    public LocalDateTime getStartTime() { return startTime; }
-    public void setStartTime(LocalDateTime startTime) { this.startTime = startTime; }
+    public double getStartPrice() {
+        return startPrice;
+    }
 
-    public LocalDateTime getEndTime() { return endTime; }
-    public void setEndTime(LocalDateTime endTime) { this.endTime = endTime; }
+    public void setStartPrice(double startPrice) {
+        this.startPrice = startPrice;
+    }
 
-    public String getStatus() { return status; }
-    public void setStatus(String status) { this.status = status; }
+    public double getCurrentHighestPrice() {
+        return currentHighestPrice;
+    }
 
-    public String getCurrentWinnerId() { return currentWinnerId; }
-    public void setCurrentWinnerId(String currentWinnerId) { this.currentWinnerId = currentWinnerId; }
+    public void setCurrentHighestPrice(double currentHighestPrice) {
+        this.currentHighestPrice = currentHighestPrice;
+    }
+
+    public double getMinIncrement() {
+        return minIncrement;
+    }
+
+    public void setMinIncrement(double minIncrement) {
+        this.minIncrement = minIncrement;
+    }
+
+    public LocalDateTime getStartTime() {
+        return startTime;
+    }
+
+    public void setStartTime(LocalDateTime startTime) {
+        this.startTime = startTime;
+    }
+
+    public LocalDateTime getEndTime() {
+        return endTime;
+    }
+
+    public void setEndTime(LocalDateTime endTime) {
+        this.endTime = endTime;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    public String getCurrentWinnerId() {
+        return currentWinnerId;
+    }
+
+    public void setCurrentWinnerId(String currentWinnerId) {
+        this.currentWinnerId = currentWinnerId;
+    }
 
     @Override
     public String toString() {
