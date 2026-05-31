@@ -1,66 +1,70 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.geometry.*?>
-<?import javafx.scene.chart.LineChart?>
-<?import javafx.scene.chart.NumberAxis?>
-<?import javafx.scene.control.*?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.TextField?>
 <?import javafx.scene.image.Image?>
 <?import javafx.scene.image.ImageView?>
-<?import javafx.scene.layout.*?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.ColumnConstraints?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.RowConstraints?>
+<?import javafx.scene.layout.VBox?>
 <?import javafx.scene.shape.Circle?>
-<?import javafx.scene.text.*?>
-<BorderPane style="-fx-background-color: #f4f6f9;" stylesheets="@style.css" xmlns="http://javafx.com/javafx/25"
-            xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.auction.client.controller.AuctionDetailController">
+<?import javafx.scene.text.Font?>
+
+<BorderPane style="-fx-background-color: #f4f6f9;" stylesheets="@style.css" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.auction.client.controller.AuctionDetailController">
 
     <top>
         <VBox BorderPane.alignment="CENTER">
             <VBox style="-fx-background-color: #2c3e50;">
                 <HBox alignment="CENTER_LEFT" spacing="20.0">
                     <padding>
-                        <Insets bottom="8.0" left="20.0" right="20.0" top="12.0"/>
+                        <Insets bottom="8.0" left="20.0" right="20.0" top="12.0" />
                     </padding>
                     <Label text="SĐT: 0834539363" textFill="WHITE">
                         <font>
-                            <Font name="System Bold" size="13.0"/>
+                            <Font name="System Bold" size="13.0" />
                         </font>
                     </Label>
-                    <Region HBox.hgrow="ALWAYS"/>
+                    <Region HBox.hgrow="ALWAYS" />
                     <Label text="Email: 25020399@vnu.edu.vn" textFill="WHITE">
                         <font>
-                            <Font name="System Bold" size="13.0"/>
+                            <Font name="System Bold" size="13.0" />
                         </font>
                     </Label>
                 </HBox>
                 <HBox alignment="CENTER">
                     <padding>
-                        <Insets bottom="12.0" left="20.0" right="20.0"/>
+                        <Insets bottom="12.0" left="20.0" right="20.0" />
                     </padding>
                     <children>
                         <Label text="Địa chỉ: 144 Xuân Thủy, Dịch Vọng Hậu, Cầu Giấy, Hà Nội" textFill="WHITE">
                             <font>
-                                <Font name="System Bold" size="13.0"/>
+                                <Font name="System Bold" size="13.0" />
                             </font>
                         </Label>
                     </children>
                 </HBox>
             </VBox>
 
-            <HBox alignment="CENTER_LEFT" spacing="15.0"
-                  style="-fx-background-color: white; -fx-border-color: #dee2e6; -fx-border-width: 0 0 1 0;">
+            <HBox alignment="CENTER_LEFT" spacing="15.0" style="-fx-background-color: white; -fx-border-color: #dee2e6; -fx-border-width: 0 0 1 0;">
                 <padding>
-                    <Insets bottom="10.0" left="20.0" right="20.0" top="10.0"/>
+                    <Insets bottom="10.0" left="20.0" right="20.0" top="10.0" />
                 </padding>
 
-                <Button fx:id="btnAvt" mnemonicParsing="false" onAction="#toInfoScreen"
-                        style="-fx-background-color: transparent; -fx-cursor: hand; -fx-padding: 0;"
-                        styleClass="text-input-modern" stylesheets="@style.css">
+                <Button fx:id="btnAvt" mnemonicParsing="false" onAction="#toInfoScreen" style="-fx-background-color: transparent; -fx-cursor: hand; -fx-padding: 0;" styleClass="text-input-modern" stylesheets="@style.css">
                     <graphic>
                         <ImageView fitHeight="40.0" fitWidth="40.0" pickOnBounds="true" styleClass="avatar-button">
                             <image>
-                                <Image url="@Image/8f1ca2029e2efceebd22fa05cca423d7.jpg"/>
+                                <Image url="@Image/8f1ca2029e2efceebd22fa05cca423d7.jpg" />
                             </image>
                             <clip>
-                                <Circle centerX="20.0" centerY="20.0" radius="20.0"/>
+                                <Circle centerX="20.0" centerY="20.0" radius="20.0" />
                             </clip>
                         </ImageView>
                     </graphic>
@@ -69,21 +73,19 @@
                 <VBox alignment="CENTER_LEFT">
                     <Label text="Xin chào," textFill="#7f8c8d">
                         <font>
-                            <Font size="12.0"/>
+                            <Font size="12.0" />
                         </font>
                     </Label>
                     <Label fx:id="lblUsername2" text="Tên đăng nhập" textFill="#c0392b">
                         <font>
-                            <Font name="System Bold" size="16.0"/>
+                            <Font name="System Bold" size="16.0" />
                         </font>
                     </Label>
                 </VBox>
-                <Region HBox.hgrow="ALWAYS"/>
-                <Button fx:id="btnLogout" mnemonicParsing="false" onAction="#handleLogout" prefHeight="35.0"
-                        style="-fx-background-color: transparent; -fx-border-color: #e74c3c; -fx-text-fill: #e74c3c; -fx-border-radius: 5; -fx-cursor: hand;"
-                        styleClass="btn-primary" text="Đăng xuất">
+                <Region HBox.hgrow="ALWAYS" />
+                <Button fx:id="btnLogout" mnemonicParsing="false" onAction="#handleLogout" prefHeight="35.0" style="-fx-background-color: transparent; -fx-border-color: #e74c3c; -fx-text-fill: #e74c3c; -fx-border-radius: 5; -fx-cursor: hand;" styleClass="btn-primary" text="Đăng xuất">
                     <font>
-                        <Font name="System Bold" size="13.0"/>
+                        <Font name="System Bold" size="13.0" />
                     </font>
                 </Button>
             </HBox>
@@ -91,18 +93,17 @@
     </top>
 
     <center>
-        <ScrollPane fitToHeight="true" fitToWidth="true" style="-fx-background: #f4f6f9; -fx-border-color: transparent;"
-                    BorderPane.alignment="CENTER">
+        <ScrollPane fitToHeight="true" fitToWidth="true" style="-fx-background: #f4f6f9; -fx-border-color: transparent;" BorderPane.alignment="CENTER">
             <content>
                 <VBox spacing="20.0">
                     <padding>
-                        <Insets bottom="20.0" left="30.0" right="30.0" top="20.0"/>
+                        <Insets bottom="20.0" left="30.0" right="30.0" top="20.0" />
                     </padding>
 
                     <HBox alignment="CENTER">
                         <Label text="THÔNG TIN SẢN PHẨM ĐẤU GIÁ" textFill="#2c3e50">
                             <font>
-                                <Font name="System Bold" size="24.0"/>
+                                <Font name="System Bold" size="24.0" />
                             </font>
                         </Label>
                     </HBox>
@@ -110,125 +111,110 @@
                     <HBox spacing="20.0" VBox.vgrow="ALWAYS">
                         <children>
 
-                            <VBox prefWidth="500.0" spacing="15.0"
-                                  style="-fx-background-color: white; -fx-background-radius: 8; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.1), 10, 0, 0, 0);"
-                                  HBox.hgrow="ALWAYS">
+                            <VBox prefWidth="500.0" spacing="15.0" style="-fx-background-color: white; -fx-background-radius: 8; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.1), 10, 0, 0, 0);" HBox.hgrow="ALWAYS">
                                 <padding>
-                                    <Insets bottom="20.0" left="20.0" right="20.0" top="20.0"/>
+                                    <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
                                 </padding>
                                 <children>
                                     <HBox alignment="CENTER" VBox.vgrow="ALWAYS">
                                         <children>
-                                            <ImageView fx:id="imgProduct" fitHeight="250.0" fitWidth="400.0"
-                                                       pickOnBounds="true" preserveRatio="true"/>
+                                            <ImageView fx:id="imgProduct" fitHeight="250.0" fitWidth="400.0" pickOnBounds="true" preserveRatio="true" />
                                         </children>
                                     </HBox>
 
                                     <GridPane styleClass="table-view" vgap="12.0">
                                         <columnConstraints>
-                                            <ColumnConstraints hgrow="SOMETIMES" maxWidth="150.0" minWidth="10.0"
-                                                               prefWidth="130.0"/>
-                                            <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0"/>
+                                            <ColumnConstraints hgrow="SOMETIMES" maxWidth="150.0" minWidth="10.0" prefWidth="130.0" />
+                                            <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" />
                                         </columnConstraints>
                                         <rowConstraints>
-                                            <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES"/>
-                                            <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES"/>
-                                            <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES"/>
-                                            <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES"/>
-                                            <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES"/>
+                                            <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                                            <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                                            <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                                            <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                                            <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
                                         </rowConstraints>
                                         <children>
                                             <Label text="Tên sản phẩm:" textFill="#7f8c8d">
                                                 <font>
-                                                    <Font name="System Bold" size="14.0"/>
+                                                    <Font name="System Bold" size="14.0" />
                                                 </font>
                                             </Label>
-                                            <Label fx:id="lblProductname" text="Đang tải..." textFill="#2c3e50"
-                                                   wrapText="true" GridPane.columnIndex="1">
+                                            <Label fx:id="lblProductname" text="Đang tải..." textFill="#2c3e50" wrapText="true" GridPane.columnIndex="1">
                                                 <font>
-                                                    <Font size="15.0"/>
+                                                    <Font size="15.0" />
                                                 </font>
                                             </Label>
 
                                             <Label text="ID sản phẩm:" textFill="#7f8c8d" GridPane.rowIndex="1">
                                                 <font>
-                                                    <Font name="System Bold" size="14.0"/>
+                                                    <Font name="System Bold" size="14.0" />
                                                 </font>
                                             </Label>
-                                            <Label fx:id="lblProductID" text="Đang tải..." textFill="#2c3e50"
-                                                   GridPane.columnIndex="1" GridPane.rowIndex="1">
+                                            <Label fx:id="lblProductID" text="Đang tải..." textFill="#2c3e50" GridPane.columnIndex="1" GridPane.rowIndex="1">
                                                 <font>
-                                                    <Font size="15.0"/>
+                                                    <Font size="15.0" />
                                                 </font>
                                             </Label>
 
                                             <Label text="Người bán:" textFill="#7f8c8d" GridPane.rowIndex="2">
                                                 <font>
-                                                    <Font name="System Bold" size="14.0"/>
+                                                    <Font name="System Bold" size="14.0" />
                                                 </font>
                                             </Label>
-                                            <Label fx:id="lblSeller" text="Đang tải..." textFill="#2c3e50"
-                                                   GridPane.columnIndex="1" GridPane.rowIndex="2">
+                                            <Label fx:id="lblSeller" text="Đang tải..." textFill="#2c3e50" GridPane.columnIndex="1" GridPane.rowIndex="2">
                                                 <font>
-                                                    <Font size="15.0"/>
+                                                    <Font size="15.0" />
                                                 </font>
                                             </Label>
 
                                             <Label text="Bắt đầu:" textFill="#7f8c8d" GridPane.rowIndex="3">
                                                 <font>
-                                                    <Font name="System Bold" size="14.0"/>
+                                                    <Font name="System Bold" size="14.0" />
                                                 </font>
                                             </Label>
-                                            <Label fx:id="lblTimeStart" text="Đang tải..." textFill="#2980b9"
-                                                   GridPane.columnIndex="1" GridPane.rowIndex="3">
+                                            <Label fx:id="lblTimeStart" text="Đang tải..." textFill="#2980b9" GridPane.columnIndex="1" GridPane.rowIndex="3">
                                                 <font>
-                                                    <Font size="14.0"/>
+                                                    <Font size="14.0" />
                                                 </font>
                                             </Label>
 
                                             <Label text="Kết thúc:" textFill="#7f8c8d" GridPane.rowIndex="4">
                                                 <font>
-                                                    <Font name="System Bold" size="14.0"/>
+                                                    <Font name="System Bold" size="14.0" />
                                                 </font>
                                             </Label>
-                                            <Label fx:id="lblTimeEnd" text="Đang tải..." textFill="#e74c3c"
-                                                   GridPane.columnIndex="1" GridPane.rowIndex="4">
+                                            <Label fx:id="lblTimeEnd" text="Đang tải..." textFill="#e74c3c" GridPane.columnIndex="1" GridPane.rowIndex="4">
                                                 <font>
-                                                    <Font size="14.0"/>
+                                                    <Font size="14.0" />
                                                 </font>
                                             </Label>
                                         </children>
                                     </GridPane>
 
-                                    <Button fx:id="btnDetail" maxWidth="1.7976931348623157E308" mnemonicParsing="false"
-                                            onAction="#showProductDetails" prefHeight="40.0"
-                                            style="-fx-background-color: #3498db; -fx-text-fill: white; -fx-cursor: hand; -fx-background-radius: 5;"
-                                            styleClass="btn-primary" text="Xem chi tiết mô tả">
+                                    <Button fx:id="btnDetail" maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#showProductDetails" prefHeight="40.0" style="-fx-background-color: #3498db; -fx-text-fill: white; -fx-cursor: hand; -fx-background-radius: 5;" styleClass="btn-primary" text="Xem chi tiết mô tả">
                                         <font>
-                                            <Font name="System Bold" size="14.0"/>
+                                            <Font name="System Bold" size="14.0" />
                                         </font>
                                     </Button>
                                 </children>
                             </VBox>
 
-                            <VBox prefWidth="500.0" spacing="20.0"
-                                  style="-fx-background-color: white; -fx-background-radius: 8; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.1), 10, 0, 0, 0);"
-                                  HBox.hgrow="ALWAYS">
+                            <VBox prefWidth="500.0" spacing="20.0" style="-fx-background-color: white; -fx-background-radius: 8; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.1), 10, 0, 0, 0);" HBox.hgrow="ALWAYS">
                                 <padding>
-                                    <Insets bottom="20.0" left="30.0" right="30.0" top="20.0"/>
+                                    <Insets bottom="20.0" left="30.0" right="30.0" top="20.0" />
                                 </padding>
                                 <children>
-                                    <VBox alignment="CENTER"
-                                          style="-fx-background-color: #f0fdf4; -fx-border-color: #2ecc71; -fx-border-radius: 8; -fx-background-radius: 8; -fx-padding: 15;">
+                                    <VBox alignment="CENTER" style="-fx-background-color: #f0fdf4; -fx-border-color: #2ecc71; -fx-border-radius: 8; -fx-background-radius: 8; -fx-padding: 15;">
                                         <children>
                                             <Label text="THỜI GIAN CÒN LẠI:" textFill="#27ae60">
                                                 <font>
-                                                    <Font name="System Bold" size="14.0"/>
+                                                    <Font name="System Bold" size="14.0" />
                                                 </font>
                                             </Label>
                                             <Label fx:id="lblClock" text="00:00:00" textFill="#2ecc71">
                                                 <font>
-                                                    <Font name="System Bold" size="36.0"/>
+                                                    <Font name="System Bold" size="36.0" />
                                                 </font>
                                             </Label>
                                         </children>
@@ -236,85 +222,71 @@
 
                                     <GridPane vgap="15.0">
                                         <columnConstraints>
-                                            <ColumnConstraints hgrow="SOMETIMES" maxWidth="150.0" minWidth="10.0"
-                                                               prefWidth="130.0"/>
-                                            <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0"/>
+                                            <ColumnConstraints hgrow="SOMETIMES" maxWidth="150.0" minWidth="10.0" prefWidth="130.0" />
+                                            <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" />
                                         </columnConstraints>
                                         <rowConstraints>
-                                            <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES"/>
-                                            <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES"/>
-                                            <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES"/>
+                                            <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                                            <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                                            <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
                                         </rowConstraints>
                                         <children>
                                             <Label text="Giá khởi điểm:" textFill="#7f8c8d">
                                                 <font>
-                                                    <Font size="16.0"/>
+                                                    <Font size="16.0" />
                                                 </font>
                                             </Label>
-                                            <Label fx:id="lblStartPrice" text="0 VNĐ" textFill="#34495e"
-                                                   GridPane.columnIndex="1">
+                                            <Label fx:id="lblStartPrice" text="0 VNĐ" textFill="#34495e" GridPane.columnIndex="1">
                                                 <font>
-                                                    <Font size="18.0"/>
+                                                    <Font size="18.0" />
                                                 </font>
                                             </Label>
 
                                             <Label text="Bước giá:" textFill="#7f8c8d" GridPane.rowIndex="1">
                                                 <font>
-                                                    <Font size="16.0"/>
+                                                    <Font size="16.0" />
                                                 </font>
                                             </Label>
-                                            <Label fx:id="lblStepPrice" text="0 VNĐ" textFill="#34495e"
-                                                   GridPane.columnIndex="1" GridPane.rowIndex="1">
+                                            <Label fx:id="lblStepPrice" text="0 VNĐ" textFill="#34495e" GridPane.columnIndex="1" GridPane.rowIndex="1">
                                                 <font>
-                                                    <Font size="18.0"/>
+                                                    <Font size="18.0" />
                                                 </font>
                                             </Label>
 
                                             <Label text="GIÁ HIỆN TẠI:" textFill="#2c3e50" GridPane.rowIndex="2">
                                                 <font>
-                                                    <Font name="System Bold" size="18.0"/>
+                                                    <Font name="System Bold" size="18.0" />
                                                 </font>
                                             </Label>
-                                            <Label fx:id="lblRecentPrice" text="0 VNĐ" textFill="#e74c3c"
-                                                   GridPane.columnIndex="1" GridPane.rowIndex="2">
+                                            <Label fx:id="lblRecentPrice" text="0 VNĐ" textFill="#e74c3c" GridPane.columnIndex="1" GridPane.rowIndex="2">
                                                 <font>
-                                                    <Font name="System Bold" size="24.0"/>
+                                                    <Font name="System Bold" size="24.0" />
                                                 </font>
                                             </Label>
                                         </children>
                                     </GridPane>
 
-                                    <VBox alignment="CENTER" spacing="10.0"
-                                          style="-fx-background-color: #fff9c4; -fx-padding: 15; -fx-background-radius: 8;"
-                                          VBox.vgrow="ALWAYS">
+                                    <VBox alignment="CENTER" spacing="10.0" style="-fx-background-color: #fff9c4; -fx-padding: 15; -fx-background-radius: 8;" VBox.vgrow="ALWAYS">
                                         <children>
                                             <Label text="RA GIÁ NGAY" textFill="#d35400">
                                                 <font>
-                                                    <Font name="System Bold" size="16.0"/>
+                                                    <Font name="System Bold" size="16.0" />
                                                 </font>
                                             </Label>
                                             <HBox alignment="CENTER" spacing="15.0">
                                                 <children>
-                                                    <TextField fx:id="txtPrice" prefHeight="45.0" prefWidth="200.0"
-                                                               promptText="Nhập giá (VNĐ)" style="-fx-font-size: 16;"
-                                                               styleClass="text-input-modern" stylesheets="@style.css"
-                                                               HBox.hgrow="ALWAYS"/>
-                                                    <Button fx:id="btnAuction" mnemonicParsing="false"
-                                                            onAction="#onBidButtonClicked" prefHeight="45.0"
-                                                            prefWidth="120.0"
-                                                            style="-fx-background-color: #e74c3c; -fx-text-fill: white; -fx-cursor: hand; -fx-background-radius: 5;"
-                                                            styleClass="btn-primary" text="ĐẤU GIÁ!">
+                                                    <TextField fx:id="txtPrice" prefHeight="45.0" prefWidth="200.0" promptText="Nhập giá (VNĐ)" style="-fx-font-size: 16;" styleClass="text-input-modern" stylesheets="@style.css" HBox.hgrow="ALWAYS" />
+                                                    <Button fx:id="btnAuction" mnemonicParsing="false" onAction="#onBidButtonClicked" prefHeight="45.0" prefWidth="120.0" style="-fx-background-color: #e74c3c; -fx-text-fill: white; -fx-cursor: hand; -fx-background-radius: 5;" styleClass="btn-primary" text="ĐẤU GIÁ!">
                                                         <font>
-                                                            <Font name="System Bold" size="16.0"/>
+                                                            <Font name="System Bold" size="16.0" />
                                                         </font>
                                                     </Button>
                                                 </children>
                                             </HBox>
 
-                                            <Region prefHeight="1.0"
-                                                    style="-fx-background-color: #f39c12; -fx-opacity: 0.3;">
+                                            <Region prefHeight="1.0" style="-fx-background-color: #f39c12; -fx-opacity: 0.3;">
                                                 <VBox.margin>
-                                                    <Insets bottom="5.0" top="10.0"/>
+                                                    <Insets bottom="5.0" top="10.0" />
                                                 </VBox.margin>
                                             </Region>
 
@@ -324,57 +296,44 @@
                                                         <children>
                                                             <Label text="TỰ ĐỘNG TRẢ GIÁ (AUTO-BID)" textFill="#d35400">
                                                                 <font>
-                                                                    <Font name="System Bold" size="13.0"/>
+                                                                    <Font name="System Bold" size="13.0" />
                                                                 </font>
                                                             </Label>
-                                                            <Label text="Nhập giá trần để tự đấu giá"
-                                                                   textFill="#7f8c8d">
+                                                            <Label text="Nhập giá trần để tự đấu giá" textFill="#7f8c8d">
                                                                 <font>
-                                                                    <Font name="System Italic" size="12.0"/>
+                                                                    <Font name="System Italic" size="12.0" />
                                                                 </font>
                                                             </Label>
                                                         </children>
                                                     </VBox>
-                                                    <TextField fx:id="txtMaxAutoBid" prefHeight="35.0" prefWidth="130.0"
-                                                               promptText="Giá trần (Tối đa)" style="-fx-font-size: 13;"
-                                                               styleClass="text-input-modern" stylesheets="@style.css"/>
-                                                    <Button fx:id="btnAutoBid" mnemonicParsing="false"
-                                                            onAction="#onAutoBidButtonClicked" prefHeight="35.0"
-                                                            prefWidth="90.0"
-                                                            style="-fx-background-color: #f39c12; -fx-text-fill: white; -fx-cursor: hand; -fx-background-radius: 5;"
-                                                            styleClass="btn-primary" text="Cài Auto">
+                                                    <TextField fx:id="txtMaxAutoBid" prefHeight="35.0" prefWidth="130.0" promptText="Giá trần (Tối đa)" style="-fx-font-size: 13;" styleClass="text-input-modern" stylesheets="@style.css" />
+                                                    <Button fx:id="btnAutoBid" mnemonicParsing="false" onAction="#onAutoBidButtonClicked" prefHeight="35.0" prefWidth="90.0" style="-fx-background-color: #f39c12; -fx-text-fill: white; -fx-cursor: hand; -fx-background-radius: 5;" styleClass="btn-primary" text="Cài Auto">
                                                         <font>
-                                                            <Font name="System Bold" size="13.0"/>
+                                                            <Font name="System Bold" size="13.0" />
                                                         </font>
                                                     </Button>
                                                 </children>
                                             </HBox>
 
-                                            <HBox fx:id="boxCurrentAuto" alignment="CENTER" spacing="15.0"
-                                                  managed="false" visible="false">
+                                            <HBox fx:id="boxCurrentAuto" alignment="CENTER" managed="false" spacing="15.0" visible="false">
                                                 <children>
                                                     <VBox alignment="CENTER_LEFT" spacing="2.0" HBox.hgrow="ALWAYS">
                                                         <children>
                                                             <Label text="TRẠNG THÁI ĐANG CHẠY" textFill="#27ae60">
                                                                 <font>
-                                                                    <Font name="System Bold" size="11.0"/>
+                                                                    <Font name="System Bold" size="11.0" />
                                                                 </font>
                                                             </Label>
-                                                            <Label fx:id="lblCurrentMaxBid"
-                                                                   text="Đã đặt giá trần: 0.0 $" textFill="#2c3e50">
+                                                            <Label fx:id="lblCurrentMaxBid" text="Đã đặt giá trần: 0.0 $" textFill="#2c3e50">
                                                                 <font>
-                                                                    <Font name="System Bold" size="14.0"/>
+                                                                    <Font name="System Bold" size="14.0" />
                                                                 </font>
                                                             </Label>
                                                         </children>
                                                     </VBox>
-                                                    <Button fx:id="btnEditAuto" mnemonicParsing="false"
-                                                            onAction="#onEditAutoBidClicked" prefHeight="35.0"
-                                                            prefWidth="130.0"
-                                                            style="-fx-background-color: #34495e; -fx-text-fill: white; -fx-cursor: hand; -fx-background-radius: 5;"
-                                                            styleClass="btn-primary" text="Thay đổi giá trần">
+                                                    <Button fx:id="btnEditAuto" mnemonicParsing="false" onAction="#onEditAutoBidClicked" prefHeight="35.0" prefWidth="130.0" style="-fx-background-color: #34495e; -fx-text-fill: white; -fx-cursor: hand; -fx-background-radius: 5;" styleClass="btn-primary" text="Thay đổi giá trần">
                                                         <font>
-                                                            <Font name="System Bold" size="12.0"/>
+                                                            <Font name="System Bold" size="12.0" />
                                                         </font>
                                                     </Button>
                                                 </children>
@@ -386,26 +345,6 @@
 
                         </children>
                     </HBox>
-                    <VBox spacing="10.0"
-                          style="-fx-background-color: white; -fx-background-radius: 8; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.1), 10, 0, 0, 0); -fx-padding: 20;"
-                          VBox.vgrow="ALWAYS">
-                        <children>
-                            <Label text="Lịch sử đấu giá:" textFill="#b0b902">
-                                <font>
-                                    <Font name="System Bold" size="16.0"/>
-                                </font>
-                            </Label>
-                            <LineChart fx:id="priceChart" animated="false" prefHeight="250.0"
-                                       title="Biểu đồ giá đấu theo thời gian" VBox.vgrow="ALWAYS">
-                                <xAxis>
-                                    <NumberAxis autoRanging="true" label="Lần đặt giá" fx:id="xAxis"/>
-                                </xAxis>
-                                <yAxis>
-                                    <NumberAxis fx:id="yAxis" autoRanging="true" label="Giá (đ)"/>
-                                </yAxis>
-                            </LineChart>
-                        </children>
-                    </VBox>
 
                 </VBox>
             </content>
@@ -415,22 +354,19 @@
     <bottom>
         <BorderPane style="-fx-background-color: white; -fx-border-color: #dee2e6; -fx-border-width: 1 0 0 0;">
             <padding>
-                <Insets bottom="10.0" left="20.0" right="20.0" top="10.0"/>
+                <Insets bottom="10.0" left="20.0" right="20.0" top="10.0" />
             </padding>
             <center>
-                <Label fx:id="lblTime4" text="Thời gian hiển thị tại đây" textFill="#dc2525"
-                       BorderPane.alignment="CENTER">
+                <Label fx:id="lblTime4" text="Thời gian hiển thị tại đây" textFill="#dc2525" BorderPane.alignment="CENTER">
                     <font>
-                        <Font name="System Italic" size="14.0"/>
+                        <Font name="System Italic" size="14.0" />
                     </font>
                 </Label>
             </center>
             <right>
-                <Button fx:id="btnBack" mnemonicParsing="false" onAction="#toMainScreen" prefHeight="35.0"
-                        style="-fx-background-color: transparent; -fx-border-color: #95a5a6; -fx-text-fill: #7f8c8d; -fx-border-radius: 5; -fx-cursor: hand;"
-                        styleClass="btn-primary" text="Quay lại" BorderPane.alignment="CENTER">
+                <Button fx:id="btnBack" mnemonicParsing="false" onAction="#toMainScreen" prefHeight="35.0" style="-fx-background-color: transparent; -fx-border-color: #95a5a6; -fx-text-fill: #7f8c8d; -fx-border-radius: 5; -fx-cursor: hand;" styleClass="btn-primary" text="Quay lại" BorderPane.alignment="CENTER">
                     <font>
-                        <Font name="System Bold" size="13.0"/>
+                        <Font name="System Bold" size="13.0" />
                     </font>
                 </Button>
             </right>
