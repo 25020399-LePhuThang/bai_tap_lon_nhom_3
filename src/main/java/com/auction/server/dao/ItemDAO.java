@@ -498,8 +498,8 @@ public class ItemDAO {
                     try {
                         String startStr = rs.getString("StartTime");
                         String endStr = rs.getString("EndTime");
-                        if (startStr != null) item.setStartTime(new java.sql.Timestamp(sdf.parse(startStr).getTime()));
-                        if (startStr != null) item.setEndTime(new java.sql.Timestamp(sdf.parse(endStr).getTime()));
+                        if (startStr != null && !startStr.isEmpty()) item.setStartTime(new java.sql.Timestamp(sdf.parse(startStr).getTime()));
+                        if (endStr != null && !endStr.isEmpty()) item.setEndTime(new java.sql.Timestamp(sdf.parse(endStr).getTime()));
                     } catch (java.text.ParseException pe) {
                         System.out.println("Lỗi parse StartTime/EndTime:" + pe.getMessage());
                     }

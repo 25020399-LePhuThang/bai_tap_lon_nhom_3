@@ -162,6 +162,7 @@ public class AdminController implements Initializable {
                 allUsers = new ArrayList<>();
             }
 
+            // 1. Tạo 2 biến copy final để "chốt" dữ liệu
             final List<Item> finalWaitingItems = waitingItems;
             final List<User> finalAllUsers = allUsers;
 

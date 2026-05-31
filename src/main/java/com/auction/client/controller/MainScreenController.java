@@ -479,10 +479,12 @@ public class MainScreenController implements Initializable {
                             break;
                         }
                     }
-
-                    // Nếu tìm thấy: Xóa khỏi bảng và bật thông báo
                     if (endedItem != null) {
                         activeMasterList.remove(endedItem);
+
+                        // 👉 Dòng này là cái bạn đang thiếu để chuyển sang SOLD nè
+                        endedItem.setStatus("SOLD");
+
                         tbvIsPresenting.refresh();
 
                         // Ép giá trị cuối cùng từ Server để hiển thị Alert chính xác 100%
@@ -511,83 +513,77 @@ public class MainScreenController implements Initializable {
         clock.play();
     }
 
-    /**
-     * 🛠️ HÀM MỚI THÊM: Tự động quét và chuyển trạng thái các item từ PREPARED -> ACTIVE khi đến giờ.
-     * Hoàn toàn không ảnh hưởng đến cấu trúc luồng mạng hay cơ sở dữ liệu cũ.
-     */
     private void checkAndTransitionItems() {
-        if (preparedMasterList == null || preparedMasterList.isEmpty()) {
-            return;
-        }
-
         Date now = new Date();
-        List<Item> itemsToMove = new ArrayList<>();
+        if (preparedMasterList != null && !preparedMasterList.isEmpty()) {
+            List<Item> itemsToMove = new ArrayList<>();
+            for (Item item : preparedMasterList) {
+                if (item.getStartTime() != null && !now.before(item.getStartTime())) {
+                    itemsToMove.add(item);
+                }
+            }
 
-        // Quét danh sách "Sắp diễn ra", nếu sản phẩm nào có startTime bằng hoặc nhỏ hơn thời gian hiện tại
-        for (Item item : preparedMasterList) {
-            if (item.getStartTime() != null && !now.before(item.getStartTime())) {
-                itemsToMove.add(item);
+            if (!itemsToMove.isEmpty()) {
+                Platform.runLater(() -> {
+                    for (Item item : itemsToMove) {
+                        item.setStatus("ACTIVE");
+                        preparedMasterList.remove(item);
+                        if (!activeMasterList.contains(item)) {
+                            activeMasterList.add(item);
+                        }
+                        System.out.println(">>> [MainScreen] SP '" + item.getName() + "' đã đến giờ, tự động mở đấu giá!");
+                    }
+                    if (tbvWillPresent != null) tbvWillPresent.refresh();
+                    if (tbvIsPresenting != null) tbvIsPresenting.refresh();
+                });
             }
         }
 
-        // Nếu phát hiện có sản phẩm đến giờ "khai mạc"
-        if (!itemsToMove.isEmpty()) {
-            Platform.runLater(() -> {
-                for (Item item : itemsToMove) {
-                    // 1. Đổi trạng thái Model thành ACTIVE
-                    item.setStatus("ACTIVE");
-
-                    // 2. Xóa khỏi danh sách chuẩn bị (Bảng 2)
-                    preparedMasterList.remove(item);
-
-                    // 3. Đẩy sang danh sách đang đấu giá (Bảng 1)
-                    if (!activeMasterList.contains(item)) {
-                        activeMasterList.add(item);
-                    }
-
-                    System.out.println(">>> [Client Live] Sản phẩm '" + item.getName() + "' (ID: " + item.getId() + ") đã đến giờ, tự động mở đấu giá!");
+        if (activeMasterList != null && !activeMasterList.isEmpty()) {
+            List<Item> itemsToEnd = new ArrayList<>();
+            for (Item item : activeMasterList) {
+                if (item.getEndTime() != null && !now.before(item.getEndTime())) {
+                    itemsToEnd.add(item);
                 }
+            }
 
-                // 4. Ép JavaFX vẽ lại dữ liệu mới lên màn hình lập tức
-                if (tbvWillPresent != null) tbvWillPresent.refresh();
-                if (tbvIsPresenting != null) tbvIsPresenting.refresh();
-            });
+            if (!itemsToEnd.isEmpty()) {
+                Platform.runLater(() -> {
+                    for (Item item : itemsToEnd) {
+                        activeMasterList.remove(item);
+                        System.out.println(">>> [MainScreen] SP '" + item.getName() + "' đã hết hạn, tự động dọn khỏi bảng!");
+                    }
+                    if (tbvIsPresenting != null) tbvIsPresenting.refresh();
+                });
+            }
         }
     }
-
     private void showWinnerAlert(Item item) {
         Alert alert = new Alert(Alert.AlertType.INFORMATION);
         alert.setTitle("PHIÊN ĐẤU GIÁ KẾT THÚC!");
-        alert.setHeaderText("Sản phẩm: " + item.getName() + " (Mã SP: " + item.getId() + ") đã hết thời gian đấu giá!");
+        alert.setHeaderText("Sản phẩm: " + item.getName() + " (Mã SP: " + item.getId() + ")");
 
         String winnerId = item.getLastBidderId();
         double finalPrice = item.getCurrentPrice();
 
         String contextText;
-        // Kiểm tra xem có ai tham gia đặt giá không
         if (winnerId == null || winnerId.trim().isEmpty() || winnerId.equalsIgnoreCase("null") || winnerId.equalsIgnoreCase("Chưa có")) {
-            contextText = "Kết quả: Phiên đấu giá thất bại do không có người tham gia ra giá.\n"
-                    + "Giá khởi điểm ban đầu: " + item.getStartingPrice() + " $";
-            alert.setGraphic(null); // Không cần ảnh đặc biệt
+            contextText = "Kết quả: Không có ai trả giá.\nGiá khởi điểm: " + item.getStartingPrice() + " $";
+            alert.setGraphic(null);
         } else {
-            contextText = "🎉 CHÚC MỪNG NGƯỜI THẮNG CUỘC! 🎉\n\n"
-                    + "👤 Người chiến thắng: " + winnerId + "\n"
-                    + "💰 Mức giá mua đứt cuối cùng: " + finalPrice + " $\n\n"
-                    + "Hệ thống sẽ tự động liên hệ người bán và trừ tiền trong số dư tài khoản của người thắng.";
 
-            // Thêm một icon cúp chiến thắng nhỏ cho đẹp mắt (tùy chọn)
+            contextText = "🎉 CHÚC MỪNG! 🎉\n\n"
+                    + "👤 Người thắng: " + winnerId + "\n"
+                    + "💰 Giá chốt: " + finalPrice + " $";
+
             try {
                 Label lblEmoji = new Label("🏆");
                 lblEmoji.setStyle("-fx-font-size: 40px;");
                 alert.setGraphic(lblEmoji);
-            } catch (Exception e) {
-                // Nếu lỗi style thì bỏ qua đồ họa
-            }
+            } catch (Exception e) {}
         }
 
         alert.setContentText(contextText);
-
-        // Hiển thị hộp thoại lên màn hình (Không làm block luồng chính của JavaFX)
         alert.show();
     }
 }

@@ -553,4 +553,5 @@ public class SellerController implements Initializable {
     public void onClose() {
         NetworkClient.getInstance().detachListener();
     }
+
 }
