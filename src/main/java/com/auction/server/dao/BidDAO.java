@@ -202,4 +202,70 @@ public class BidDAO {
             return false;
         }
     }
+
+    /**
+     * Hàm xử lý chuyển tiền khi chốt phiên đấu giá.
+     * @return true nếu trừ/cộng tiền thành công, false nếu lỗi hoặc người mua không đủ tiền.
+     */
+    public boolean processAuctionPayment(String itemId, String winnerId, String sellerId, double winningPrice) {
+        String deductSql = "UPDATE users SET balance = balance - ? WHERE username = ? AND balance >= ?";
+        String addSql = "UPDATE users SET balance = balance + ? WHERE username = ?";
+        String updateItemSql = "UPDATE items SET status = 'SOLD' WHERE item_id = ?";
+
+        try (Connection conn = DatabaseManager.getConnection()) {
+
+            conn.setAutoCommit(false);
+
+            try {
+                // 1. Trừ tiền người thắng
+                try (PreparedStatement psDeduct = conn.prepareStatement(deductSql)) {
+                    psDeduct.setDouble(1, winningPrice);
+                    psDeduct.setString(2, winnerId);
+                    psDeduct.setDouble(3, winningPrice); // Đảm bảo số dư >= giá thắng
+
+                    int rowsDeducted = psDeduct.executeUpdate();
+                    if (rowsDeducted == 0) {
+                        System.err.println("Transaction hủy: Người mua [" + winnerId + "] không đủ tiền!");
+                        conn.rollback();
+                        return false;
+                    }
+                }
+
+                // 2. Cộng tiền cho người bán (Bỏ qua nếu hệ thống không có seller rõ ràng)
+                if (sellerId != null && !sellerId.trim().isEmpty() && !sellerId.equals("null")) {
+                    try (PreparedStatement psAdd = conn.prepareStatement(addSql)) {
+                        psAdd.setDouble(1, winningPrice);
+                        psAdd.setString(2, sellerId);
+                        psAdd.executeUpdate();
+                    }
+                }
+
+                // 3. Khóa sản phẩm lại
+                try (PreparedStatement psItem = conn.prepareStatement(updateItemSql)) {
+                    try {
+                        psItem.setInt(1, Integer.parseInt(itemId.trim()));
+                    } catch (NumberFormatException e) {
+                        psItem.setString(1, itemId);
+                    }
+                    psItem.executeUpdate();
+                }
+
+                // Lưu toàn bộ thay đổi xuống SQLite
+                conn.commit();
+                return true;
+
+            } catch (SQLException e) {
+                conn.rollback(); // Lỗi phát là quay xe bảo toàn tiền ngay
+                System.err.println("Lỗi Transaction, đã Rollback: " + e.getMessage());
+                return false;
+            } finally {
+                // Nhớ bật lại auto-commit để không ảnh hưởng các hàm khác trong BidDAO
+                conn.setAutoCommit(true);
+            }
+
+        } catch (SQLException e) {
+            System.err.println("Lỗi kết nối DB khi chốt đơn: " + e.getMessage());
+            return false;
+        }
+    }
 }

@@ -96,7 +96,46 @@ public class SellerController implements Initializable {
 
         cbItemType.setItems(FXCollections.observableArrayList("ART", "VEHICLE", "ELECTRONIC"));
         cbItemType.getSelectionModel().selectFirst();
-    }
+
+        NetworkClient.getInstance().startListening(response -> {
+            if (response == null) return;
+
+            if (response.equals("SERVER_SIGNAL_REFRESH")) {
+                Platform.runLater(() -> {
+                    handleRefresh();
+                });
+                return;
+            }
+
+            if (response.startsWith("NOTIFY_SELLER|")) {
+                String[] p = response.split("\\|");
+                if (p.length < 5) return;
+
+                String targetSeller = p[1].trim();
+
+                Platform.runLater(() -> {
+                    String myUsername = lblSellerName.getText().trim();
+
+                    if (myUsername.equalsIgnoreCase(targetSeller)) {
+                        String soldItemId = p[2];
+                        String soldItemName = p[3];
+                        String finalPrice = p[4];
+
+                        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+                        alert.setTitle(" Tin vui từ hệ thống");
+                        alert.setHeaderText("Hàng của bạn đã bay!");
+                        alert.setContentText("Sản phẩm [" + soldItemName + "] (Mã: " + soldItemId + ") "
+                                + "đã được đấu giá thành công.\n\n"
+                                + "Số tiền " + finalPrice + " $ đã được cộng vào tài khoản của bạn.");
+                        alert.show();
+                        handleRefresh();
+                    }
+                });
+            }
+        });
+
+        }
+
 
     private void setupTableColumns() {
         NumberFormat usdFormat = NumberFormat.getCurrencyInstance(Locale.US);
@@ -126,12 +165,10 @@ public class SellerController implements Initializable {
     }
 
     public void setDisplayName(String currentUser) {
-        // LUỒNG NGẦM TẢI DỮ LIỆU TỪ MẠNG (THREAD)
         new Thread(() -> {
             String balanceResponse = NetworkClient.getBalanceRequest(currentUser);
             List<Item> myItems = NetworkClient.getItemsBySellerIdRequest(currentUser);
 
-            // LUỒNG GIAO DIỆN (UI THREAD) - Cập nhật mọi thứ ở đây để tránh Crash!
             Platform.runLater(() -> {
                 lblSellerName.setText(currentUser);
 
@@ -487,5 +524,9 @@ public class SellerController implements Initializable {
                 }
             });
         }).start();
+    }
+
+    public void onClose() {
+        NetworkClient.getInstance().detachListener();
     }
 }

@@ -77,7 +77,7 @@ public class MainScreenController implements Initializable {
 
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
-        clockInit();
+        clockInit2();
         setupTableColumns();
 
         if (imgUserAvatar != null) {
@@ -109,7 +109,9 @@ public class MainScreenController implements Initializable {
                         stage.setTitle("Chi tiết: " + selectedItem.getName());
                         stage.getScene().setRoot(root);
                         stage.show();
-                    } catch (IOException e) { e.printStackTrace(); }
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
                 }
             }
         });
@@ -180,7 +182,7 @@ public class MainScreenController implements Initializable {
         });
 
         Search();
-        // setupSocketListener() sẽ được gọi bên trong hàm setDisplayName sau khi tải xong Data
+        setupSocketListener();
     }
 
     private void setupTableColumns() {
@@ -212,26 +214,6 @@ public class MainScreenController implements Initializable {
         });
         StartTimeColumn.setCellValueFactory(new PropertyValueFactory<>("startTime"));
         EndTimeColumn2.setCellValueFactory(new PropertyValueFactory<>("endTime"));
-    }
-
-    public void clockInit() {
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm:ss  dd/MM");
-        Timeline clock = new Timeline(new KeyFrame(Duration.ZERO, e -> {
-            lblTime5.setText(LocalDateTime.now().format(formatter));
-
-            // TỰ ĐỘNG LỌC BỎ SẢN PHẨM HẾT HẠN KHỎI TRANG CHỦ THEO GIÂY REALTIME
-            if (activeMasterList != null && !activeMasterList.isEmpty()) {
-                Date now = new Date();
-                boolean dynamicRemoved = activeMasterList.removeIf(item ->
-                        item.getEndTime() != null && !now.before(item.getEndTime())
-                );
-                if (dynamicRemoved && tbvIsPresenting != null) {
-                    tbvIsPresenting.refresh();
-                }
-            }
-        }), new KeyFrame(Duration.seconds(1)));
-        clock.setCycleCount(Timeline.INDEFINITE);
-        clock.play();
     }
 
     public void setDisplayName(String currentUser) {
@@ -425,36 +407,162 @@ public class MainScreenController implements Initializable {
 
     private void setupSocketListener() {
         NetworkClient.getInstance().startListening(response -> {
-            if (response == null || !response.startsWith("BID_UPDATE|")) return;
+            if (response == null) return;
 
-            // Xử lý cả trường hợp bản tin trả về có 3 hoặc 4 tham số (có hay không có winner)
-            String[] p = response.split("\\|");
-            if (p.length < 3) return;
+            // --- 1. Lắng nghe cập nhật giá Live ---
+            if (response.startsWith("BID_UPDATE|")) {
+                String[] p = response.split("\\|");
+                if (p.length < 3) return;
 
-            String msgItemId = p[1];
-            double newPrice = Double.parseDouble(p[2]);
-            String winner = (p.length >= 4) ? p[3] : "Chưa có";
+                String msgItemId = p[1];
+                double newPrice = Double.parseDouble(p[2]);
+                String winner = (p.length >= 4) ? p[3] : "Chưa có";
 
-            Platform.runLater(() -> {
-                boolean isUpdated = false;
-                for (Item item : activeMasterList) {
-                    if (String.valueOf(item.getItemID()).equals(msgItemId) || String.valueOf(item.getId()).equals(msgItemId)) {
-                        item.setCurrentPrice(newPrice);
-                        item.setLastBidderId(winner);
-                        isUpdated = true;
-                        break;
+                Platform.runLater(() -> {
+                    boolean isUpdated = false;
+                    for (Item item : activeMasterList) {
+                        if (String.valueOf(item.getItemID()).equals(msgItemId) || String.valueOf(item.getId()).equals(msgItemId)) {
+                            item.setCurrentPrice(newPrice);
+                            item.setLastBidderId(winner);
+                            isUpdated = true;
+                            break;
+                        }
                     }
-                }
 
-                if (isUpdated) {
-                    tbvIsPresenting.refresh();
-                    System.out.println("MainScreen: Cập nhật giá Live SP " + msgItemId + " -> " + newPrice + "$ (Winner: " + winner + ")");
-                }
-            });
+                    if (isUpdated) {
+                        tbvIsPresenting.refresh();
+                        System.out.println("MainScreen: Cập nhật giá Live SP " + msgItemId + " -> " + newPrice + "$ (Winner: " + winner + ")");
+                    }
+                });
+                return;
+            }
+
+            // --- 2. Lắng nghe chốt đơn kết thúc từ Server ---
+            if (response.startsWith("AUCTION_END|")) {
+                String[] p = response.split("\\|");
+                if (p.length < 4) return;
+
+                String msgItemId = p[1];
+                String finalWinner = p[2].trim();
+                double finalPrice = Double.parseDouble(p[3]);
+
+                Platform.runLater(() -> {
+                    Item endedItem = null;
+                    // Tìm sản phẩm đã kết thúc trong danh sách đang diễn ra
+                    for (Item item : activeMasterList) {
+                        if (String.valueOf(item.getItemID()).equals(msgItemId) || String.valueOf(item.getId()).equals(msgItemId)) {
+                            endedItem = item;
+                            break;
+                        }
+                    }
+
+                    // Nếu tìm thấy: Xóa khỏi bảng và bật thông báo
+                    if (endedItem != null) {
+                        activeMasterList.remove(endedItem);
+                        tbvIsPresenting.refresh();
+
+                        // Ép giá trị cuối cùng từ Server để hiển thị Alert chính xác 100%
+                        endedItem.setLastBidderId(finalWinner);
+                        endedItem.setCurrentPrice(finalPrice);
+                        showWinnerAlert(endedItem);
+                    }
+                });
+            }
         });
     }
 
     public void resumeSocketListener() {
         setupSocketListener();
+    }
+
+
+    public void clockInit2() {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm:ss  dd/MM");
+        Timeline clock = new Timeline(new KeyFrame(Duration.ZERO, e -> {
+            lblTime5.setText(LocalDateTime.now().format(formatter));
+            checkAndTransitionItems();
+
+        }), new KeyFrame(Duration.seconds(1)));
+        clock.setCycleCount(Timeline.INDEFINITE);
+        clock.play();
+    }
+    /**
+     * 🛠️ HÀM MỚI THÊM: Tự động quét và chuyển trạng thái các item từ PREPARED -> ACTIVE khi đến giờ.
+     * Hoàn toàn không ảnh hưởng đến cấu trúc luồng mạng hay cơ sở dữ liệu cũ.
+     */
+    private void checkAndTransitionItems() {
+        if (preparedMasterList == null || preparedMasterList.isEmpty()) {
+            return;
+        }
+
+        Date now = new Date();
+        List<Item> itemsToMove = new ArrayList<>();
+
+        // Quét danh sách "Sắp diễn ra", nếu sản phẩm nào có startTime bằng hoặc nhỏ hơn thời gian hiện tại
+        for (Item item : preparedMasterList) {
+            if (item.getStartTime() != null && !now.before(item.getStartTime())) {
+                itemsToMove.add(item);
+            }
+        }
+
+        // Nếu phát hiện có sản phẩm đến giờ "khai mạc"
+        if (!itemsToMove.isEmpty()) {
+            Platform.runLater(() -> {
+                for (Item item : itemsToMove) {
+                    // 1. Đổi trạng thái Model thành ACTIVE
+                    item.setStatus("ACTIVE");
+
+                    // 2. Xóa khỏi danh sách chuẩn bị (Bảng 2)
+                    preparedMasterList.remove(item);
+
+                    // 3. Đẩy sang danh sách đang đấu giá (Bảng 1)
+                    if (!activeMasterList.contains(item)) {
+                        activeMasterList.add(item);
+                    }
+
+                    System.out.println(">>> [Client Live] Sản phẩm '" + item.getName() + "' (ID: " + item.getId() + ") đã đến giờ, tự động mở đấu giá!");
+                }
+
+                // 4. Ép JavaFX vẽ lại dữ liệu mới lên màn hình lập tức
+                if (tbvWillPresent != null) tbvWillPresent.refresh();
+                if (tbvIsPresenting != null) tbvIsPresenting.refresh();
+            });
+        }
+    }
+
+    private void showWinnerAlert(Item item) {
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setTitle("PHIÊN ĐẤU GIÁ KẾT THÚC!");
+        alert.setHeaderText("Sản phẩm: " + item.getName() + " (Mã SP: " + item.getId() + ") đã hết thời gian đấu giá!");
+
+        String winnerId = item.getLastBidderId();
+        double finalPrice = item.getCurrentPrice();
+
+        String contextText;
+        // Kiểm tra xem có ai tham gia đặt giá không
+        if (winnerId == null || winnerId.trim().isEmpty() || winnerId.equalsIgnoreCase("null") || winnerId.equalsIgnoreCase("Chưa có")) {
+            contextText = "Kết quả: Phiên đấu giá thất bại do không có người tham gia ra giá.\n"
+                    + "Giá khởi điểm ban đầu: " + item.getStartingPrice() + " $";
+            alert.setGraphic(null); // Không cần ảnh đặc biệt
+        } else {
+            contextText = "🎉 CHÚC MỪNG NGƯỜI THẮNG CUỘC! 🎉\n\n"
+                    + "👤 Người chiến thắng: " + winnerId + "\n"
+                    + "💰 Mức giá mua đứt cuối cùng: " + finalPrice + " $\n\n"
+                    + "Hệ thống sẽ tự động liên hệ người bán và trừ tiền trong số dư tài khoản của người thắng.";
+
+            // Thêm một icon cúp chiến thắng nhỏ cho đẹp mắt (tùy chọn)
+            try {
+                Label lblEmoji = new Label("🏆");
+                lblEmoji.setStyle("-fx-font-size: 40px;");
+                alert.setGraphic(lblEmoji);
+            } catch (Exception e) {
+                // Nếu lỗi style thì bỏ qua đồ họa
+            }
+        }
+
+        alert.setContentText(contextText);
+
+        // Hiển thị hộp thoại lên màn hình (Không làm block luồng chính của JavaFX)
+        alert.show();
     }
 }

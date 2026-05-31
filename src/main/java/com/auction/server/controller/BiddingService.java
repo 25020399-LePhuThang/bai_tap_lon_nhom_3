@@ -89,12 +89,12 @@ public class BiddingService {
                                 "TIME_UPDATE|" + item.getId() + "|" + item.getEndTime().getTime()
                         );
 
-                         //Tạm thời đóng phần Reschedule Timer vì dự án chưa có class AuctionTimer
-                         AuctionTimer timer = AuctionServer.auctionTimers.get(item.getId());
-                         if (timer != null) {
-                             timer.reschedule();
-                             System.out.println(">>> Timer đã được gia hạn thêm 60s cho: " + item.getId());
-                         }
+                        //Tạm thời đóng phần Reschedule Timer vì dự án chưa có class AuctionTimer
+                        AuctionTimer timer = AuctionServer.auctionTimers.get(item.getId());
+                        if (timer != null) {
+                            timer.reschedule();
+                            System.out.println(">>> Timer đã được gia hạn thêm 60s cho: " + item.getId());
+                        }
                     }}
 
                 // 6. Kích hoạt auto-bid phản ứng (nếu có người đã đăng ký)
@@ -147,7 +147,9 @@ public class BiddingService {
             if (now.before(item.getStartTime())) {
                 return "Phiên đấu giá chưa mở.";
             }
-            if (now.after(item.getEndTime())) {
+            // [Tâm] Bù trừ độ trễ mạng 1 giây giống bên placeBid
+            long timeLeft = item.getEndTime().getTime() - now.getTime();
+            if (timeLeft < -1000) {
                 return "Phiên đấu giá đã kết thúc!";
             }
 
@@ -163,12 +165,46 @@ public class BiddingService {
                 return dbMaxBid <= 0;
             });
 
+            // 🛠️ SỬA TẠI ĐÂY: Lưu lại người thắng cũ trước khi guồng máy AutoBid chạy đè lên
+            String oldWinnerId = item.getLastBidderId();
+
             AutoBid bid = new AutoBid(bidderId, maxBid, increment);
             AuctionAutoBid.AutoBidResult result = autoBid.registerAutoBid(bid);
 
+            // 🛠️ SỬA TẠI ĐÂY: Nếu đăng ký AutoBid làm thay đổi giá (giật lại lượt dẫn đầu)
             if (result.priceChanged) {
-                item.setCurrentPrice(result.finalPrice);
-                item.setLastBidderId(result.finalWinnerId);
+                try {
+                    // 1. Cập nhật RAM
+                    item.setCurrentPrice(result.finalPrice);
+                    item.setLastBidderId(result.finalWinnerId);
+
+                    // 2. Cập nhật cứng xuống Database (Code cũ của bạn bị thiếu dòng này nên DB không đổi)
+                    getItemDao().updatePrice(item);
+
+                    // 3. Kiểm tra gia hạn tự động ở giây cuối (Anti-Sniping)
+                    if (antiSnipingPolicy.apply(item)) {
+                        getItemDao().updateEndTime(item);
+                        AuctionServer.broadcast(
+                                "TIME_UPDATE|" + item.getId() + "|" + item.getEndTime().getTime()
+                        );
+
+                        AuctionTimer timer = AuctionServer.auctionTimers.get(item.getId());
+                        if (timer != null) {
+                            timer.reschedule();
+                            System.out.println(">>> Timer đã được gia hạn thêm 60s (từ AutoBid) cho: " + item.getId());
+                        }
+                    }
+
+                    // 4. Bắn Socket thông báo cho toàn bộ các Client đang mở UI cập nhật ngay lập tức
+                    AuctionServer.broadcast(
+                            "BID_UPDATE|" + item.getId() + "|" + result.finalPrice + "|" + result.finalWinnerId +
+                                    "|AUTOBID_TRIGGERED|" + bidderId + "|" + oldWinnerId + "\n"
+                    );
+
+                    return "SERVER_PROCESSED_AUTOBID|" + result.finalWinnerId + "|" + result.finalPrice;
+                } catch (Exception e) {
+                    return "LỖI HỆ THỐNG: Không thể cập nhật giá AutoBid. Vui lòng thử lại.";
+                }
             }
 
             return result.message != null ? result.message

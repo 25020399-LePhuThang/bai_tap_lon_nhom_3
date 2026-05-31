@@ -207,7 +207,7 @@ public class AuctionDetailController implements Initializable {
         NetworkClient.getInstance().startListening(response -> {
             if (!listenerActive || response == null) return;
 
-            // [Tâm] Đón đầu xử lý chuỗi phản hồi trực tiếp (nếu luồng Server trả về trực tiếp trên Listener)
+            // [Tâm] Đón đầu xử lý chuỗi phản hồi trực tiếp
             if (response.startsWith("YES|") || response.equals("NO")) {
                 Platform.runLater(() -> {
                     if (response.startsWith("YES")) {
@@ -217,6 +217,12 @@ public class AuctionDetailController implements Initializable {
                         txtMaxAutoBid.setText(savedMaxBidStr);
                         localAutoBidCache.put(cacheKey, savedMaxBidStr);
                         toggleAutoBidView(true);
+                    } else if (response.equals("NO")) {
+                        // Xử lý khi thực sự không có AutoBid
+                        localAutoBidCache.remove(cacheKey);
+                        txtMaxAutoBid.clear();
+                        lblCurrentMaxBid.setText("");
+                        toggleAutoBidView(false);
                     }
                 });
                 return;
@@ -344,7 +350,9 @@ public class AuctionDetailController implements Initializable {
                 } else if (response != null && response.equals("NO")) {
                     localAutoBidCache.remove(cacheKey); // [Tâm] Xóa đệm cũ nếu server báo hết hạn
                     Platform.runLater(() -> {
-                        txtMaxAutoBid.clear();
+                        if (!txtMaxAutoBid.isFocused()) {
+                            txtMaxAutoBid.clear();
+                        }
                         lblCurrentMaxBid.setText("");
                         toggleAutoBidView(false);
                     });
@@ -355,7 +363,6 @@ public class AuctionDetailController implements Initializable {
             }
         }, "AutoBid-Fast-Restore-Thread").start();
     }
-
     public void setDisplayName(String displayName) {
         if (displayName != null && !displayName.isEmpty()) {
             lblUsername2.setText(displayName);
@@ -735,4 +742,5 @@ public class AuctionDetailController implements Initializable {
             popUpStage.show();
         } catch (IOException e) { e.printStackTrace(); }
     }
+
 }

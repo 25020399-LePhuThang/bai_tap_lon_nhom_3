@@ -21,26 +21,6 @@ public class AuctionAutoBid {
         this.currentWinnerId = currentWinnerId;
     }
 
-    public AutoBidResult registerAutoBid(AutoBid newBid) {
-        lock.lock();
-        try {
-            if (newBid.getBidderId().equals(currentWinnerId)) {
-                return new AutoBidResult(currentPrice, currentWinnerId, false,
-                        "Bạn đang là người dẫn đầu, không cần đăng ký auto-bid lúc này.");
-            }
-
-            if (newBid.getMaxBid() <= currentPrice) {
-                return new AutoBidResult(currentPrice, currentWinnerId, false,
-                        "maxBid phải lớn hơn giá hiện tại (" + currentPrice + ").");
-            }
-
-            autoBids.removeIf(b -> b.getBidderId().equals(newBid.getBidderId()));
-            autoBids.add(newBid);
-            return processAutoBidding();
-        } finally {
-            lock.unlock();
-        }
-    }
 
     public AutoBidResult onManualBidPlaced(double newPrice, String newWinner) {
         lock.lock();
@@ -56,85 +36,79 @@ public class AuctionAutoBid {
         }
     }
 
+    public AutoBidResult registerAutoBid(AutoBid newBid) {
+        lock.lock();
+        try {
+            // 🛠️ XÓA ĐOẠN CHECK KHÓA: Bỏ đoạn check "if (newBid.getBidderId().equals(currentWinnerId))" cũ
+            // để cho phép người đang thắng vẫn được quyền nâng/thay đổi mức giá trần của họ.
+
+            if (newBid.getMaxBid() <= currentPrice) {
+                return new AutoBidResult(currentPrice, currentWinnerId, false,
+                        "maxBid phải lớn hơn giá hiện tại (" + currentPrice + ").");
+            }
+
+            // Ghi đè hoặc thêm mới cấu hình AutoBid của User vào danh sách quản lý trên RAM
+            autoBids.removeIf(b -> b.getBidderId().equals(newBid.getBidderId()));
+            autoBids.add(newBid);
+
+            // Kích hoạt guồng máy so kè giá
+            return processAutoBidding();
+        } finally {
+            lock.unlock();
+        }
+    }
+
     private AutoBidResult processAutoBidding() {
-        boolean anyChange = true;
+        boolean priceUpdated;
         boolean actualPriceChanged = false;
 
-        while (anyChange) {
-            anyChange = false;
+        // Bước giá mặc định (Bạn có thể tinh chỉnh hoặc truyền item.getMinIncrement() từ Service vào đây)
+        double increment = 10.0;
 
-            AutoBid challenger = findBestChallenger();
-            if (challenger == null) break;
+        // Vòng lặp mô phỏng cuộc chiến nâng giá tự động
+        do {
+            priceUpdated = false;
+            AutoBid bestChallenger = null;
 
-            double challengerBid = currentPrice + challenger.getIncrement();
+            // Mức giá tối thiểu mà một đối thủ cần phải đáp ứng để được quyền nâng giá
+            double nextRequiredBid = currentPrice + increment;
 
-            if (challengerBid > challenger.getMaxBid()) {
-                break;
-            }
-
-            AutoBid currentWinnerBid = autoBids.stream()
-                    .filter(b -> b.getBidderId().equals(currentWinnerId))
-                    .findFirst().orElse(null);
-
-            if (currentWinnerBid != null
-                    && currentWinnerBid.getMaxBid() == challenger.getMaxBid()
-                    && currentWinnerBid.getTimestamp() < challenger.getTimestamp()) {
-                break;
-            }
-
-            if (currentWinnerBid != null) {
-                if (currentWinnerBid.getMaxBid() >= challenger.getMaxBid()) {
-                    double targetPrice = challenger.getMaxBid() + challenger.getIncrement();
-                    if (targetPrice > currentWinnerBid.getMaxBid()) {
-                        targetPrice = currentWinnerBid.getMaxBid();
-                    }
-                    if (targetPrice > currentPrice) {
-                        currentPrice = targetPrice;
-                        actualPriceChanged = true;
-                    }
-                    anyChange = false;
-                } else {
-                    double targetPrice = currentWinnerBid.getMaxBid() + challenger.getIncrement();
-                    if (targetPrice > challenger.getMaxBid()) {
-                        targetPrice = challenger.getMaxBid();
-                    }
-                    currentPrice = targetPrice;
-                    currentWinnerId = challenger.getBidderId();
-                    actualPriceChanged = true;
-                    anyChange = true;
+            // Lọc tìm người thách đấu có mức giá trần hợp lý và cao nhất lúc này
+            for (AutoBid bid : autoBids) {
+                // Người đang dẫn đầu phiên hiện tại không tự nâng giá chống lại chính mình
+                if (bid.getBidderId().equals(currentWinnerId)) {
+                    continue;
                 }
-            } else {
-                currentPrice = challengerBid;
-                currentWinnerId = challenger.getBidderId();
-                actualPriceChanged = true;
-                anyChange = true;
+
+                // Nếu giá trần của đối thủ này đủ để trả cho bước giá tiếp theo
+                if (bid.getMaxBid() >= nextRequiredBid) {
+                    if (bestChallenger == null) {
+                        bestChallenger = bid;
+                    } else if (bid.getMaxBid() > bestChallenger.getMaxBid()) {
+                        bestChallenger = bid; // Ai đặt giá trần cao hơn thì ưu tiên người đó nâng trước
+                    } else if (bid.getMaxBid() == bestChallenger.getMaxBid()
+                            && bid.getTimestamp() < bestChallenger.getTimestamp()) {
+                        bestChallenger = bid; // Nếu cùng giá trần, ai đặt trước xếp trước
+                    }
+                }
             }
 
-            System.out.printf("[AutoBid] %s đặt %.0f (maxBid=%.0f)%n",
-                    currentWinnerId, currentPrice, challenger.getMaxBid());
-        }
+            // Nếu tìm thấy một đối thủ hợp lệ để đè giá người hiện tại
+            if (bestChallenger != null) {
+                currentPrice = nextRequiredBid;
+                currentWinnerId = bestChallenger.getBidderId();
+                priceUpdated = true;
+                actualPriceChanged = true;
 
-        String msg = String.format("AutoBid: %s dẫn đầu với %.0f", currentWinnerId, currentPrice);
+                System.out.printf("[AutoBid] Hệ thống tự động đẩy giá lên: %.0f$ cho User: %s%n", currentPrice, currentWinnerId);
+            }
+
+        } while (priceUpdated); // Vòng lặp chạy liên tục cho đến khi tất cả các bên cạn giá trần
+
+        String msg = String.format("AutoBid: %s dẫn đầu với %.0f$", currentWinnerId, currentPrice);
         return new AutoBidResult(currentPrice, currentWinnerId, actualPriceChanged, msg);
     }
 
-    private AutoBid findBestChallenger() {
-        AutoBid best = null;
-        for (AutoBid bid : autoBids) {
-            if (bid.getBidderId().equals(currentWinnerId)) continue;
-            if (bid.getMaxBid() < currentPrice + bid.getIncrement()) continue;
-
-            if (best == null) {
-                best = bid;
-            } else if (bid.getMaxBid() > best.getMaxBid()) {
-                best = bid;
-            } else if (bid.getMaxBid() == best.getMaxBid()
-                    && bid.getTimestamp() < best.getTimestamp()) {
-                best = bid;
-            }
-        }
-        return best;
-    }
 
     public void cancelAutoBid(String bidderId) {
         lock.lock();
