@@ -57,12 +57,21 @@ public class DatabaseManager {
                         "  timestamp TEXT    NOT NULL" +
                         ");";
 
+        String sqlAutoBids = "CREATE TABLE IF NOT EXISTS autobids ("
+                + "username TEXT NOT NULL,"
+                + "item_id TEXT NOT NULL,"
+                + "max_bid REAL NOT NULL,"
+                + "increment REAL NOT NULL,"
+                + "PRIMARY KEY (username, item_id)"
+                + ");";
+
         try (Connection conn = getConnection();
              var stmt = conn.createStatement()) {
             if (conn != null) {
                 stmt.execute(sqlUsers);
                 stmt.execute(sqlItems);
                 stmt.execute(sqlBidTransactions);
+                stmt.execute(sqlAutoBids);
                 System.out.println("DB init OK!");
             }
         } catch (Exception e) {
