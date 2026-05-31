@@ -24,6 +24,9 @@ public class AuctionServer {
 
     public static void main(String[] args) {
         DatabaseManager.initDB();
+        java.util.TimeZone.setDefault(java.util.TimeZone.getTimeZone("Asia/Ho_Chi_Minh"));
+
+        System.out.println("Server đã khởi động với múi giờ: " + java.time.ZoneId.systemDefault());
         try {
             // 2. Mở cổng - đọc PORT từ Railway
             int port = System.getenv("PORT") != null
