@@ -17,4 +17,4 @@
   Xử lý đặt giá đồng thời (Concurrency) và thuật toán chống bắn tỉa (Anti-sniping).
 
 - ### Nguyễn Thị Hồng Nhung:
-  Đấu giá tự động, cập nhật Realtime và vẽ biểu đồ lịch sử giá.  
+  Đấu giá tự động, cập nhật Realtime và vẽ biểu đồ lịch sử giá.  //clean up
