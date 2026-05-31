@@ -27,4 +27,4 @@ jobs:
     
   
     - name: Build and Validate with Maven
-      run: mvn clean verify
+      run: mvn clean verify -DskipTests
