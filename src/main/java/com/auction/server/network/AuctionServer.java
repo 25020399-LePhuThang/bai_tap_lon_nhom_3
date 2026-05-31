@@ -36,6 +36,7 @@ public class AuctionServer {
             System.out.println("Server đang chạy trên cổng: " + port);
 
 
+
             BiddingService sharedBiddingService = new BiddingService();
             // Khởi động timer cho tất cả item ACTIVE
             com.auction.server.dao.ItemDAO itemDAO = new com.auction.server.dao.ItemDAO();
@@ -47,6 +48,46 @@ public class AuctionServer {
                 auctionTimers.put(item.getId(), timer);
                 System.out.println("Timer started for: " + item.getName());
             }
+
+
+            java.util.concurrent.ScheduledExecutorService scheduler = java.util.concurrent.Executors.newScheduledThreadPool(1);
+            scheduler.scheduleAtFixedRate(() -> {
+                try {
+                    // 1. Quét và đổi trạng thái PREPARED -> ACTIVE trong Database (Ổ cứng)
+                    itemDAO.updateToActive();
+
+                    // 2. Kéo danh sách đang ACTIVE dưới Database lên để đối chiếu với RAM
+                    java.util.List<Item> currentActiveItems = itemDAO.getActiveItems();
+                    boolean hasNewItems = false;
+
+                    for (Item item : currentActiveItems) {
+                        // Nếu RAM (itemCache) chưa có mặt SP này -> Nó là hàng mới vừa được duyệt/đến giờ
+                        if (!itemCache.containsKey(item.getId())) {
+
+                            // Đưa vào RAM để ClientHandler tìm thấy
+                            itemCache.put(item.getId(), item);
+
+                            // Bật đồng hồ đếm ngược cho SP này
+                            AuctionTimer newTimer = new AuctionTimer(item);
+                            newTimer.start();
+                            auctionTimers.put(item.getId(), newTimer);
+
+                            System.out.println("[Server] Sản phẩm ID " + item.getId() + " - " + item.getName() + " đã tự động MỞ BÁN!");
+                            hasNewItems = true; // Đánh dấu là có sự thay đổi
+                        }
+                    }
+
+                    // 3. Chỉ khi nào có đồ mới lên kệ, mới hét lên cho các App Client F5 lại bảng
+                    if (hasNewItems) {
+                        for (ClientHandler client : clients) {
+                            client.sendMessage("SERVER_SIGNAL_REFRESH");
+                        }
+                    }
+                } catch (Exception e) {
+                    System.err.println("Lỗi quét trạng thái: " + e.getMessage());
+                }
+            }, 0, 5, java.util.concurrent.TimeUnit.SECONDS);
+
 
             // 3. Vòng lặp chờ khách
             while (true) {

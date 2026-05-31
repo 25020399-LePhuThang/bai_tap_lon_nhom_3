@@ -120,6 +120,16 @@ public class AdminController implements Initializable {
     public void initialize(URL url, ResourceBundle resourceBundle) {
         clockInit(lblTimeAdmin);
         setupTableColumns();
+
+        NetworkClient.getInstance().startListening(response -> {
+            if (response == null) return;
+
+            if (response.equals("SERVER_SIGNAL_REFRESH")) {
+                Platform.runLater(() -> {
+                    handleRefresh();
+                });
+            }
+        });
     }
     public void toSignInScreen(ActionEvent event) throws IOException{
         switchScene(event,"/SignInScreen.fxml");
@@ -158,6 +168,7 @@ public class AdminController implements Initializable {
 
     @FXML
     public void handleLogout(ActionEvent event) throws IOException {
+        NetworkClient.getInstance().detachListener();
         NetworkClient.disconnect(lblAdminName.getText());
         switchScene(event,"/SignInScreen.fxml");
     }
