@@ -53,9 +53,9 @@ public class AdminController implements Initializable {
     @FXML
     private TextField txtSearchItem;
     @FXML
-    private TableView<Item> tbvPendingItems; // Chú ý: Dùng đúng class Item của cậu
+    private TableView<Item> tbvPendingItems;
     @FXML
-    private TableColumn<Item, String> colItemId; // Nếu ID của cậu là Int thì đổi String thành Integer nhé
+    private TableColumn<Item, String> colItemId;
     @FXML
     private TableColumn<Item, String> colItemName;
     @FXML
@@ -78,9 +78,9 @@ public class AdminController implements Initializable {
     @FXML
     private TextField txtSearchUser;
     @FXML
-    private TableView<User> tbvUsers; // Chú ý: Dùng đúng class User (Abstract) của cậu
+    private TableView<User> tbvUsers;
     @FXML
-    private TableColumn<User, String> colUserId; // Nếu ID là Int thì đổi String thành Integer
+    private TableColumn<User, String> colUserId;
     @FXML
     private TableColumn<User, String> colUsername;
     @FXML
@@ -103,22 +103,256 @@ public class AdminController implements Initializable {
     @FXML
     private Button DeleteUser;
 
+    // --- BIẾN QUẢN LÝ DỮ LIỆU REAL-TIME ---
+    private final ObservableList<Item> masterItemList = FXCollections.observableArrayList();
+    private final ObservableList<User> masterUserList = FXCollections.observableArrayList();
+
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
         clockInit(lblTimeAdmin);
         setupTableColumns();
 
+        // 1. Cấu hình tính năng Search (CHỈ GỌI 1 LẦN DUY NHẤT LÚC KHỞI TẠO)
+        setupSearchBindings();
+
+        // 2. Lắng nghe tín hiệu Real-time từ Server
         NetworkClient.getInstance().startListening(response -> {
             if (response == null) return;
 
-            if (response.equals("SERVER_SIGNAL_REFRESH")) {
+            // Bắt mọi tín hiệu có thể làm thay đổi dữ liệu để tải lại bảng
+            if (response.equals("SERVER_SIGNAL_REFRESH") || response.startsWith("NOTIFY_") || response.startsWith("UPDATE_")) {
                 Platform.runLater(() -> {
-                    handleRefresh();
+                    loadDataFromServer(); // Tải data âm thầm đằng sau
                 });
             }
         });
     }
 
+    // ==========================================
+    // XỬ LÝ DỮ LIỆU & TÌM KIẾM CỐT LÕI
+    // ==========================================
+    public void setDisplayName(String currentUser) {
+        lblAdminName.setText(currentUser);
+        loadDataFromServer(); // Lần đầu vào màn hình thì tải data lên
+    }
+
+    @FXML
+    public void handleRefresh() {
+        // Nút bấm thủ công trên giao diện
+        String currentUser = lblAdminName.getText();
+        if (currentUser != null && !currentUser.isEmpty()) {
+            loadDataFromServer();
+        }
+    }
+
+    private void loadDataFromServer() {
+        // Mở luồng phụ để đi lấy dữ liệu, không làm đơ giật giao diện
+        new Thread(() -> {
+            List<Item> waitingItems;
+            try {
+                waitingItems = NetworkClient.takeWaitingItemRequest();
+            } catch (Exception e) {
+                waitingItems = new ArrayList<>();
+            }
+
+            List<User> allUsers;
+            try {
+                allUsers = NetworkClient.getAllUsers();
+            } catch (Exception e) {
+                allUsers = new ArrayList<>();
+            }
+
+            final List<Item> finalWaitingItems = waitingItems;
+            final List<User> finalAllUsers = allUsers;
+
+            // 2. Ném 2 biến final đó vào luồng chính để cập nhật UI
+            Platform.runLater(() -> {
+                masterItemList.setAll(finalWaitingItems);
+                masterUserList.setAll(finalAllUsers);
+
+                tbvPendingItems.refresh();
+                tbvUsers.refresh();
+            });
+        }).start();
+    }
+
+    private void setupSearchBindings() {
+        // --- TÌM KIẾM SẢN PHẨM ---
+        FilteredList<Item> filteredItems = new FilteredList<>(masterItemList, b -> true);
+        txtSearchItem.textProperty().addListener((observable, oldValue, newValue) -> {
+            filteredItems.setPredicate(item -> {
+                if (newValue == null || newValue.isEmpty()) return true;
+                String lowerCaseFilter = newValue.toLowerCase();
+
+                if (item.getName() != null && item.getName().toLowerCase().contains(lowerCaseFilter)) return true;
+                if (String.valueOf(item.getItemID()).contains(lowerCaseFilter)) return true;
+                if (item.getSeller_ID() != null && item.getSeller_ID().toLowerCase().contains(lowerCaseFilter)) return true;
+                return item.getType() != null && item.getType().toLowerCase().contains(lowerCaseFilter);
+            });
+        });
+        SortedList<Item> sortedItems = new SortedList<>(filteredItems);
+        sortedItems.comparatorProperty().bind(tbvPendingItems.comparatorProperty());
+        tbvPendingItems.setItems(sortedItems);
+
+        // --- TÌM KIẾM NGƯỜI DÙNG ---
+        FilteredList<User> filteredUsers = new FilteredList<>(masterUserList, b -> true);
+        txtSearchUser.textProperty().addListener((observable, oldValue, newValue) -> {
+            filteredUsers.setPredicate(user -> {
+                if (newValue == null || newValue.isEmpty()) return true;
+                String lowerCaseFilter = newValue.toLowerCase();
+
+                if (user.getName() != null && user.getName().toLowerCase().contains(lowerCaseFilter)) return true;
+                if (String.valueOf(user.getId()).contains(lowerCaseFilter)) return true;
+                if (user.getPhoneNumber() != null && user.getPhoneNumber().contains(lowerCaseFilter)) return true;
+                return user.getRole() != null && user.getRole().toLowerCase().contains(lowerCaseFilter);
+            });
+        });
+        SortedList<User> sortedUsers = new SortedList<>(filteredUsers);
+        sortedUsers.comparatorProperty().bind(tbvUsers.comparatorProperty());
+        tbvUsers.setItems(sortedUsers);
+    }
+
+    private void setupTableColumns() {
+        colItemId.setCellValueFactory(new PropertyValueFactory<>("itemID"));
+        colItemName.setCellValueFactory(new PropertyValueFactory<>("name"));
+        colItemType.setCellValueFactory(new PropertyValueFactory<>("type"));
+        colSellerId.setCellValueFactory(new PropertyValueFactory<>("seller_ID"));
+        colStartPrice.setCellValueFactory(new PropertyValueFactory<>("startingPrice"));
+        colStatus.setCellValueFactory(new PropertyValueFactory<>("status"));
+
+        colUserId.setCellValueFactory(new PropertyValueFactory<>("id"));
+        colUsername.setCellValueFactory(new PropertyValueFactory<>("name"));
+        colRole.setCellValueFactory(new PropertyValueFactory<>("role"));
+        colPhone.setCellValueFactory(new PropertyValueFactory<>("phoneNumber"));
+        colUserStatus.setCellValueFactory(new PropertyValueFactory<>("status"));
+    }
+
+    // ==========================================
+    // CÁC HÀM XỬ LÝ SỰ KIỆN NÚT BẤM
+    // ==========================================
+    @FXML
+    private void handleApproveItem() {
+        Item selectedItem = tbvPendingItems.getSelectionModel().getSelectedItem();
+        if (selectedItem == null) {
+            lblItemMessage.setText("Thông báo, Vui lòng click chọn một sản phẩm trong bảng để duyệt!");
+            return;
+        }
+
+        String itemId = String.valueOf(selectedItem.getItemID());
+        boolean success = NetworkClient.approveItem(itemId);
+
+        if (success) {
+            lblItemMessage.setText("Sản phẩm đã được duyệt");
+            lblItemMessage.setStyle("-fx-text-fill: #27ae60;");
+            loadDataFromServer(); // Load lại bảng ngay
+        } else {
+            lblItemMessage.setText("Lỗi thao tác trên Server!");
+            lblItemMessage.setStyle("-fx-text-fill: #e74c3c;");
+        }
+    }
+
+    @FXML
+    private void handleRejectItem() {
+        Item selectedItem = tbvPendingItems.getSelectionModel().getSelectedItem();
+        if (selectedItem == null) {
+            lblItemMessage.setText("Thông báo, Vui lòng click chọn một sản phẩm để từ chối!");
+            return;
+        }
+
+        String itemId = String.valueOf(selectedItem.getItemID());
+        boolean success = NetworkClient.rejectItem(itemId);
+
+        if (success) {
+            lblItemMessage.setText("Thành công, Đã từ chối sản phẩm " + selectedItem.getName());
+            loadDataFromServer(); // Load lại bảng ngay
+        } else {
+            lblItemMessage.setText("Lỗi, Không thể xóa sản phẩm này.");
+        }
+    }
+
+    @FXML
+    private void handleBanUser() {
+        User selectedUser = tbvUsers.getSelectionModel().getSelectedItem();
+        if (selectedUser == null) {
+            lblUserMessage.setText("Thông báo, Vui lòng click chọn một người dùng để khóa tài khoản!");
+            return;
+        }
+
+        String userId = String.valueOf(selectedUser.getId());
+        boolean success = NetworkClient.banUser(userId);
+
+        if (success) {
+            lblUserMessage.setText("Thành công, Đã đình chỉ tài khoản: " + selectedUser.getName());
+            loadDataFromServer(); // Load lại bảng
+        } else {
+            lblUserMessage.setText("Lỗi, Không thể khóa tài khoản này.");
+        }
+    }
+
+    @FXML
+    private void handleUnbanUser() {
+        User selectedUser = tbvUsers.getSelectionModel().getSelectedItem();
+        if (selectedUser == null) {
+            lblUserMessage.setText("Thông báo, Vui lòng click chọn một người dùng để mở khóa!");
+            return;
+        }
+
+        String userId = String.valueOf(selectedUser.getId());
+        boolean success = NetworkClient.unbanUser(userId);
+
+        if (success) {
+            lblUserMessage.setText("Thành công, Đã mở khóa cho tài khoản: " + selectedUser.getName());
+            loadDataFromServer(); // Load lại bảng
+        } else {
+            lblUserMessage.setText("Lỗi, Không thể mở khóa tài khoản này.");
+        }
+    }
+
+    @FXML
+    public void DeleteUser() {
+        User selectedUser = tbvUsers.getSelectionModel().getSelectedItem();
+
+        if (selectedUser == null) {
+            Alert alert = new Alert(Alert.AlertType.WARNING);
+            alert.setTitle("Cảnh báo");
+            alert.setHeaderText(null);
+            alert.setContentText("Vui lòng click chọn một người dùng trên bảng để xóa!");
+            alert.showAndWait();
+            return;
+        }
+
+        String targetUsername = selectedUser.getName();
+
+        new Thread(() -> {
+            String response = NetworkClient.deleteUser(targetUsername);
+
+            Platform.runLater(() -> {
+                if (response != null && response.startsWith("DELETE_SUCCESS")) {
+                    Alert alert = new Alert(Alert.AlertType.INFORMATION);
+                    alert.setTitle("Thành công");
+                    alert.setHeaderText(null);
+                    alert.setContentText("Đã xóa thành công tài khoản: " + targetUsername);
+                    alert.showAndWait();
+
+                    loadDataFromServer(); // Load lại bảng
+                } else {
+                    String errorMsg = (response != null && response.contains("|"))
+                            ? response.split("\\|")[1]
+                            : "Lỗi không xác định hoặc mất kết nối";
+
+                    Alert alert = new Alert(Alert.AlertType.ERROR);
+                    alert.setTitle("Lỗi xóa tài khoản");
+                    alert.setHeaderText(null);
+                    alert.setContentText(errorMsg);
+                    alert.showAndWait();
+                }
+            });
+        }).start();
+    }
+
+    // ==========================================
+    // CHUYỂN MÀN HÌNH VÀ TIỆN ÍCH
+    // ==========================================
     public void toSignInScreen(ActionEvent event) throws IOException {
         switchScene(event, "/SignInScreen.fxml");
     }
@@ -127,10 +361,8 @@ public class AdminController implements Initializable {
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/InfoScreen.fxml"));
             Parent root = loader.load();
-
             InfoController infoController = loader.getController();
             infoController.initData(lblAdminName.getText(), this);
-
             Stage popUpStage = new Stage();
             popUpStage.setScene(new Scene(root));
             popUpStage.initModality(javafx.stage.Modality.APPLICATION_MODAL);
@@ -145,10 +377,8 @@ public class AdminController implements Initializable {
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/SettingScreen.fxml"));
             Parent root = loader.load();
-
             SettingController settingController = loader.getController();
             settingController.initData(lblAdminName.getText(), "ADMIN");
-
             Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
             stage.getScene().setRoot(root);
             stage.setTitle("Cài đặt tài khoản");
@@ -164,230 +394,4 @@ public class AdminController implements Initializable {
         NetworkClient.disconnect(lblAdminName.getText());
         switchScene(event, "/SignInScreen.fxml");
     }
-
-
-    public void setDisplayName(String currentUser) {
-        lblAdminName.setText(currentUser);
-
-        new Thread(() -> {
-
-            List<Item> waitingItems;
-            try {
-                waitingItems = NetworkClient.takeWaitingItemRequest();
-            } catch (Exception e) {
-                waitingItems = new ArrayList<>();
-            }
-
-            List<User> AllUsers;
-            try {
-                AllUsers = NetworkClient.getAllUsers();
-            } catch (Exception e) {
-                AllUsers = new ArrayList<>();
-            }
-
-            final List<Item> finalActive = waitingItems;
-            final List<User> finalPrepared = AllUsers;
-
-
-            bindItemDataAndSearch(tbvPendingItems, finalActive, txtSearchItem);
-            bindUserDataAndSearch(tbvUsers, finalPrepared, txtSearchUser);
-        }).start();
-    }
-
-    private void bindItemDataAndSearch(TableView<Item> table, List<Item> items, TextField searchField) {
-        if (items == null) items = new ArrayList<>();
-
-        ObservableList<Item> masterList = FXCollections.observableArrayList(items);
-        FilteredList<Item> filteredData = new FilteredList<>(masterList, b -> true);
-
-        searchField.textProperty().addListener((observable, oldValue, newValue) -> {
-            filteredData.setPredicate(item -> {
-                if (newValue == null || newValue.isEmpty()) return true;
-
-                String lowerCaseFilter = newValue.toLowerCase();
-
-                // Tìm theo Tên
-                if (item.getName() != null && item.getName().toLowerCase().contains(lowerCaseFilter)) return true;
-                // Tìm theo Mã SP (Giữ nguyên getItemID() theo code của cậu)
-                if (String.valueOf(item.getItemID()).contains(lowerCaseFilter)) return true;
-                // Tìm theo Mã Người bán
-                if (item.getSeller_ID() != null && item.getSeller_ID().toLowerCase().contains(lowerCaseFilter))
-                    return true;
-                // Tìm theo Loại SP (Ví dụ: gõ "Art" ra tranh ảnh)
-                return item.getType() != null && item.getType().toLowerCase().contains(lowerCaseFilter);
-            });
-        });
-
-        SortedList<Item> sortedData = new SortedList<>(filteredData);
-        sortedData.comparatorProperty().bind(table.comparatorProperty());
-        table.setItems(sortedData);
-    }
-
-    private void bindUserDataAndSearch(TableView<User> table, List<User> users, TextField searchField) {
-        if (users == null) users = new ArrayList<>();
-
-        ObservableList<User> masterList = FXCollections.observableArrayList(users);
-        FilteredList<User> filteredData = new FilteredList<>(masterList, b -> true);
-
-        searchField.textProperty().addListener((observable, oldValue, newValue) -> {
-            filteredData.setPredicate(user -> {
-                if (newValue == null || newValue.isEmpty()) return true;
-
-                String lowerCaseFilter = newValue.toLowerCase();
-
-                // Tìm theo Username
-                if (user.getName() != null && user.getName().toLowerCase().contains(lowerCaseFilter)) return true;
-                // Tìm theo Mã User
-                if (String.valueOf(user.getId()).contains(lowerCaseFilter)) return true;
-                // Tìm theo SĐT
-                if (user.getPhoneNumber() != null && user.getPhoneNumber().contains(lowerCaseFilter)) return true;
-                // Tìm theo Vai trò (BIDDER/SELLER)
-                return user.getRole() != null && user.getRole().toLowerCase().contains(lowerCaseFilter);
-            });
-        });
-
-        SortedList<User> sortedData = new SortedList<>(filteredData);
-        sortedData.comparatorProperty().bind(table.comparatorProperty());
-        table.setItems(sortedData);
-    }
-
-    private void setupTableColumns() {
-        colItemId.setCellValueFactory(new PropertyValueFactory<>("itemID"));
-        colItemName.setCellValueFactory(new PropertyValueFactory<>("name"));
-        colItemType.setCellValueFactory(new PropertyValueFactory<>("type"));
-        colSellerId.setCellValueFactory(new PropertyValueFactory<>("seller_ID"));
-        colStartPrice.setCellValueFactory(new PropertyValueFactory<>("startingPrice"));
-        colStatus.setCellValueFactory(new PropertyValueFactory<>("status"));
-
-        // --- 2. BẢNG NGƯỜI DÙNG (Tab 2) ---
-        // Tương tự, phải khớp với tên biến trong class User gốc
-        colUserId.setCellValueFactory(new PropertyValueFactory<>("id"));
-        colUsername.setCellValueFactory(new PropertyValueFactory<>("name"));
-        colRole.setCellValueFactory(new PropertyValueFactory<>("role"));
-        colPhone.setCellValueFactory(new PropertyValueFactory<>("phoneNumber"));
-        colUserStatus.setCellValueFactory(new PropertyValueFactory<>("status"));
-    }
-
-
-// ... (Các phần code khác của AdminController)
-
-    // ==========================================
-    // 1. XỬ LÝ NÚT TAB SẢN PHẨM (DUYỆT / TỪ CHỐI)
-    // ==========================================
-    @FXML
-    private void handleApproveItem() {
-        // Lấy sản phẩm đang được click chọn trên bảng
-        Item selectedItem = tbvPendingItems.getSelectionModel().getSelectedItem();
-
-        if (selectedItem == null) {
-            lblItemMessage.setText("Thông báo, Vui lòng click chọn một sản phẩm trong bảng để duyệt!");
-            return;
-        }
-
-        // Đảm bảo dùng đúng hàm lấy ID của cậu (getItemID() hoặc getId())
-        String itemId = String.valueOf(selectedItem.getItemID());
-        boolean success = NetworkClient.approveItem(itemId);
-
-        if (success) {
-            lblItemMessage.setText("Sản phẩm đã được duyệt");
-            lblItemMessage.setStyle("-fx-text-fill: #27ae60;");
-        } else {
-            lblItemMessage.setText("Vui lòng chọn một sản phẩm để thao tác!");
-            lblItemMessage.setStyle("-fx-text-fill: #e74c3c;");
-        }
-    }
-
-    @FXML
-    private void handleRejectItem() {
-        Item selectedItem = tbvPendingItems.getSelectionModel().getSelectedItem();
-
-        if (selectedItem == null) {
-            lblItemMessage.setText("Thông báo, Vui lòng click chọn một sản phẩm để từ chối!");
-            return;
-        }
-
-        String itemId = String.valueOf(selectedItem.getItemID());
-        boolean success = NetworkClient.rejectItem(itemId);
-
-        if (success) {
-            lblItemMessage.setText("Thành công, Đã xóa sản phẩm " + selectedItem.getName() + " khỏi hệ thống!");
-        } else {
-            lblItemMessage.setText("Lỗi, Không thể xóa sản phẩm này.");
-        }
-    }
-
-    // ==========================================
-    // 2. XỬ LÝ NÚT TAB NGƯỜI DÙNG (KHÓA / MỞ KHÓA)
-    // ==========================================
-    @FXML
-    private void handleBanUser() {
-        User selectedUser = tbvUsers.getSelectionModel().getSelectedItem();
-
-        if (selectedUser == null) {
-            lblUserMessage.setText("Thông báo, Vui lòng click chọn một người dùng để khóa tài khoản!");
-            return;
-        }
-
-        String userId = String.valueOf(selectedUser.getId());
-        boolean success = NetworkClient.banUser(userId);
-
-        if (success) {
-            lblUserMessage.setText("Thành công, Đã đình chỉ tài khoản: " + selectedUser.getName());
-        } else {
-            lblUserMessage.setText("Lỗi, Không thể khóa tài khoản này.");
-        }
-    }
-
-    @FXML
-    private void handleUnbanUser() {
-        User selectedUser = tbvUsers.getSelectionModel().getSelectedItem();
-
-        if (selectedUser == null) {
-            lblUserMessage.setText("Thông báo, Vui lòng click chọn một người dùng để mở khóa!");
-            return;
-        }
-
-        String userId = String.valueOf(selectedUser.getId());
-        boolean success = NetworkClient.unbanUser(userId);
-
-        if (success) {
-            lblUserMessage.setText("Thành công, Đã mở khóa cho tài khoản: " + selectedUser.getName());
-        } else {
-            lblUserMessage.setText("Lỗi,Không thể mở khóa tài khoản này.");
-        }
-    }
-
-
-    @FXML
-    public void handleRefresh() {
-        String currentUser = lblAdminName.getText();
-        if (currentUser != null && !currentUser.isEmpty()) {
-            setDisplayName(currentUser);
-        }
-    }
-
-    public void DeleteUser(ActionEvent event) throws IOException {
-        String response = NetworkClient.deleteUser(lblAdminName.getText());
-
-        String[] parts = response.split("\\|");
-        String status = parts[0];
-        String message = (parts.length > 1) ? parts[1] : "Lỗi không xác định";
-
-        if (status.equals("DELETE_SUCCESS")) {
-            Alert alert = new Alert(Alert.AlertType.INFORMATION);
-            alert.setTitle("Thành công");
-            alert.setHeaderText(null);
-            alert.setContentText(message);
-            alert.showAndWait();
-
-            switchScene(event, "/SignInScreen.fxml");
-        } else {
-            Alert alert = new Alert(Alert.AlertType.ERROR);
-            alert.setTitle("Lỗi xóa tài khoản");
-            alert.setHeaderText(null);
-            alert.setContentText(message);
-            alert.showAndWait();
-        }
-    }
 }
-
