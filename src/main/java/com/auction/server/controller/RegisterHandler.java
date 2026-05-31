@@ -1,9 +1,9 @@
 package com.auction.server.controller;
 
 import com.auction.server.dao.UserDAO;
-import com.auction.shared.model.user.User;
 import com.auction.shared.model.user.Bidder;
 import com.auction.shared.model.user.Seller;
+import com.auction.shared.model.user.User;
 
 public class RegisterHandler {
 

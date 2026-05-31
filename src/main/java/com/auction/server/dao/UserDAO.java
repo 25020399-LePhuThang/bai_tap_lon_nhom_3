@@ -7,15 +7,16 @@ import com.auction.shared.model.user.Admin;
 import com.auction.shared.model.user.Bidder;
 import com.auction.shared.model.user.Seller;
 import com.auction.shared.model.user.User;
-import java.sql.*;
-
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
+
 import java.lang.reflect.Type;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
-
-import static java.lang.System.out;
 
 public class UserDAO {
     //Hàm đăng ký
@@ -27,7 +28,7 @@ public class UserDAO {
             preparedStatement.setString(2, user.getPassword());
             preparedStatement.setString(3, user.getEmail());
             preparedStatement.setString(4, user.getPhoneNumber());
-            preparedStatement.setString(5,user.getRole().toUpperCase());
+            preparedStatement.setString(5, user.getRole().toUpperCase());
             int rows = preparedStatement.executeUpdate();
             return rows > 0;
         } catch (SQLException e) {
@@ -90,7 +91,8 @@ public class UserDAO {
                             if (addedItemJson != null && !addedItemJson.isEmpty()) {
                                 Gson gson = new Gson();
                                 // 1. Lấy danh sách các chuỗi (thường là ID sản phẩm) từ DB
-                                Type listType = new TypeToken<ArrayList<String>>() {}.getType();
+                                Type listType = new TypeToken<ArrayList<String>>() {
+                                }.getType();
                                 List<String> productIds = gson.fromJson(addedItemJson, listType);
 
                                 // 2. Tạo một danh sách Item đúng chuẩn để nạp vào Seller
@@ -236,7 +238,6 @@ public class UserDAO {
             }
 
 
-
             String sql = "UPDATE Users SET "
                     + "username = COALESCE(NULLIF(?, ''), username), "
                     + "email = COALESCE(NULLIF(?, ''), email), "
@@ -335,6 +336,7 @@ public class UserDAO {
         }
         return id;
     }
+
     public User getUserByUsername(String username) {
         String sql = "SELECT * FROM Users WHERE username = ?";
         try (Connection conn = DatabaseManager.getConnection();

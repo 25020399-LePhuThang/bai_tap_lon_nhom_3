@@ -1,14 +1,15 @@
 package com.auction.server.controller;
 
 import com.auction.shared.model.Observer;
-import java.util.*;
+
+import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 public class AuctionObserver {
 
     private final List<Observer> observers = new CopyOnWriteArrayList<>();
 
-    private String auctionId;
+    private final String auctionId;
     private double currentPrice = 0;
 
     public AuctionObserver(String auctionId) {

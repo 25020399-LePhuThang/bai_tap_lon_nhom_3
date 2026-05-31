@@ -1,30 +1,17 @@
 package com.auction.client.controller;
 
 import com.auction.client.network.NetworkClient;
-
-import java.awt.*;
+import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
 import javafx.scene.Node;
 import javafx.scene.Parent;
-import javafx.scene.Scene;
 import javafx.scene.control.*;
-import javafx.scene.control.Button;
-import javafx.scene.control.Label;
-import javafx.scene.control.TextField;
 import javafx.stage.Stage;
-import javafx.event.ActionEvent;
 
 import java.io.IOException;
-
-import javafx.animation.KeyFrame;
-import javafx.animation.Timeline;
-import javafx.util.Duration;
-
 import java.net.URL;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.ResourceBundle;
 
 import static com.auction.client.controller.ClockUtil.clockInit;
@@ -68,26 +55,26 @@ public class SettingController implements Initializable {
 
     @FXML
     public void toPreviousScreen(ActionEvent event) {
-        if(role.equals("BIDDER")){
-        try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/MainScreen.fxml"));
-            Parent root = loader.load();
+        if (role.equals("BIDDER")) {
+            try {
+                FXMLLoader loader = new FXMLLoader(getClass().getResource("/MainScreen.fxml"));
+                Parent root = loader.load();
 
-            MainScreenController mainScreenController = loader.getController();
+                MainScreenController mainScreenController = loader.getController();
 
-            String currentUser = lblUsernameSettings1.getText();
+                String currentUser = lblUsernameSettings1.getText();
 
-            mainScreenController.setDisplayName(currentUser);
+                mainScreenController.setDisplayName(currentUser);
 
-            Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
-            stage.getScene().setRoot(root);
-            stage.setTitle("Cài đặt tài khoản");
-            stage.show();
+                Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
+                stage.getScene().setRoot(root);
+                stage.setTitle("Cài đặt tài khoản");
+                stage.show();
 
-        } catch (IOException e) {
-            e.printStackTrace();
-        }}
-        else if(role.equals("SELLER")) {
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        } else if (role.equals("SELLER")) {
             try {
                 FXMLLoader loader = new FXMLLoader(getClass().getResource("/SellerScreen.fxml"));
                 Parent root = loader.load();
@@ -102,12 +89,10 @@ public class SettingController implements Initializable {
                 stage.getScene().setRoot(root);
                 stage.setTitle("Cài đặt tài khoản");
                 stage.show();
-            }catch (IOException e) {
+            } catch (IOException e) {
                 e.printStackTrace();
             }
-        }
-
-        else if(role.equals("ADMIN")) {
+        } else if (role.equals("ADMIN")) {
             try {
                 FXMLLoader loader = new FXMLLoader(getClass().getResource("/AdminScreen.fxml"));
                 Parent root = loader.load();
@@ -118,7 +103,7 @@ public class SettingController implements Initializable {
                 stage.getScene().setRoot(root);
                 stage.setTitle("Cài đặt tài khoản");
                 stage.show();
-            }catch (IOException e) {
+            } catch (IOException e) {
                 e.printStackTrace();
             }
         }
@@ -130,7 +115,7 @@ public class SettingController implements Initializable {
     }
 
     public void setupUIBasedOnRole(String role) {
-        this.role=role;
+        this.role = role;
         if (role.equals("ADMIN") || role.equals("SELLER")) {
             lblAddressTitle.setVisible(false);
             txtUpdateAddress.setVisible(false);
@@ -248,7 +233,8 @@ public class SettingController implements Initializable {
             });
         }).start();
     }
-    public void DeleteUser(ActionEvent event) throws IOException{
+
+    public void DeleteUser(ActionEvent event) throws IOException {
         String response = NetworkClient.deleteUser(lblUsernameSettings1.getText());
 
         String[] parts = response.split("\\|");
@@ -262,7 +248,7 @@ public class SettingController implements Initializable {
             alert.setContentText(message);
             alert.showAndWait();
 
-            SceneSwitchUtil.switchScene(event,"/SignInScreen.fxml");
+            SceneSwitchUtil.switchScene(event, "/SignInScreen.fxml");
         } else {
             Alert alert = new Alert(Alert.AlertType.ERROR);
             alert.setTitle("Lỗi xóa tài khoản");
@@ -270,5 +256,5 @@ public class SettingController implements Initializable {
             alert.setContentText(message);
             alert.showAndWait();
         }
-        }
     }
+}

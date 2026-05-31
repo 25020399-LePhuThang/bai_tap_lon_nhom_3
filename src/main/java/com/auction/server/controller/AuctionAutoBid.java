@@ -121,27 +121,23 @@ public class AuctionAutoBid {
 
     public double getCurrentPrice() {
         lock.lock();
-        try { return currentPrice; } finally { lock.unlock(); }
+        try {
+            return currentPrice;
+        } finally {
+            lock.unlock();
+        }
     }
 
     public String getCurrentWinnerId() {
         lock.lock();
-        try { return currentWinnerId; } finally { lock.unlock(); }
+        try {
+            return currentWinnerId;
+        } finally {
+            lock.unlock();
+        }
     }
 
-    public static class AutoBidResult {
-        public final double finalPrice;
-        public final String finalWinnerId;
-        public final boolean priceChanged;
-        public final String message;
-
-        public AutoBidResult(double finalPrice, String finalWinnerId,
-                             boolean priceChanged, String message) {
-            this.finalPrice = finalPrice;
-            this.finalWinnerId = finalWinnerId;
-            this.priceChanged = priceChanged;
-            this.message = message;
-        }
+    public record AutoBidResult(double finalPrice, String finalWinnerId, boolean priceChanged, String message) {
     }
 
     public List<AutoBid> getAutoBids() {

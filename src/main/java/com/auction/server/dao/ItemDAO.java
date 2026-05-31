@@ -6,9 +6,6 @@ import com.auction.shared.model.item.Electronic;
 import com.auction.shared.model.item.Item;
 import com.auction.shared.model.item.Vehicle;
 
-import javafx.collections.transformation.FilteredList;
-import javafx.collections.transformation.SortedList;
-
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -144,6 +141,7 @@ public class ItemDAO {
             return false;
         }
     }
+
     // HÀM MỚI: Cập nhật giá và người dẫn đầu sau mỗi lần bid thành công
     public boolean updatePrice(Item item) {
         String sql = "UPDATE items SET current_price = ?, last_bidder_id = ? WHERE item_id = ?";
@@ -302,8 +300,7 @@ public class ItemDAO {
             pstmt.setString(9, item.getSeller_ID());
             pstmt.setString(10, item.getProductImageURL());
 
-            if (item instanceof Electronic) {
-                Electronic el = (Electronic) item;
+            if (item instanceof Electronic el) {
                 pstmt.setInt(11, el.getWarrantyPeriod());
                 pstmt.setString(12, el.getBrand());
                 pstmt.setNull(13, java.sql.Types.VARCHAR);
@@ -311,8 +308,7 @@ public class ItemDAO {
                 pstmt.setNull(15, java.sql.Types.VARCHAR);
                 pstmt.setNull(16, java.sql.Types.INTEGER);
 
-            } else if (item instanceof Vehicle) {
-                Vehicle v = (Vehicle) item;
+            } else if (item instanceof Vehicle v) {
                 pstmt.setInt(11, v.getWarrantyPeriod());
                 pstmt.setString(12, v.getBrand());
                 pstmt.setString(13, v.getEngineCapacity());
@@ -320,8 +316,7 @@ public class ItemDAO {
                 pstmt.setNull(15, java.sql.Types.VARCHAR);
                 pstmt.setNull(16, java.sql.Types.INTEGER);
 
-            } else if (item instanceof Art) {
-                Art a = (Art) item;
+            } else if (item instanceof Art a) {
                 pstmt.setNull(11, java.sql.Types.INTEGER);
                 pstmt.setNull(12, java.sql.Types.VARCHAR);
                 pstmt.setNull(13, java.sql.Types.VARCHAR);
@@ -388,7 +383,6 @@ public class ItemDAO {
     }
 
 
-
     public static boolean approveItemWithTimeCheck(String itemId) {
 
         String queryTime = "SELECT StartTime FROM Items WHERE item_id = ?";
@@ -424,6 +418,7 @@ public class ItemDAO {
             return false;
         }
     }
+
     public static boolean deleteItem(String itemId) {
         String sql = "DELETE FROM Items WHERE item_id = ?";
 
@@ -518,6 +513,7 @@ public class ItemDAO {
         }
         return null;
     }
+
     public boolean updateStatusToSold(String itemId) {
         String sql = "UPDATE items SET status = 'SOLD' WHERE item_id = ?";
         try (Connection conn = DatabaseManager.getConnection();

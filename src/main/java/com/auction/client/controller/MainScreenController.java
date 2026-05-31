@@ -5,18 +5,6 @@ import com.auction.shared.model.item.Art;
 import com.auction.shared.model.item.Electronic;
 import com.auction.shared.model.item.Item;
 import com.auction.shared.model.item.Vehicle;
-
-import java.io.IOException;
-import java.net.URL;
-import java.text.NumberFormat;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Locale;
-import java.util.ResourceBundle;
-
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.application.Platform;
@@ -38,39 +26,71 @@ import javafx.scene.shape.Circle;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 
+import java.io.IOException;
+import java.net.URL;
+import java.text.NumberFormat;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
+
 import static com.auction.client.controller.SceneSwitchUtil.switchScene;
 
 public class MainScreenController implements Initializable {
 
-    @FXML private Button btnUpdate;
-    @FXML private Button btnQuaylai2;
-    @FXML private TextField txtSearch1;
-    @FXML private Label lblTime5;
-    @FXML private Button btnDangXuat1;
-    @FXML private Label lblName;
-    @FXML private Button btnAvt;
-    @FXML private ImageView imgUserAvatar;
-    @FXML private Button btnDeposit;
-    @FXML private Button btnWithdraw;
-    @FXML private Label lblBalance;
+    @FXML
+    private Button btnUpdate;
+    @FXML
+    private Button btnQuaylai2;
+    @FXML
+    private TextField txtSearch1;
+    @FXML
+    private Label lblTime5;
+    @FXML
+    private Button btnDangXuat1;
+    @FXML
+    private Label lblName;
+    @FXML
+    private Button btnAvt;
+    @FXML
+    private ImageView imgUserAvatar;
+    @FXML
+    private Button btnDeposit;
+    @FXML
+    private Button btnWithdraw;
+    @FXML
+    private Label lblBalance;
 
     // --- Bảng 1: Đang diễn ra ---
-    @FXML private TableView<Item> tbvIsPresenting;
-    @FXML private TableColumn<Item, String> NameColumn1;
-    @FXML private TableColumn<Item, Integer> IDcolumn1;
-    @FXML private TableColumn<Item, String> typeColumn1;
-    @FXML private TableColumn<Item, Double> RecentPriceColumn;
-    @FXML private TableColumn<Item, Date> EndTimeColumn1;
+    @FXML
+    private TableView<Item> tbvIsPresenting;
+    @FXML
+    private TableColumn<Item, String> NameColumn1;
+    @FXML
+    private TableColumn<Item, Integer> IDcolumn1;
+    @FXML
+    private TableColumn<Item, String> typeColumn1;
+    @FXML
+    private TableColumn<Item, Double> RecentPriceColumn;
+    @FXML
+    private TableColumn<Item, Date> EndTimeColumn1;
 
     // --- Bảng 2: Sắp diễn ra ---
-    @FXML private TableView<Item> tbvWillPresent;
-    @FXML private TableColumn<Item, String> NameColumn2;
-    @FXML private TableColumn<Item, Integer> IDcolumn2;
-    @FXML private TableColumn<Item, String> typeColumn2;
-    @FXML private TableColumn<Item, Double> StartPriceColumn;
-    @FXML private TableColumn<Item, Date> StartTimeColumn;
-    @FXML private TableColumn<Item, Date> EndTimeColumn2;
-    @FXML private Button btnRefresh;
+    @FXML
+    private TableView<Item> tbvWillPresent;
+    @FXML
+    private TableColumn<Item, String> NameColumn2;
+    @FXML
+    private TableColumn<Item, Integer> IDcolumn2;
+    @FXML
+    private TableColumn<Item, String> typeColumn2;
+    @FXML
+    private TableColumn<Item, Double> StartPriceColumn;
+    @FXML
+    private TableColumn<Item, Date> StartTimeColumn;
+    @FXML
+    private TableColumn<Item, Date> EndTimeColumn2;
+    @FXML
+    private Button btnRefresh;
 
     private final ObservableList<Item> activeMasterList = FXCollections.observableArrayList();
     private final ObservableList<Item> preparedMasterList = FXCollections.observableArrayList();
@@ -145,16 +165,13 @@ public class MainScreenController implements Initializable {
 
                     String extraDetails = "\n Thông tin chi tiết \n";
 
-                    if (selectedItem instanceof Electronic) {
-                        Electronic electronic = (Electronic) selectedItem;
+                    if (selectedItem instanceof Electronic electronic) {
                         extraDetails += "Thương hiệu: " + electronic.getBrand() + "\n"
                                 + "Bảo hành: " + electronic.getWarrantyPeriod() + " tháng\n";
-                    } else if (selectedItem instanceof Art) {
-                        Art art = (Art) selectedItem;
+                    } else if (selectedItem instanceof Art art) {
                         extraDetails += "Tác giả: " + art.getAuthor() + "\n"
                                 + "Năm sáng tác: " + art.getCreationYear() + "\n";
-                    } else if (selectedItem instanceof Vehicle) {
-                        Vehicle vehicle = (Vehicle) selectedItem;
+                    } else if (selectedItem instanceof Vehicle vehicle) {
                         extraDetails += "Thương hiệu: " + vehicle.getBrand() + "\n"
                                 + "Bảo hành: " + vehicle.getWarrantyPeriod() + " tháng\n"
                                 + "Nhiên liệu: " + vehicle.getFuelType() + "\n"
@@ -306,7 +323,9 @@ public class MainScreenController implements Initializable {
             popUpStage.initModality(javafx.stage.Modality.APPLICATION_MODAL);
             popUpStage.setResizable(false);
             popUpStage.show();
-        } catch (IOException e) { e.printStackTrace(); }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     public void toLoginScreen(ActionEvent event) throws IOException {
@@ -326,7 +345,9 @@ public class MainScreenController implements Initializable {
             stage.getScene().setRoot(root);
             stage.setTitle("Cài đặt tài khoản");
             stage.show();
-        } catch (IOException e) { e.printStackTrace(); }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     public void toDepositScreen() {
@@ -343,7 +364,9 @@ public class MainScreenController implements Initializable {
             popUpStage.initModality(javafx.stage.Modality.APPLICATION_MODAL);
             popUpStage.setResizable(false);
             popUpStage.show();
-        } catch (IOException e) { e.printStackTrace(); }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     public void toWithdrawScreen() {
@@ -360,7 +383,9 @@ public class MainScreenController implements Initializable {
             popUpStage.initModality(javafx.stage.Modality.APPLICATION_MODAL);
             popUpStage.setResizable(false);
             popUpStage.show();
-        } catch (IOException e) { e.printStackTrace(); }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     @FXML
@@ -388,8 +413,7 @@ public class MainScreenController implements Initializable {
                 if (lowerCaseFilter.isEmpty()) return true;
                 if (item.getName() != null && item.getName().toLowerCase().contains(lowerCaseFilter)) return true;
                 if (String.valueOf(item.getItemID()).contains(lowerCaseFilter)) return true;
-                if (item.getSeller_ID() != null && item.getSeller_ID().toLowerCase().contains(lowerCaseFilter)) return true;
-                return false;
+                return item.getSeller_ID() != null && item.getSeller_ID().toLowerCase().contains(lowerCaseFilter);
             };
 
             filteredActive.setPredicate(filterPredicate);
@@ -486,6 +510,7 @@ public class MainScreenController implements Initializable {
         clock.setCycleCount(Timeline.INDEFINITE);
         clock.play();
     }
+
     /**
      * 🛠️ HÀM MỚI THÊM: Tự động quét và chuyển trạng thái các item từ PREPARED -> ACTIVE khi đến giờ.
      * Hoàn toàn không ảnh hưởng đến cấu trúc luồng mạng hay cơ sở dữ liệu cũ.

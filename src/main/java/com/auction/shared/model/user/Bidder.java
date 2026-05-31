@@ -10,14 +10,14 @@ public class Bidder extends User {
     @SerializedName("name")
     String name;
     @SerializedName("balance")
-    protected float balance=0;
+    protected float balance = 0;
     @SerializedName("max_autobid_limit")
     protected float maxAutoBidLimit;
     @SerializedName("shipping_address")
     private String ShippingAddress;
 
-    public Bidder(String id, String name,String password,String email,String phoneNumber,String status,String role) {
-        super(id,name,password,email,phoneNumber, status,"Bidder");
+    public Bidder(String id, String name, String password, String email, String phoneNumber, String status, String role) {
+        super(id, name, password, email, phoneNumber, status, "Bidder");
         this.maxAutoBidLimit = 0;
     }
 
@@ -26,14 +26,26 @@ public class Bidder extends User {
         super();
     }
 
-    public float  getBalance(){ return balance; }
-    public void setBalance(float balance){ this.balance=balance; }
+    public float getBalance() {
+        return balance;
+    }
 
-    public float getMaxAutoBidLimit() { return maxAutoBidLimit; }
-    public void setMaxAutoBidLimit(float maxAutoBidLimit) { this.maxAutoBidLimit = maxAutoBidLimit; }
+    public void setBalance(float balance) {
+        this.balance = balance;
+    }
+
+    public float getMaxAutoBidLimit() {
+        return maxAutoBidLimit;
+    }
+
+    public void setMaxAutoBidLimit(float maxAutoBidLimit) {
+        this.maxAutoBidLimit = maxAutoBidLimit;
+    }
 
     @Override
-    public String getRole(){ return "BIDDER"; }
+    public String getRole() {
+        return "BIDDER";
+    }
 
     @Override
     public void printInfo() {
@@ -49,6 +61,11 @@ public class Bidder extends User {
                 '}';
     }
 
-    public String getShippingAddress(){return ShippingAddress;}
-    public void setShippingAddress(String ShippingAddress){this.ShippingAddress=ShippingAddress;}
+    public String getShippingAddress() {
+        return ShippingAddress;
+    }
+
+    public void setShippingAddress(String ShippingAddress) {
+        this.ShippingAddress = ShippingAddress;
+    }
 }

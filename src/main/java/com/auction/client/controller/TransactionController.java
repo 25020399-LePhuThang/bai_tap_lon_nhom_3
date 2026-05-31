@@ -12,10 +12,14 @@ import javafx.stage.Stage;
 
 public class TransactionController {
 
-    @FXML private Label lblTitle;
-    @FXML private TextField txtAmount;
-    @FXML private Button btnConfirm;
-    @FXML private Label lblStatusMsg;
+    @FXML
+    private Label lblTitle;
+    @FXML
+    private TextField txtAmount;
+    @FXML
+    private Button btnConfirm;
+    @FXML
+    private Label lblStatusMsg;
 
     private String actionType;
     private String username;
@@ -59,8 +63,7 @@ public class TransactionController {
             lblStatusMsg.setText("Số tiền phải lớn hơn 0!");
             lblStatusMsg.setStyle("-fx-text-fill: #e74c3c;");
             return;
-        }
-        else if ("NAP_TIEN".equals(actionType) && amount > 1000000) {
+        } else if ("NAP_TIEN".equals(actionType) && amount > 1000000) {
             lblStatusMsg.setText("Số tiền nạp một lần không vượt quá 1,000,000$");
             lblStatusMsg.setStyle("-fx-text-fill: #e74c3c;");
             return;
@@ -90,16 +93,14 @@ public class TransactionController {
 
                     Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
                     stage.close();
-                }
-                else if (response != null && response.contains("FAIL")) {
+                } else if (response != null && response.contains("FAIL")) {
                     btnConfirm.setDisable(false);
                     String[] parts = response.split("\\|");
                     String errorMsg = (parts.length > 1) ? parts[1] : "Giao dịch thất bại!";
 
                     lblStatusMsg.setText(errorMsg);
                     lblStatusMsg.setStyle("-fx-text-fill: #e74c3c;");
-                }
-                else {
+                } else {
                     btnConfirm.setDisable(false);
                     lblStatusMsg.setText("Lỗi: Không nhận được phản hồi từ Server!");
                     lblStatusMsg.setStyle("-fx-text-fill: #e74c3c;");

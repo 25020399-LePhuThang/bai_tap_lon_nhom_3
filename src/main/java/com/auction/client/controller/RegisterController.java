@@ -2,24 +2,13 @@ package com.auction.client.controller;
 
 import com.auction.client.network.NetworkClient;
 import javafx.collections.FXCollections;
-import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
-import javafx.fxml.Initializable;
-import javafx.scene.Node;
-import javafx.scene.Parent;
-import javafx.scene.Scene;
-import javafx.scene.control.*;
-import javafx.stage.Stage;
 import javafx.event.ActionEvent;
+import javafx.fxml.FXML;
+import javafx.fxml.Initializable;
+import javafx.scene.control.*;
 
 import java.io.IOException;
-
-import javafx.animation.KeyFrame;
-import javafx.animation.Timeline;
-import javafx.util.Duration;
 import java.net.URL;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.ResourceBundle;
 
 import static com.auction.client.controller.ClockUtil.clockInit;
@@ -57,7 +46,7 @@ public class RegisterController implements Initializable {
     }
 
     public void toWelcomeScreen(ActionEvent event) throws IOException {
-      switchScene(event, "/hello-view.fxml");
+        switchScene(event, "/hello-view.fxml");
     }
 
     public void RegisterLogic(ActionEvent event) {
@@ -70,7 +59,7 @@ public class RegisterController implements Initializable {
         String password2 = txtPass2.getText();
         String email = txtEmail.getText().trim();
         String phone = txtPhone.getText().trim();
-        String role= cbRole.getValue().trim();
+        String role = cbRole.getValue().trim();
 
         if (username.isEmpty() || phone.isEmpty() || email.isEmpty() || password1.isEmpty() || role == null) {
             lblERROR.setText("Nhập đủ thông tin để tiếp tục!");
@@ -101,9 +90,9 @@ public class RegisterController implements Initializable {
                 finalRole = "SELLER";
             }
             // đợi liên kết với server
-            boolean isSuccess = NetworkClient.sendRegisterRequest(username, password1, email, phone,finalRole);
+            boolean isSuccess = NetworkClient.sendRegisterRequest(username, password1, email, phone, finalRole);
             if (isSuccess) {
-                   switchScene(event, "/SignInScreen.fxml");
+                switchScene(event, "/SignInScreen.fxml");
 
             } else {
                 lblERROR.setText("         Tên đăng nhập hoặc Email đã tồn tại! Vui lòng thử lại.");

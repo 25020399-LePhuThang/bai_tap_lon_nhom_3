@@ -1,26 +1,17 @@
 package com.auction.client.controller;
 
 import com.auction.client.network.NetworkClient;
-import com.auction.shared.model.user.User;
 import javafx.collections.FXCollections;
+import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
-import javafx.scene.Node;
 import javafx.scene.Parent;
-import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.stage.Stage;
-import javafx.event.ActionEvent;
 
 import java.io.IOException;
-
-import javafx.animation.KeyFrame;
-import javafx.animation.Timeline;
-import javafx.util.Duration;
 import java.net.URL;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.ResourceBundle;
 
 import static com.auction.client.controller.ClockUtil.clockInit;
@@ -29,17 +20,17 @@ import static com.auction.client.controller.SceneSwitchUtil.switchScene;
 
 public class LoginController implements Initializable {
     @FXML
-   private Label lbltime1;
+    private Label lbltime1;
     @FXML
     private TextField txtLogin1;
     @FXML
-   private PasswordField txtPass1;
+    private PasswordField txtPass1;
     @FXML
     private Button btnRegister2;
     @FXML
     private Label lblError1;
     @FXML
-   private Button btnLogin2;
+    private Button btnLogin2;
     @FXML
     private Button btnBack3;
     @FXML
@@ -54,6 +45,7 @@ public class LoginController implements Initializable {
 
         cbxRole.getSelectionModel().selectFirst();
     }
+
     @FXML
     public void LoginLogic(ActionEvent event) throws IOException {
         // Lấy dữ liệu từ các ô nhập liệu
@@ -106,6 +98,7 @@ public class LoginController implements Initializable {
             lblError1.setText(errorMsg);
         }
     }
+
     public void toRegisterScreen(ActionEvent event) throws IOException {
         switchScene(event, "/RegisterScreen.fxml");
     }

@@ -3,15 +3,14 @@ package com.auction.server.network;
 import com.auction.server.controller.AuctionTimer;
 import com.auction.server.controller.BiddingService;
 import com.auction.server.database.DatabaseManager;
+import com.auction.shared.model.item.Item;
 
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
-import com.auction.shared.model.item.Item;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-
 
 
 public class AuctionServer {
@@ -34,7 +33,6 @@ public class AuctionServer {
                     : 5000;
             ServerSocket serverSocket = new ServerSocket(port);
             System.out.println("Server đang chạy trên cổng: " + port);
-
 
 
             BiddingService sharedBiddingService = new BiddingService();
@@ -95,7 +93,7 @@ public class AuctionServer {
                 Socket socket = serverSocket.accept();
 
                 // 5. Giao việc cho luồng mới
-                ClientHandler clientHandler = new ClientHandler(socket,sharedBiddingService);
+                ClientHandler clientHandler = new ClientHandler(socket, sharedBiddingService);
                 clients.add(clientHandler);
 
                 new Thread(clientHandler).start();

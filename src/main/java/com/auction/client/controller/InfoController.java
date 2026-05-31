@@ -5,7 +5,8 @@ import com.auction.shared.model.user.Bidder;
 import com.auction.shared.model.user.Seller;
 import com.auction.shared.model.user.User;
 import javafx.fxml.FXML;
-import javafx.scene.control.*;
+import javafx.scene.control.Button;
+import javafx.scene.control.Label;
 
 public class InfoController {
     @FXML
@@ -68,14 +69,13 @@ public class InfoController {
             lblRating.setManaged(false);
 
 
-
             lblRole.setText("NGƯỜI MUA (BIDDER)");
             lblRole.setStyle("-fx-background-color: #27ae60; -fx-padding: 5 15; -fx-background-radius: 15; -fx-text-fill: white;");
 
         } else if (userRole.equals("SELLER")) {
             Seller seller = (Seller) user;
 
-            lblRating.setText(seller.getRating()+"");
+            lblRating.setText(seller.getRating() + "");
             lblAddressTitle.setVisible(false);
             lblShippingAddress.setVisible(false);
 

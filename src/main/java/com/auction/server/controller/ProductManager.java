@@ -1,8 +1,9 @@
 //thuật toán quản lí sản phẩm đấu giá
 package com.auction.server.controller;
 
-import com.auction.shared.model.item.Item;
 import com.auction.shared.model.item.Electronic;
+import com.auction.shared.model.item.Item;
+
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -11,7 +12,7 @@ import java.util.List;
 public class ProductManager {
 
     // 1. Tạo một cái kho chứa đồ giả (Lưu tạm trên RAM)
-    private static List<Item> mockDatabase = new ArrayList<>();
+    private static final List<Item> mockDatabase = new ArrayList<>();
 
     // 2. Nhét sẵn vài món đồ vào kho để thầy có cái mà xem
     static {

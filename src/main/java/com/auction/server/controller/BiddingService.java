@@ -1,13 +1,13 @@
 package com.auction.server.controller;
 
-import java.util.Date;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-
 import com.auction.server.dao.ItemDAO;
 import com.auction.server.network.AuctionServer;
 import com.auction.shared.model.AutoBid;
 import com.auction.shared.model.item.Item;
+
+import java.util.Date;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class BiddingService {
 
@@ -95,7 +95,8 @@ public class BiddingService {
                             timer.reschedule();
                             System.out.println(">>> Timer đã được gia hạn thêm 60s cho: " + item.getId());
                         }
-                    }}
+                    }
+                }
 
                 // 6. Kích hoạt auto-bid phản ứng (nếu có người đã đăng ký)
                 AuctionAutoBid autoBid = autoBidMap.get(item.getId());
@@ -114,19 +115,19 @@ public class BiddingService {
                     String manualBidderId = userId;
 
                     AuctionAutoBid.AutoBidResult result = autoBid.onManualBidPlaced(amount, userId);
-                    if (result.priceChanged) {
-                        item.setCurrentPrice(result.finalPrice);
-                        item.setLastBidderId(result.finalWinnerId);
+                    if (result.priceChanged()) {
+                        item.setCurrentPrice(result.finalPrice());
+                        item.setLastBidderId(result.finalWinnerId());
                         getItemDao().updatePrice(item);
 
                         // 🛠️ SỬA TRỰC TIẾP: Gửi kèm oldWinnerId ở vị trí tham số thứ 7 để UI đọc Alert
                         AuctionServer.broadcast(
-                                "BID_UPDATE|" + item.getId() + "|" + result.finalPrice + "|" + result.finalWinnerId +
+                                "BID_UPDATE|" + item.getId() + "|" + result.finalPrice() + "|" + result.finalWinnerId() +
                                         "|AUTOBID_TRIGGERED|" + manualBidderId + "|" + oldWinnerId + "\n"
                         );
 
                         // Gửi kèm winnerId và giá mới để client hiển thị thông báo chi tiết
-                        return "SERVER_PROCESSED_AUTOBID|" + result.finalWinnerId + "|" + result.finalPrice;
+                        return "SERVER_PROCESSED_AUTOBID|" + result.finalWinnerId() + "|" + result.finalPrice();
                     }
                 }
 
@@ -172,11 +173,11 @@ public class BiddingService {
             AuctionAutoBid.AutoBidResult result = autoBid.registerAutoBid(bid);
 
             // 🛠️ SỬA TẠI ĐÂY: Nếu đăng ký AutoBid làm thay đổi giá (giật lại lượt dẫn đầu)
-            if (result.priceChanged) {
+            if (result.priceChanged()) {
                 try {
                     // 1. Cập nhật RAM
-                    item.setCurrentPrice(result.finalPrice);
-                    item.setLastBidderId(result.finalWinnerId);
+                    item.setCurrentPrice(result.finalPrice());
+                    item.setLastBidderId(result.finalWinnerId());
 
                     // 2. Cập nhật cứng xuống Database (Code cũ của bạn bị thiếu dòng này nên DB không đổi)
                     getItemDao().updatePrice(item);
@@ -197,17 +198,17 @@ public class BiddingService {
 
                     // 4. Bắn Socket thông báo cho toàn bộ các Client đang mở UI cập nhật ngay lập tức
                     AuctionServer.broadcast(
-                            "BID_UPDATE|" + item.getId() + "|" + result.finalPrice + "|" + result.finalWinnerId +
+                            "BID_UPDATE|" + item.getId() + "|" + result.finalPrice() + "|" + result.finalWinnerId() +
                                     "|AUTOBID_TRIGGERED|" + bidderId + "|" + oldWinnerId + "\n"
                     );
 
-                    return "SERVER_PROCESSED_AUTOBID|" + result.finalWinnerId + "|" + result.finalPrice;
+                    return "SERVER_PROCESSED_AUTOBID|" + result.finalWinnerId() + "|" + result.finalPrice();
                 } catch (Exception e) {
                     return "LỖI HỆ THỐNG: Không thể cập nhật giá AutoBid. Vui lòng thử lại.";
                 }
             }
 
-            return result.message != null ? result.message
+            return result.message() != null ? result.message()
                     : "Auto-bid đã được đăng ký. Giá hiện tại: " + item.getCurrentPrice() + "$";
         }
     }

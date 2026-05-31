@@ -4,6 +4,19 @@ import com.auction.client.network.NetworkClient;
 import com.auction.shared.model.item.Art;
 import com.auction.shared.model.item.Electronic;
 import com.auction.shared.model.item.Item;
+import com.auction.shared.model.item.Vehicle;
+import javafx.application.Platform;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+import javafx.event.ActionEvent;
+import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
+import javafx.fxml.Initializable;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
+import javafx.scene.control.*;
+import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.stage.Stage;
 
 import java.io.IOException;
 import java.net.URL;
@@ -17,64 +30,78 @@ import java.util.List;
 import java.util.Locale;
 import java.util.ResourceBundle;
 
-import com.auction.shared.model.item.Vehicle;
-import javafx.animation.KeyFrame;
-import javafx.animation.Timeline;
-import javafx.application.Platform;
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
-import javafx.event.ActionEvent;
-import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
-import javafx.fxml.Initializable;
-import javafx.scene.Node;
-import javafx.scene.Parent;
-import javafx.scene.Scene;
-import javafx.scene.control.*;
-import javafx.scene.control.cell.PropertyValueFactory;
-import javafx.stage.Stage;
-import javafx.util.Duration;
-
 import static com.auction.client.controller.ClockUtil.clockInit;
 
 public class SellerController implements Initializable {
 
-    @FXML private Label lblSellerName;
-    @FXML private Label lblBalance;
-    @FXML private Label lblTime;
+    @FXML
+    private Label lblSellerName;
+    @FXML
+    private Label lblBalance;
+    @FXML
+    private Label lblTime;
 
-    @FXML private TextField txtStartTime;
-    @FXML private TextField txtEndTime;
+    @FXML
+    private TextField txtStartTime;
+    @FXML
+    private TextField txtEndTime;
 
-    @FXML private Button btnDeposit;
-    @FXML private Button btnWithdraw;
-    @FXML private Button btnSettings;
-    @FXML private Button btnLogout;
-    @FXML private Button btnRefresh;
-    @FXML private Button btnAddItem;
-    @FXML private Button btnBackFromSeller;
+    @FXML
+    private Button btnDeposit;
+    @FXML
+    private Button btnWithdraw;
+    @FXML
+    private Button btnSettings;
+    @FXML
+    private Button btnLogout;
+    @FXML
+    private Button btnRefresh;
+    @FXML
+    private Button btnAddItem;
+    @FXML
+    private Button btnBackFromSeller;
 
-    @FXML private TableView<Item> tableItems;
-    @FXML private TableColumn<Item, Integer> colId;
-    @FXML private TableColumn<Item, String> colName;
-    @FXML private TableColumn<Item, String> colType;
-    @FXML private TableColumn<Item, Double> colStartPrice;
-    @FXML private TableColumn<Item, Double> colCurrentPrice;
-    @FXML private TableColumn<Item, String> colStatus;
+    @FXML
+    private TableView<Item> tableItems;
+    @FXML
+    private TableColumn<Item, Integer> colId;
+    @FXML
+    private TableColumn<Item, String> colName;
+    @FXML
+    private TableColumn<Item, String> colType;
+    @FXML
+    private TableColumn<Item, Double> colStartPrice;
+    @FXML
+    private TableColumn<Item, Double> colCurrentPrice;
+    @FXML
+    private TableColumn<Item, String> colStatus;
 
-    @FXML private TextField txtItemName;
-    @FXML private TextField txtStartPrice;
-    @FXML private TextField txtStepPrice;
-    @FXML private TextField txtImageUrl;
-    @FXML private DatePicker dpEndDate;
-    @FXML private DatePicker dpStartDate;
-    @FXML private ComboBox<String> cbItemType;
-    @FXML private TextField txtBrand;
-    @FXML private TextField txtWarranty;
-    @FXML private TextField txtAuthor;
-    @FXML private TextField txtCreationYear;
-    @FXML private TextField txtFuelType;
-    @FXML private TextField txtEngineCapacity;
+    @FXML
+    private TextField txtItemName;
+    @FXML
+    private TextField txtStartPrice;
+    @FXML
+    private TextField txtStepPrice;
+    @FXML
+    private TextField txtImageUrl;
+    @FXML
+    private DatePicker dpEndDate;
+    @FXML
+    private DatePicker dpStartDate;
+    @FXML
+    private ComboBox<String> cbItemType;
+    @FXML
+    private TextField txtBrand;
+    @FXML
+    private TextField txtWarranty;
+    @FXML
+    private TextField txtAuthor;
+    @FXML
+    private TextField txtCreationYear;
+    @FXML
+    private TextField txtFuelType;
+    @FXML
+    private TextField txtEngineCapacity;
 
     private final ObservableList<Item> myItemsMasterList = FXCollections.observableArrayList();
 
@@ -134,7 +161,7 @@ public class SellerController implements Initializable {
             }
         });
 
-        }
+    }
 
 
     private void setupTableColumns() {
@@ -222,18 +249,15 @@ public class SellerController implements Initializable {
         // Thuộc tính phụ
         String extraDetails = "\n Thông tin chi tiết \n";
 
-        if (selectedItem instanceof Electronic) {
-            Electronic electronic = (Electronic) selectedItem;
+        if (selectedItem instanceof Electronic electronic) {
             extraDetails += "Thương hiệu: " + electronic.getBrand() + "\n"
                     + "Bảo hành: " + electronic.getWarrantyPeriod() + " tháng\n";
 
-        } else if (selectedItem instanceof Art) {
-            Art art = (Art) selectedItem;
+        } else if (selectedItem instanceof Art art) {
             extraDetails += "Tác giả: " + art.getAuthor() + "\n"
                     + "Năm sáng tác: " + art.getCreationYear() + "\n";
 
-        } else if (selectedItem instanceof Vehicle) {
-            Vehicle vehicle = (Vehicle) selectedItem;
+        } else if (selectedItem instanceof Vehicle vehicle) {
             extraDetails += "Thương hiệu: " + vehicle.getBrand() + "\n"
                     + "Bảo hành: " + vehicle.getWarrantyPeriod() + " tháng\n"
                     + "Nhiên liệu: " + vehicle.getFuelType() + "\n"
@@ -261,7 +285,7 @@ public class SellerController implements Initializable {
     }
 
     public void toSignInScreen(ActionEvent event) throws IOException {
-       SceneSwitchUtil.switchScene(event, "/SignInScreen.fxml");
+        SceneSwitchUtil.switchScene(event, "/SignInScreen.fxml");
     }
 
     public void toSettingScreen() {
@@ -473,7 +497,7 @@ public class SellerController implements Initializable {
     public void handleLogout(ActionEvent event) throws IOException {
         NetworkClient.getInstance().detachListener(); // Khóa vòi dữ liệu cũ trước khi thoát
         NetworkClient.disconnect(lblSellerName.getText());
-      SceneSwitchUtil.switchScene(event, "/SignInScreen.fxml");
+        SceneSwitchUtil.switchScene(event, "/SignInScreen.fxml");
     }
 
     public void toInfoScreen() {
@@ -514,7 +538,7 @@ public class SellerController implements Initializable {
             String msg = NetworkClient.deleteItem(itemID);
 
             Platform.runLater(() -> {
-                if(msg != null && msg.startsWith("DELETE_SUCCESS")){
+                if (msg != null && msg.startsWith("DELETE_SUCCESS")) {
                     myItemsMasterList.remove(selectedItem);
                     tableItems.refresh();
 

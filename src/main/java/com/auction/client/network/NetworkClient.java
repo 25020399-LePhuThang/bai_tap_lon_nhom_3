@@ -1,22 +1,26 @@
 package com.auction.client.network;
 
 import com.auction.shared.model.BidTransaction;
+import com.auction.shared.model.item.Art;
+import com.auction.shared.model.item.Electronic;
 import com.auction.shared.model.item.Item;
+import com.auction.shared.model.item.Vehicle;
 import com.auction.shared.model.user.Admin;
 import com.auction.shared.model.user.Bidder;
 import com.auction.shared.model.user.Seller;
 import com.auction.shared.model.user.User;
-import com.auction.shared.model.item.Art;
-import com.auction.shared.model.item.Vehicle;
-import com.auction.shared.model.item.Electronic;
 import com.google.gson.*;
 import com.google.gson.reflect.TypeToken;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
 import java.lang.reflect.Type;
+import java.net.Socket;
+import java.net.SocketTimeoutException;
 import java.util.ArrayList;
 import java.util.List;
-import java.io.*;
-import java.net.*;
 import java.util.function.Consumer;
 
 public class NetworkClient {
@@ -25,7 +29,7 @@ public class NetworkClient {
     private static BufferedReader in;
     private static PrintWriter out;
 
-    private static final String SERVER_IP ="zephyr.proxy.rlwy.net";
+    private static final String SERVER_IP = "zephyr.proxy.rlwy.net";
     private static final int SERVER_PORT = 37065;
 
     // Callback được gọi mỗi khi nhận được BID_UPDATE từ server
@@ -46,6 +50,7 @@ public class NetworkClient {
         }
         return instance;
     }
+
     private static boolean connect(String host, int port) {
         try {
             socket = new Socket(host, port);
@@ -65,10 +70,21 @@ public class NetworkClient {
     }
 
     private static void closeAll() {
-        try { if (in != null) in.close(); } catch (Exception ignored) {}
-        try { if (out != null) out.close(); } catch (Exception ignored) {}
-        try { if (socket != null) socket.close(); } catch (Exception ignored) {}
-        in = null; out = null; socket = null;
+        try {
+            if (in != null) in.close();
+        } catch (Exception ignored) {
+        }
+        try {
+            if (out != null) out.close();
+        } catch (Exception ignored) {
+        }
+        try {
+            if (socket != null) socket.close();
+        } catch (Exception ignored) {
+        }
+        in = null;
+        out = null;
+        socket = null;
     }
 
     // =========================================================================
@@ -105,6 +121,7 @@ public class NetworkClient {
             return "ERROR|Đứt cáp mạng giữa chừng!";
         }
     }
+
     private static String safe(String s) {
         return s == null ? "" : s.replace("\n", "").replace("\r", "").replace("|", "");
     }
@@ -190,6 +207,7 @@ public class NetworkClient {
         }
         return null;
     }
+
     public static String getBalanceRequest(String username) {
         return sendAndReceive("GET_BALANCE|" + safe(username));
     }
@@ -261,14 +279,17 @@ public class NetworkClient {
                             String itemType = jsonObject.has("type") ? jsonObject.get("type").getAsString() : "";
 
                             if (itemType.equalsIgnoreCase("Art")) return context.deserialize(json, Art.class);
-                            else if (itemType.equalsIgnoreCase("Vehicle")) return context.deserialize(json, Vehicle.class);
-                            else if (itemType.equalsIgnoreCase("Electronic")) return context.deserialize(json, Electronic.class);
+                            else if (itemType.equalsIgnoreCase("Vehicle"))
+                                return context.deserialize(json, Vehicle.class);
+                            else if (itemType.equalsIgnoreCase("Electronic"))
+                                return context.deserialize(json, Electronic.class);
 
                             throw new JsonParseException("Không nhận diện được loại Item: " + itemType);
                         }
                     }).create();
 
-            Type listType = new TypeToken<ArrayList<Item>>() {}.getType();
+            Type listType = new TypeToken<ArrayList<Item>>() {
+            }.getType();
             return gson.fromJson(jsonResponse, listType);
         } catch (Exception e) {
             System.err.println("Lỗi bóc tách JSON Item: " + e.getMessage());
@@ -310,7 +331,8 @@ public class NetworkClient {
                             }
                         }).create();
 
-                Type listType = new TypeToken<ArrayList<User>>(){}.getType();
+                Type listType = new TypeToken<ArrayList<User>>() {
+                }.getType();
                 return customGson.fromJson(jsonStr, listType);
             }
         } catch (Exception e) {
@@ -372,14 +394,16 @@ public class NetworkClient {
                                 com.google.gson.JsonObject jsonObject = json.getAsJsonObject();
                                 String type = jsonObject.has("type") ? jsonObject.get("type").getAsString() : "";
 
-                                if (type.equalsIgnoreCase("Electronic")) return context.deserialize(json, Electronic.class);
+                                if (type.equalsIgnoreCase("Electronic"))
+                                    return context.deserialize(json, Electronic.class);
                                 if (type.equalsIgnoreCase("Art")) return context.deserialize(json, Art.class);
                                 if (type.equalsIgnoreCase("Vehicle")) return context.deserialize(json, Vehicle.class);
                                 return null;
                             }
                         }).create();
 
-                Type listType = new TypeToken<ArrayList<Item>>(){}.getType();
+                Type listType = new TypeToken<ArrayList<Item>>() {
+                }.getType();
                 return customGson.fromJson(jsonStr, listType);
             }
         } catch (Exception e) {
@@ -396,7 +420,8 @@ public class NetworkClient {
         String response = sendAndReceive("GET_BID_HISTORY|" + itemId);
         if (response == null || response.isEmpty()) return new ArrayList<>();
         Gson gson = new Gson();
-        Type listType = new TypeToken<ArrayList<BidTransaction>>(){}.getType();
+        Type listType = new TypeToken<ArrayList<BidTransaction>>() {
+        }.getType();
         return gson.fromJson(response, listType);
     }
 
@@ -441,6 +466,7 @@ public class NetworkClient {
     public void detachListener() {
         this.bidUpdateListener = null;
     }
+
     /**
      * Gửi yêu cầu xóa tài khoản lên Server
      * Trả về nguyên chuỗi phản hồi từ Server (vd: "DELETE_SUCCESS|..." hoặc "DELETE_FAIL|...")

@@ -1,43 +1,36 @@
 package com.auction.server.network;
 
 import com.auction.server.controller.BiddingService;
-import com.auction.server.controller.ProductManager;
 import com.auction.server.controller.RegisterHandler;
+import com.auction.server.dao.BidDAO;
 import com.auction.server.dao.ItemDAO;
 import com.auction.server.dao.UserDAO;
-import com.auction.server.dao.BidDAO;
 import com.auction.shared.model.BidTransaction;
-import com.auction.server.database.DatabaseManager;
 import com.auction.shared.model.item.Art;
 import com.auction.shared.model.item.Electronic;
 import com.auction.shared.model.item.Item;
 import com.auction.shared.model.item.Vehicle;
 import com.auction.shared.model.user.User;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 import com.google.gson.*;
 
-import java.lang.reflect.Type;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
+import java.lang.reflect.Type;
 import java.net.Socket;
 import java.util.Date;
 import java.util.List;
-import com.auction.server.controller.AntiSnipingPolicy;
 
 public class ClientHandler implements Runnable {
-    private Socket socket;
+    private final Socket socket;
     private BufferedReader in;
     private PrintWriter out;
-    private BiddingService biddingService;
+    private final BiddingService biddingService;
 
-    private UserDAO userDAO = new UserDAO();
-    private ItemDAO itemDAO = new ItemDAO();
-    private BidDAO bidDAO = new BidDAO();
+    private final UserDAO userDAO = new UserDAO();
+    private final ItemDAO itemDAO = new ItemDAO();
+    private final BidDAO bidDAO = new BidDAO();
 
     public ClientHandler(Socket socket, BiddingService biddingService) {
         this.socket = socket;
@@ -120,7 +113,7 @@ public class ClientHandler implements Runnable {
                             if (targetItem != null) {
                                 AuctionServer.itemCache.put(itemId, targetItem);
                             }
-                        }else {
+                        } else {
                             // [FIX LỖI BÓNG MA CACHE]
                             Item freshData = itemDAO.getItemById(itemId);
                             if (freshData != null) {
@@ -151,10 +144,10 @@ public class ClientHandler implements Runnable {
 
                     // 3b. AUTO-BID
                     case "AUTO_BID" -> {
-                        String bidderId  = parts[1];
-                        double maxBid    = Double.parseDouble(parts[2]);
+                        String bidderId = parts[1];
+                        double maxBid = Double.parseDouble(parts[2]);
                         double increment = Double.parseDouble(parts[3]);
-                        String itemId    = parts[4];
+                        String itemId = parts[4];
 
                         Item targetItem = AuctionServer.itemCache.computeIfAbsent(
                                 itemId,
@@ -170,7 +163,8 @@ public class ClientHandler implements Runnable {
                                 // Nếu nhóm có hàm saveAutoBid trong DB thì dùng, nếu không có thể bỏ qua dòng saveAutoBid
                                 try {
                                     bidDAO.saveAutoBid(bidderId, itemId, maxBid, increment);
-                                } catch (Exception ignored) {}
+                                } catch (Exception ignored) {
+                                }
 
                                 double finalPrice = targetItem.getCurrentPrice();
                                 String finalWinner = targetItem.getLastBidderId();
@@ -502,7 +496,7 @@ public class ClientHandler implements Runnable {
                                 sendMessage("DELETE_FAIL|Thất bại! Sản phẩm này đã bắt đầu lên sàn đấu giá.");
                                 System.out.println("Server: Từ chối xóa vì item " + itemIdToDelete + " đã diễn ra.");
                             } else {
-                                boolean isItemDeleted = itemDAO.deleteItem(itemIdToDelete);
+                                boolean isItemDeleted = ItemDAO.deleteItem(itemIdToDelete);
                                 if (isItemDeleted) {
                                     sendMessage("DELETE_SUCCESS|Đã rút sản phẩm thành công.");
                                     System.out.println("Server: Xóa thành công sản phẩm ID: " + itemIdToDelete);

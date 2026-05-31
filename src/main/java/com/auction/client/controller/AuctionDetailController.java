@@ -8,37 +8,37 @@ import com.auction.shared.model.item.Item;
 import com.auction.shared.model.item.Vehicle;
 import com.auction.shared.model.user.User;
 import javafx.animation.Animation;
+import javafx.animation.KeyFrame;
+import javafx.animation.Timeline;
 import javafx.application.Platform;
+import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
 import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
-import javafx.scene.control.*;
-import javafx.stage.Stage;
-import javafx.event.ActionEvent;
-import java.text.NumberFormat;
-import java.util.Locale;
-
-import java.io.IOException;
-
-import javafx.animation.KeyFrame;
-import javafx.animation.Timeline;
-import javafx.util.Duration;
 import javafx.scene.chart.LineChart;
 import javafx.scene.chart.NumberAxis;
 import javafx.scene.chart.XYChart;
-import java.net.URL;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.Date;
-import java.util.List;
-import java.util.ResourceBundle;
-import java.text.SimpleDateFormat;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Button;
+import javafx.scene.control.Label;
+import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
+import javafx.stage.Stage;
+import javafx.util.Duration;
+
+import java.io.IOException;
+import java.net.URL;
+import java.text.NumberFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.List;
+import java.util.Locale;
+import java.util.ResourceBundle;
 
 import static com.auction.client.controller.ClockUtil.clockInit;
 import static com.auction.client.controller.SceneSwitchUtil.switchScene;
@@ -49,40 +49,66 @@ public class AuctionDetailController implements Initializable {
     private MainScreenController mainController;
 
     // ================= HEADER & FOOTER =================
-    @FXML private Label lblUsername2;
-    @FXML private Button btnLogout;
-    @FXML private Label lblTime4;
-    @FXML private Button btnBack;
+    @FXML
+    private Label lblUsername2;
+    @FXML
+    private Button btnLogout;
+    @FXML
+    private Label lblTime4;
+    @FXML
+    private Button btnBack;
 
     // ================= CHI TIẾT SẢN PHẨM =================
-    @FXML private ImageView imgProduct;
-    @FXML private Label lblProductname;
-    @FXML private Label lblProductID;
-    @FXML private Label lblSeller;
-    @FXML private Label lblTimeStart;
-    @FXML private Label lblTimeEnd;
+    @FXML
+    private ImageView imgProduct;
+    @FXML
+    private Label lblProductname;
+    @FXML
+    private Label lblProductID;
+    @FXML
+    private Label lblSeller;
+    @FXML
+    private Label lblTimeStart;
+    @FXML
+    private Label lblTimeEnd;
 
     // ================= THÔNG TIN GIÁ & ĐẤU GIÁ =================
-    @FXML private Label lblClock;
-    @FXML private Label lblStartPrice;
-    @FXML private Label lblStepPrice;
-    @FXML private Label lblRecentPrice;
-    @FXML private TextField txtPrice;
-    @FXML private Button btnAuction;
-    @FXML private Button btnDetail;
-    @FXML private Button btnAvt;
+    @FXML
+    private Label lblClock;
+    @FXML
+    private Label lblStartPrice;
+    @FXML
+    private Label lblStepPrice;
+    @FXML
+    private Label lblRecentPrice;
+    @FXML
+    private TextField txtPrice;
+    @FXML
+    private Button btnAuction;
+    @FXML
+    private Button btnDetail;
+    @FXML
+    private Button btnAvt;
 
     // ================= CÀI ĐẶT AUTOBID =================
-    @FXML private TextField txtMaxAutoBid;
-    @FXML private Button btnAutoBid;
-    @FXML private HBox boxSetupAuto;
-    @FXML private HBox boxCurrentAuto;
-    @FXML private Label lblCurrentMaxBid;
-    @FXML private Button btnEditAuto;
+    @FXML
+    private TextField txtMaxAutoBid;
+    @FXML
+    private Button btnAutoBid;
+    @FXML
+    private HBox boxSetupAuto;
+    @FXML
+    private HBox boxCurrentAuto;
+    @FXML
+    private Label lblCurrentMaxBid;
+    @FXML
+    private Button btnEditAuto;
 
     // ================= BẢNG & THỐNG KÊ =================
-    @FXML private Label lblUserAuctionCount;
-    @FXML private Label lblBidCount;
+    @FXML
+    private Label lblUserAuctionCount;
+    @FXML
+    private Label lblBidCount;
 
     // ================= BIẾN TOÀN CỤC =================
     private Item currentItem;
@@ -91,9 +117,12 @@ public class AuctionDetailController implements Initializable {
     private Timeline clockTimeline;
 
     // ─── LineChart lịch sử giá realtime ─────────────────────────────────────
-    @FXML private LineChart<Number, Number> priceChart;
-    @FXML private NumberAxis xAxis;
-    @FXML private NumberAxis yAxis;
+    @FXML
+    private LineChart<Number, Number> priceChart;
+    @FXML
+    private NumberAxis xAxis;
+    @FXML
+    private NumberAxis yAxis;
 
     private XYChart.Series<Number, Number> priceSeries;
     private int bidCount = 0;
@@ -363,6 +392,7 @@ public class AuctionDetailController implements Initializable {
             }
         }, "AutoBid-Fast-Restore-Thread").start();
     }
+
     public void setDisplayName(String displayName) {
         if (displayName != null && !displayName.isEmpty()) {
             lblUsername2.setText(displayName);
@@ -409,11 +439,12 @@ public class AuctionDetailController implements Initializable {
             }
         }
     }
+
     @FXML
     public void handleLogout(ActionEvent event) throws IOException {
         onClose();
         NetworkClient.disconnect(lblUsername2.getText());
-        switchScene(event,"/SignInScreen.fxml");
+        switchScene(event, "/SignInScreen.fxml");
     }
 
     private void startCountdown() {
@@ -481,18 +512,15 @@ public class AuctionDetailController implements Initializable {
 
         String extraDetails = "\n Thông tin chi tiết \n";
 
-        if (currentItem instanceof Electronic) {
-            Electronic electronic = (Electronic) currentItem;
+        if (currentItem instanceof Electronic electronic) {
             extraDetails += "Thương hiệu: " + electronic.getBrand() + "\n"
                     + "Bảo hành: " + electronic.getWarrantyPeriod() + " tháng\n";
 
-        } else if (currentItem instanceof Art) {
-            Art art = (Art) currentItem;
+        } else if (currentItem instanceof Art art) {
             extraDetails += "Tác giả: " + art.getAuthor() + "\n"
                     + "Năm sáng tác: " + art.getCreationYear() + "\n";
 
-        } else if (currentItem instanceof Vehicle) {
-            Vehicle vehicle = (Vehicle) currentItem;
+        } else if (currentItem instanceof Vehicle vehicle) {
             // Giữ lại cách căn lề và dấu cách chuẩn của Nhung
             extraDetails += "Thương hiệu: " + vehicle.getBrand() + "\n"
                     + "Bảo hành: " + vehicle.getWarrantyPeriod() + " tháng\n"
@@ -698,7 +726,8 @@ public class AuctionDetailController implements Initializable {
             try {
                 String parts = lblCurrentMaxBid.getText().split(":")[1].replace("$", "").trim();
                 txtMaxAutoBid.setText(parts);
-            } catch (Exception e) { }
+            } catch (Exception e) {
+            }
         }
         txtMaxAutoBid.requestFocus();
     }
@@ -727,7 +756,7 @@ public class AuctionDetailController implements Initializable {
     }
 
     @FXML
-    public void toInfoScreen()  {
+    public void toInfoScreen() {
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/InfoScreen.fxml"));
             Parent root = loader.load();
@@ -740,7 +769,9 @@ public class AuctionDetailController implements Initializable {
             popUpStage.initModality(javafx.stage.Modality.APPLICATION_MODAL);
             popUpStage.setResizable(false);
             popUpStage.show();
-        } catch (IOException e) { e.printStackTrace(); }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
 }

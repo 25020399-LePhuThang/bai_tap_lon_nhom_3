@@ -3,7 +3,10 @@ package com.auction.server.dao;
 import com.auction.server.database.DatabaseManager;
 import com.auction.shared.model.BidTransaction;
 
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -205,6 +208,7 @@ public class BidDAO {
 
     /**
      * Hàm xử lý chuyển tiền khi chốt phiên đấu giá.
+     *
      * @return true nếu trừ/cộng tiền thành công, false nếu lỗi hoặc người mua không đủ tiền.
      */
     public boolean processAuctionPayment(String itemId, String winnerId, String sellerId, double winningPrice) {

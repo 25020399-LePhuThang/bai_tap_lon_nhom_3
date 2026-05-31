@@ -3,8 +3,8 @@ package com.auction.shared.model.item;
 import com.auction.shared.model.Entity;
 import com.google.gson.annotations.SerializedName;
 
-import java.io.Serializable;
 import java.io.Serial;
+import java.io.Serializable;
 import java.util.Date;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -75,6 +75,7 @@ public abstract class Item implements Entity, Serializable {
     public String getId() {
         return itemID;
     }
+
     @Override
     public void setId(String newID) {
         this.itemID = newID;
@@ -84,6 +85,7 @@ public abstract class Item implements Entity, Serializable {
     public String getItemID() {
         return itemID;
     }
+
     public void setItemID(String itemID) {
         this.itemID = itemID;
     }
@@ -92,40 +94,97 @@ public abstract class Item implements Entity, Serializable {
     // CÁC HÀM GETTER & SETTER CÒN LẠI (GIỮ NGUYÊN)
     // =========================================================================
 
-    public String getName() { return name; }
-    public void setName(String name) { this.name = name; }
+    public String getName() {
+        return name;
+    }
 
-    public double getStartingPrice() { return startingPrice; }
-    public void setStartingPrice(double newStartingPrice) { this.startingPrice = newStartingPrice; }
+    public void setName(String name) {
+        this.name = name;
+    }
 
-    public double getCurrentPrice() { return currentPrice; }
-    public void setCurrentPrice(double currentPrice) { this.currentPrice = currentPrice; }
+    public double getStartingPrice() {
+        return startingPrice;
+    }
 
-    public double getMinIncrement() { return minIncrement; }
-    public void setMinIncrement(double minIncrement) { this.minIncrement = minIncrement; }
+    public void setStartingPrice(double newStartingPrice) {
+        this.startingPrice = newStartingPrice;
+    }
 
-    public String getLastBidderId() { return lastBidderId; }
-    public void setLastBidderId(String lastBidderId) { this.lastBidderId = lastBidderId; }
+    public double getCurrentPrice() {
+        return currentPrice;
+    }
 
-    public String getSeller_ID() { return seller_ID; }
-    public void setSeller_ID(String seller_ID) { this.seller_ID = seller_ID; }
+    public void setCurrentPrice(double currentPrice) {
+        this.currentPrice = currentPrice;
+    }
 
-    public String getStatus() { return status; }
-    public void setStatus(String status) { this.status = status; }
+    public double getMinIncrement() {
+        return minIncrement;
+    }
 
-    public String getType() { return type; }
-    public void setType(String type) { this.type = type; }
+    public void setMinIncrement(double minIncrement) {
+        this.minIncrement = minIncrement;
+    }
 
-    public Date getStartTime() { return startTime; }
-    public void setStartTime(Date startTime) { this.startTime = startTime; }
+    public String getLastBidderId() {
+        return lastBidderId;
+    }
 
-    public Date getEndTime() { return endTime; }
-    public void setEndTime(Date endTime) { this.endTime = endTime; }
+    public void setLastBidderId(String lastBidderId) {
+        this.lastBidderId = lastBidderId;
+    }
 
-    public String getProductImageURL() { return productImageURL; }
-    public void setProductImageURL(String productImageURL) { this.productImageURL = productImageURL; }
+    public String getSeller_ID() {
+        return seller_ID;
+    }
 
-    /** Kiểm tra xem phiên đấu giá còn hoạt động không?
+    public void setSeller_ID(String seller_ID) {
+        this.seller_ID = seller_ID;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    public String getType() {
+        return type;
+    }
+
+    public void setType(String type) {
+        this.type = type;
+    }
+
+    public Date getStartTime() {
+        return startTime;
+    }
+
+    public void setStartTime(Date startTime) {
+        this.startTime = startTime;
+    }
+
+    public Date getEndTime() {
+        return endTime;
+    }
+
+    public void setEndTime(Date endTime) {
+        this.endTime = endTime;
+    }
+
+    public String getProductImageURL() {
+        return productImageURL;
+    }
+
+    public void setProductImageURL(String productImageURL) {
+        this.productImageURL = productImageURL;
+    }
+
+    /**
+     * Kiểm tra xem phiên đấu giá còn hoạt động không?
+     *
      * @return true / false
      */
     public boolean isActive() {

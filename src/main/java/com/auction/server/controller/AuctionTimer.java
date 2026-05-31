@@ -1,9 +1,10 @@
 package com.auction.server.controller;
 
-import com.auction.server.network.AuctionServer;
-import com.auction.shared.model.item.Item;
 import com.auction.server.dao.BidDAO;
 import com.auction.server.dao.ItemDAO;
+import com.auction.server.network.AuctionServer;
+import com.auction.shared.model.item.Item;
+
 import java.util.Timer;
 import java.util.TimerTask;
 
